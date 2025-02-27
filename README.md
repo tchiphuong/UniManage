@@ -2,9 +2,6 @@
 
 ## Giới thiệu
 
-### Description
-**UniManage** là một hệ thống quản lý giúp doanh nghiệp tối ưu hóa quy trình đặt hàng, theo dõi nhà cung cấp và kiểm soát dữ liệu sản phẩm. Dự án tập trung vào việc cung cấp giao diện thân thiện và API mạnh mẽ để quản lý chuỗi cung ứng hiệu quả.
-
 **UniManage** là một hệ thống quản lý giúp doanh nghiệp tối ưu hóa quy trình đặt hàng, theo dõi nhà cung cấp và kiểm soát dữ liệu sản phẩm. Dự án được thiết kế với kiến trúc hiện đại, sử dụng ASP.NET cho backend và AngularJS cho frontend.
 
 ## Công nghệ sử dụng
