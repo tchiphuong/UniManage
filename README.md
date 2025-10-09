@@ -7,17 +7,41 @@
 ## Cấu trúc dự án
 
 ```
-UniManage/
-├── src/                           # Source code .NET
-│   ├── UniManage.Api/            # REST API (Controllers, Middleware)
-│   ├── UniManage.Application/    # CQRS (Commands, Queries, Handlers)
-│   ├── UniManage.Core/           # Database, Models, Infrastructure
-│   ├── UniManage.Resource/       # Localization (T4 Templates)
-│   └── UniManage.IdentityServer/ # Authentication & Authorization
-├── docs/                         # Documentation
-├── scripts/                      # Helper scripts
-└── README.md
+UniManage/                         # Monorepo root
+├── backend/                      # Backend .NET 9
+│   ├── src/                     # Backend source code
+│   │   ├── UniManage.Api/       # REST API (Controllers, Middleware)
+│   │   ├── UniManage.Application/ # CQRS (Commands, Queries, Handlers)
+│   │   ├── UniManage.Core/      # Database, Models, Infrastructure
+│   │   ├── UniManage.Resource/  # Localization (T4 Templates)
+│   │   ├── UniManage.IdentityServer/ # Authentication & Authorization
+│   │   └── UniManage.sln        # Backend solution
+│   │
+│   ├── docs/                    # Backend documentation
+│   │   └── examples/           # Code examples
+│   │
+│   └── scripts/                # Backend scripts (migrations, tools)
+│
+├── frontend/                     # Frontend (Angular/React)
+│   ├── src/                     # Frontend source code
+│   ├── public/                  # Static assets (planned)
+│   ├── package.json             # npm dependencies (planned)
+│   └── README.md                # Frontend documentation
+│
+├── .github/                     # GitHub configs
+│   ├── workflows/              # CI/CD pipelines
+│   └── copilot-instructions.md # Copilot settings
+│
+├── .gitignore                   # Git ignore rules (monorepo)
+└── README.md                    # Main documentation (this file)
 ```
+
+**Lưu ý cấu trúc Monorepo:**
+
+-   `backend/src/` - Backend .NET 9 source code
+-   `frontend/src/` - Frontend React/Angular source code (planned)
+-   Cả 2 đều trong cùng 1 Git repository (Monorepo)
+-   CI/CD sẽ có 2 pipelines riêng cho backend và frontend
 
 ## Công nghệ sử dụng
 
@@ -35,9 +59,12 @@ UniManage/
 
 ### Frontend:
 
--   Angular 17+ (hoặc React + Tailwind)
--   Tailwind CSS
--   Modern UI components
+-   **Framework**: React 18+ / Angular 17+ (To be decided)
+-   **Language**: TypeScript
+-   **Styling**: Tailwind CSS
+-   **State Management**: Redux Toolkit / NgRx
+-   **API Client**: Axios / Angular HttpClient
+-   **Build Tool**: Vite / Angular CLI
 
 ### DevOps:
 
@@ -71,11 +98,22 @@ UniManage/
 
 ### Yêu cầu hệ thống:
 
+**Backend:**
+
 -   .NET 9 SDK
 -   SQL Server 2019+
 -   PowerShell 5.1+ (cho scripts)
 -   Visual Studio 2022 hoặc VS Code
--   Docker (tùy chọn)
+
+**Frontend:**
+
+-   Node.js 18+ LTS
+-   npm 9+ hoặc yarn
+-   Modern browser (Chrome, Firefox, Edge, Safari)
+
+**Optional:**
+
+-   Docker & Docker Compose
 
 ### 1. Clone repository
 
@@ -84,9 +122,9 @@ git clone https://github.com/tchiphuong/UniManage.git
 cd UniManage
 ```
 
-### 2. Cấu hình Database
+### 2. Cấu hình Backend
 
-#### Tạo database:
+#### a. Tạo database:
 
 ```sql
 CREATE DATABASE UniManage;
@@ -145,6 +183,97 @@ dotnet run --project UniManage.Api
 
 API sẽ chạy tại: `https://localhost:5001`
 
+### 6. Setup Frontend
+
+Frontend đã được tạo sẵn với **React 18 + TypeScript + Vite + Tailwind CSS**.
+
+#### a. Install dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+#### b. Tạo file `.env`:
+
+```bash
+# Copy .env.example
+cp .env.example .env
+
+# Edit .env (Windows)
+notepad .env
+```
+
+Nội dung `.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+#### c. Chạy development server:
+
+```bash
+npm run dev
+```
+
+Frontend sẽ chạy tại: `http://localhost:3000`
+
+#### d. Build production:
+
+```bash
+npm run build
+```
+
+Build output: `frontend/dist/`
+
+### 7. Chạy cả Backend & Frontend
+
+**Terminal 1 - Backend:**
+
+```bash
+cd backend/src
+dotnet run --project UniManage.Api
+```
+
+**Terminal 2 - Frontend:**
+
+```bash
+cd frontend
+npm run dev
+```
+
+Access:
+
+-   Frontend: http://localhost:3000
+-   Backend API: http://localhost:5000/api
+-   API Docs: http://localhost:5000/swagger (nếu có)
+    npm install axios # For React
+
+# Angular uses HttpClient built-in
+
+# Start development server
+
+npm run dev # React (port 5173)
+
+# or
+
+ng serve # Angular (port 4200)
+
+````
+
+Frontend documentation: See `frontend/README.md`
+
+## Frontend Development (Separate Documentation)
+
+Chi tiết về frontend development xem tại: [`frontend/README.md`](./frontend/README.md)
+
+**Quick links:**
+
+-   API Integration: See frontend/README.md
+-   Authentication Flow: OpenID Connect with IdentityServer
+-   UI Components: Tailwind CSS + Custom components
+-   State Management: Redux Toolkit (React) / NgRx (Angular)
+
 ## Database Schema
 
 ### Chuẩn thiết kế database:
@@ -189,7 +318,7 @@ API được viết theo chuẩn RESTful với response format chuẩn:
     "message": "Operation completed successfully",
     "data": {}
 }
-```
+````
 
 ### Paged Response Format:
 
@@ -312,6 +441,7 @@ dotnet run -- encrypt "uni_manager@2024"
 ```
 
 Output:
+
 ```
 Encrypted value:
 ENC:J5xK8mQ3p9YzWfA7bN2kR8tU6vC4xD1e...
@@ -337,22 +467,24 @@ dotnet run --project src\UniManage.Core
 
 ### Encryption Mechanism
 
-- **Algorithm**: AES-256
-- **Key Derivation**: SHA-256 hash của `MachineName + UNIMANAGE_ENCRYPTION_SEED`
-- **Prefix**: `ENC:` để nhận biết encrypted values
-- **Auto Decrypt**: DbContext tự động decrypt khi connect database
+-   **Algorithm**: AES-256
+-   **Key Derivation**: SHA-256 hash của `MachineName + UNIMANAGE_ENCRYPTION_SEED`
+-   **Prefix**: `ENC:` để nhận biết encrypted values
+-   **Auto Decrypt**: DbContext tự động decrypt khi connect database
 
 ### Security Best Practices
 
 **Development:**
-- ✅ Plain text password OK
-- ✅ File trong `.gitignore`
+
+-   ✅ Plain text password OK
+-   ✅ File trong `.gitignore`
 
 **Production:**
-- ✅ **Bắt buộc** encrypt password
-- ✅ Set `UNIMANAGE_ENCRYPTION_SEED` trên production server (Machine-level)
-- ✅ Backup encryption seed ở nơi an toàn
-- ✅ Rotate seed định kỳ (3-6 tháng)
+
+-   ✅ **Bắt buộc** encrypt password
+-   ✅ Set `UNIMANAGE_ENCRYPTION_SEED` trên production server (Machine-level)
+-   ✅ Backup encryption seed ở nơi an toàn
+-   ✅ Rotate seed định kỳ (3-6 tháng)
 
 **Troubleshooting:**
 

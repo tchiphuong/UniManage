@@ -22,6 +22,16 @@ packages/
 node_modules/
 package-lock.json
 yarn.lock
+pnpm-lock.yaml
+
+# Ignore Frontend build outputs
+frontend/build/
+frontend/dist/
+frontend/.next/
+frontend/out/
+frontend/.nuxt/
+frontend/.cache/
+frontend/coverage/
 
 # Ignore logs and temp files
 logs/
@@ -33,6 +43,9 @@ yarn-error.log*
 # Ignore environment and secrets
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 secrets.json
 
 # Ignore database and migration files
@@ -58,9 +71,10 @@ publish/
 tailwind.config.js
 dist/
 coverage/
-
-# Ignore compiled TypeScript files
 *.tsbuildinfo
+.turbo/
+.vercel/
+.parcel-cache/
 
 # Ignore JetBrains Rider / WebStorm IDE files
 .idea/
