@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Extensions\ResourceExtensions.cs" />
+    <Compile Remove="ResourceProvider.cs" />
+    <Compile Remove="ResourcesGenerator2.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="CoreResources.resx" />
+    <EmbeddedResource Remove="CoreResources.vi.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="ResourcesGenerator2.tt" />
+  </ItemGroup>  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="Mono.TextTemplating" Version="3.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TransformOnBuild>true</TransformOnBuild>
+    <OverwriteReadOnlyOutputFiles>true</OverwriteReadOnlyOutputFiles>
+    <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
+    <TextTemplateTransformationType>Regular</TextTemplateTransformationType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UniManage.Core\UniManage.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ResourcesGenerator.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ResourcesGenerator.cs</LastGenOutput>
+    </None>
+    <None Update="CoreResource.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CoreResource.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" /> <!-- T4 Template Service -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ResourcesGenerator.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResourcesGenerator.tt</DependentUpon>
+    </Compile>
+    <Compile Update="CoreResource.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CoreResource.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
+</Project>

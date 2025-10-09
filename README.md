@@ -4,85 +4,429 @@
 
 **UniManage** là một hệ thống quản lý giúp doanh nghiệp tối ưu hóa quy trình đặt hàng, theo dõi nhà cung cấp và kiểm soát dữ liệu sản phẩm. Dự án được thiết kế với kiến trúc hiện đại, sử dụng ASP.NET cho backend và AngularJS cho frontend.
 
+## Cấu trúc dự án
+
+```
+UniManage/
+├── src/                           # Source code .NET
+│   ├── UniManage.Api/            # REST API (Controllers, Middleware)
+│   ├── UniManage.Application/    # CQRS (Commands, Queries, Handlers)
+│   ├── UniManage.Core/           # Database, Models, Infrastructure
+│   ├── UniManage.Resource/       # Localization (T4 Templates)
+│   └── UniManage.IdentityServer/ # Authentication & Authorization
+├── docs/                         # Documentation
+├── scripts/                      # Helper scripts
+└── README.md
+```
+
 ## Công nghệ sử dụng
 
 ### Backend:
 
-- ASP.NET Web API
-- SQL Server
-- Dapper (ORM nhẹ)
-- Migration Data
-- Redis Cache
-- JWT Authentication
-- IIS (Internet Information Services)
+-   **ASP.NET Core**: .NET 9
+-   **Database**: SQL Server
+-   **ORM**: Dapper (không dùng EF Core)
+-   **Pattern**: CQRS + MediatR
+-   **Authentication**: Duende IdentityServer (custom stores với Dapper)
+-   **Logging**: log4net (SiftingAppender - log theo ngày & API)
+-   **Jobs**: Hangfire (SQL Server storage)
+-   **Validation**: FluentValidation
+-   **Localization**: T4 Template + Database (sy_resources, sy_languages)
 
 ### Frontend:
 
-- AngularJS
-- Tailwind CSS
-- Select2
-- Flatpickr
-- NgMask
+-   Angular 17+ (hoặc React + Tailwind)
+-   Tailwind CSS
+-   Modern UI components
 
 ### DevOps:
 
-- Docker
-- CI/CD với GitHub Actions
+-   Docker
+-   CI/CD với GitHub Actions
 
 ## Tính năng chính
 
 ### 1️⃣ Quản lý nhà cung cấp
-- Thêm, sửa, xóa nhà cung cấp
-- Theo dõi lịch sử giao dịch
+
+-   Thêm, sửa, xóa nhà cung cấp
+-   Theo dõi lịch sử giao dịch
 
 ### 2️⃣ Quản lý đơn hàng
-- Tạo đơn hàng, cập nhật trạng thái
-- Lịch sử chỉnh sửa đơn hàng
-- Theo dõi tiến độ xử lý
+
+-   Tạo đơn hàng, cập nhật trạng thái
+-   Lịch sử chỉnh sửa đơn hàng
+-   Theo dõi tiến độ xử lý
 
 ### 3️⃣ Quản lý sản phẩm
-- Danh mục sản phẩm theo nhà cung cấp
-- Giá nhập, đơn vị, số lượng tối thiểu
+
+-   Danh mục sản phẩm theo nhà cung cấp
+-   Giá nhập, đơn vị, số lượng tối thiểu
 
 ### 4️⃣ Thống kê & báo cáo
-- Biểu đồ hiệu suất nhà cung cấp
-- Tổng hợp sản phẩm nhập theo thời gian
+
+-   Biểu đồ hiệu suất nhà cung cấp
+-   Tổng hợp sản phẩm nhập theo thời gian
 
 ## Cách cài đặt
 
 ### Yêu cầu hệ thống:
 
-- .NET 8 SDK
-- Node.js 16+
-- SQL Server
-- Docker (tùy chọn)
-- IIS (Internet Information Services)
+-   .NET 9 SDK
+-   SQL Server 2019+
+-   PowerShell 5.1+ (cho scripts)
+-   Visual Studio 2022 hoặc VS Code
+-   Docker (tùy chọn)
 
-### Chạy Backend
-
-```bash
-cd backend
- dotnet restore
- dotnet run
-```
-
-### Triển khai Backend trên IIS
-
-1. Mở **IIS Manager**.
-2. Thêm **Application Pool** mới và chọn .NET CLR version phù hợp.
-3. Thêm **Website** mới, trỏ đến thư mục publish của ứng dụng.
-4. Cấu hình **Bindings** để chạy trên cổng mong muốn.
-5. Khởi động website và kiểm tra.
-
-### Chạy Frontend
+### 1. Clone repository
 
 ```bash
-cd frontend
-npm install
-npm start
+git clone https://github.com/tchiphuong/UniManage.git
+cd UniManage
 ```
+
+### 2. Cấu hình Database
+
+#### Tạo database:
+
+```sql
+CREATE DATABASE UniManage;
+CREATE DATABASE UniManageLog;
+```
+
+#### Tạo user:
+
+```sql
+CREATE LOGIN uni_manager WITH PASSWORD = 'uni_manager@2024';
+USE UniManage;
+CREATE USER uni_manager FOR LOGIN uni_manager;
+ALTER ROLE db_owner ADD MEMBER uni_manager;
+```
+
+#### Chạy migration:
+
+```bash
+# Chạy script SQL migrations
+cd src/UniManage.Core/Migrations
+# Xem README.md trong folder Migrations để biết thêm chi tiết
+# Chạy RunAllMigrations.sql hoặc từng file migration theo thứ tự
+```
+
+### 3. Cấu hình Connection String
+
+Cập nhật `src/UniManage.Core/appsettings.Development.json`:
+
+```json
+{
+    "Database": {
+        "Server": "YOUR_SERVER\\SQLEXPRESS",
+        "DefaultDatabase": "UniManage",
+        "LogDatabase": "UniManageLog",
+        "UserId": "uni_manager",
+        "Password": "uni_manager@2024",
+        "TrustServerCertificate": true
+    }
+}
+```
+
+### 4. Generate Resources từ Database
+
+```bash
+cd src/UniManage.Resource
+.\GenerateCoreResource.ps1
+```
+
+### 5. Build & Run
+
+```bash
+cd src
+dotnet build
+dotnet run --project UniManage.Api
+```
+
+API sẽ chạy tại: `https://localhost:5001`
+
+## Database Schema
+
+### Chuẩn thiết kế database:
+
+-   **PK**: Id (INT IDENTITY hoặc BIGINT)
+-   **Text**: NVARCHAR; thời gian: DATETIME2(3)
+-   **Concurrency**: ROWVERSION → cột DataRowVersion (map byte[])
+-   **Audit columns** (mọi bảng): CreatedBy, CreatedAt, UpdatedBy, UpdatedAt, DataRowVersion
+-   **Naming**: Hậu tố cột Amount/Number/Name/Code/Qty/Date/Rate
+-   **Index**: IX*{Table}*{Column}
+-   **Encryption**: Mật khẩu được mã hóa AES-256 (xem `README_ENCRYPTION.md`)
+
+### Core System Tables:
+
+-   **sy_languages**: Ngôn ngữ hệ thống (vi-VN, en-US)
+-   **sy_resources**: Resources đa ngôn ngữ (cho T4 Template)
+-   **sy_users**: Users & authentication
+-   **sy_roles**: Roles & permissions
+-   **sy_menus**: Menu structure
+-   **sy_functions**: Function permissions
+
+### Master Data Tables:
+
+-   **md_provinces**: Tỉnh/thành phố
+-   **md_districts**: Quận/huyện
+-   **md_wards**: Phường/xã
+-   **md_employees**: Nhân viên
+-   **md_units**: Đơn vị tổ chức
+
+Chi tiết xem trong `docs/DATABASE_ENCRYPTION.md`
 
 ## API Documentation
 
-API được viết theo chuẩn RESTful, tài liệu chi tiết có thể xem tại: `http://localhost:5000/swagger`
+API được viết theo chuẩn RESTful với response format chuẩn:
 
+### Standard Response Format:
+
+```json
+{
+    "returnCode": 0,
+    "errors": [],
+    "message": "Operation completed successfully",
+    "data": {}
+}
+```
+
+### Paged Response Format:
+
+```json
+{
+    "returnCode": 0,
+    "errors": [],
+    "message": "Successfully retrieved list",
+    "data": {
+        "items": [],
+        "paging": {
+            "pageIndex": 1,
+            "pageSize": 20,
+            "totalItems": 100,
+            "totalPages": 5
+        }
+    }
+}
+```
+
+Tài liệu chi tiết có thể xem tại: `http://localhost:5001/swagger`
+
+## Localization & Resources
+
+UniManage hỗ trợ đa ngôn ngữ thông qua T4 Template + Database.
+
+### Cấu trúc:
+
+-   **sy_languages**: Danh sách ngôn ngữ (vi-VN, en-US, ...)
+-   **sy_resources**: Resource key-value theo từng ngôn ngữ
+
+### Regenerate Resources:
+
+Mỗi khi cập nhật resources trong database, chạy:
+
+```bash
+cd src/UniManage.Resource
+.\GenerateCoreResource.ps1
+```
+
+Script sẽ generate `CoreResource.cs` từ database.
+
+### Sử dụng trong code:
+
+```csharp
+// Static resource
+string message = CoreResource.Validation_msg_Required;
+
+// Dynamic resource với ResourceManager
+var resManager = new ResourceManager(dbContext);
+string translated = await resManager.GetAsync("Validation_msg_Required", "vi-VN");
+```
+
+## Logging
+
+Sử dụng **log4net** với SiftingAppender:
+
+-   Log theo ngày: `logs/yyyy-MM-dd/{api}.log`
+-   Error log: `logs/yyyy-MM-dd/error-{api}.log`
+-   Mỗi API endpoint có file log riêng
+-   Tự động mask dữ liệu nhạy cảm (password, token, secret)
+
+Config: `src/UniManage.Core/log4net.config`
+
+## 🔐 Database Configuration Encryption
+
+UniManage hỗ trợ mã hóa password trong configuration file với AES-256.
+
+### Cấu trúc Configuration
+
+#### Development (Plain text):
+
+```json
+{
+    "Database": {
+        "Server": "TCPHUONG\\SQLEXPRESS",
+        "DefaultDatabase": "UniManage",
+        "UserId": "uni_manager",
+        "Password": "uni_manager@2024",
+        "TrustServerCertificate": true
+    }
+}
+```
+
+#### Production (Encrypted):
+
+```json
+{
+    "Database": {
+        "Server": "TCPHUONG\\SQLEXPRESS",
+        "DefaultDatabase": "UniManage",
+        "UserId": "uni_manager",
+        "Password": "ENC:J5xK8mQ3p9YzWfA7bN2kR8tU6vC4xD1e...",
+        "TrustServerCertificate": true
+    }
+}
+```
+
+### Quick Start - Encryption
+
+#### 1. Set Encryption Seed:
+
+```powershell
+# PowerShell (User-level - permanent)
+[Environment]::SetEnvironmentVariable("UNIMANAGE_ENCRYPTION_SEED", "YourSecretSeed2024", "User")
+
+# Hoặc session hiện tại
+$env:UNIMANAGE_ENCRYPTION_SEED = "YourSecretSeed2024"
+```
+
+#### 2. Encrypt Password:
+
+```powershell
+# Cách 1: Dùng script (Recommended)
+.\scripts\EncryptPassword.ps1
+
+# Cách 2: Command line
+cd src\UniManage.Core
+dotnet run -- encrypt "uni_manager@2024"
+```
+
+Output:
+```
+Encrypted value:
+ENC:J5xK8mQ3p9YzWfA7bN2kR8tU6vC4xD1e...
+```
+
+#### 3. Update Config:
+
+Copy encrypted value vào `appsettings.json`:
+
+```json
+{
+    "Database": {
+        "Password": "ENC:J5xK8mQ3p9YzWfA7bN2kR8tU6vC4xD1e..."
+    }
+}
+```
+
+#### 4. Test Connection:
+
+```powershell
+dotnet run --project src\UniManage.Core
+```
+
+### Encryption Mechanism
+
+- **Algorithm**: AES-256
+- **Key Derivation**: SHA-256 hash của `MachineName + UNIMANAGE_ENCRYPTION_SEED`
+- **Prefix**: `ENC:` để nhận biết encrypted values
+- **Auto Decrypt**: DbContext tự động decrypt khi connect database
+
+### Security Best Practices
+
+**Development:**
+- ✅ Plain text password OK
+- ✅ File trong `.gitignore`
+
+**Production:**
+- ✅ **Bắt buộc** encrypt password
+- ✅ Set `UNIMANAGE_ENCRYPTION_SEED` trên production server (Machine-level)
+- ✅ Backup encryption seed ở nơi an toàn
+- ✅ Rotate seed định kỳ (3-6 tháng)
+
+**Troubleshooting:**
+
+```powershell
+# Error: "Failed to decrypt" → Check seed
+echo $env:UNIMANAGE_ENCRYPTION_SEED
+
+# Decrypt để verify
+dotnet run -- decrypt "ENC:yourvalue"
+
+# Re-encrypt với seed mới
+dotnet run -- encrypt "newpassword"
+```
+
+## Development Guidelines
+
+### CQRS Pattern:
+
+-   **Command**: Thay đổi dữ liệu (Create, Update, Delete)
+    -   Handler có transaction (TransactionBehavior)
+    -   Validation với FluentValidation
+    -   Return ApiResponse<T>
+-   **Query**: Chỉ đọc dữ liệu
+    -   Không có transaction
+    -   Return PagedResponse<T> hoặc ApiResponse<T>
+
+### Database Access:
+
+```csharp
+// Command (with transaction)
+using (var dbContext = new DbContext(openTransaction: true))
+{
+    try
+    {
+        // Execute commands
+        await dbContext.CommitAsync();
+    }
+    catch
+    {
+        await dbContext.RollbackAsync();
+        throw;
+    }
+}
+
+// Query (no transaction)
+using (var dbContext = new DbContext())
+{
+    var result = await dbContext.QueryAsync<T>(...);
+    return result;
+}
+```
+
+### Code Style:
+
+-   Controllers mỏng, chỉ gọi MediatR
+-   1 Command/Query = 1 Handler
+-   Có XML comments cho public members
+-   Không dùng `SELECT *`
+-   Tham số hóa SQL queries (tránh SQL injection)
+
+## Contributing
+
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contact
+
+**Project Owner**: Trần Chí Phương (tchiphuong)
+
+**Repository**: https://github.com/tchiphuong/UniManage

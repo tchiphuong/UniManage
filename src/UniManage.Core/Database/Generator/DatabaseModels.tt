@@ -1,0 +1,260 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="Newtonsoft.Json" #>
+<#@ assembly name="System.Data" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="Newtonsoft.Json.Linq" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#
+    // Đọc cấu hình từ appsettings.json
+    string configPath = Host.ResolvePath("..\\..\\appsettings.json");
+    var jsonConfig = JObject.Parse(File.ReadAllText(configPath));
+    var dbConfig = jsonConfig["Database"];
+
+    string dbServer = dbConfig["Server"].ToString();
+    string dbName = dbConfig["Database"].ToString();
+    string dbUser = dbConfig["User"].ToString();
+    string dbPassword = dbConfig["Password"].ToString();
+    string dbPort = dbConfig["Port"]?.ToString() ?? "1433";
+
+    // Tạo connection string
+    var connectionString = $"Data Source={dbServer};Initial Catalog={dbName};User ID={dbUser};Password={dbPassword};";    // Dictionary lưu thông tin schema của từng bảng
+    var tableSchemas = new Dictionary<string, List<(
+        string ColumnName, 
+        string DataType, 
+        bool IsNullable,
+        string MaxLength,
+        string Precision,
+        string Scale,
+        bool IsPrimaryKey,
+        string DefaultValue,
+        string Description)>>();
+
+    // Lấy danh sách tất cả các bảng từ database
+    var tables = new List<string>();
+    using (var connection = new SqlConnection(connectionString))
+    {
+        connection.Open();
+        using (var command = new SqlCommand(@"
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_TYPE = 'BASE TABLE'
+                AND TABLE_CATALOG = DB_NAME()
+                AND TABLE_SCHEMA = 'dbo'
+            ORDER BY TABLE_NAME", connection))
+        {
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    tables.Add(reader["TABLE_NAME"].ToString());
+                }
+            }
+        }
+    }
+
+    using (var connection = new SqlConnection(connectionString))
+    {
+        connection.Open();
+        foreach (var table in tables)
+        {
+            var schema = new List<(
+                string ColumnName,
+                string DataType,
+                bool IsNullable,
+                string MaxLength,
+                string Precision,
+                string Scale,
+                bool IsPrimaryKey,
+                string DefaultValue,
+                string Description
+            )>();
+              // Query để lấy thông tin schema của bảng
+            var sql = @"
+                SELECT 
+                    c.COLUMN_NAME,
+                    c.DATA_TYPE,
+                    c.IS_NULLABLE,
+                    c.CHARACTER_MAXIMUM_LENGTH,
+                    c.NUMERIC_PRECISION,
+                    c.NUMERIC_SCALE,
+                    CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END AS IS_PRIMARY_KEY,
+                    c.COLUMN_DEFAULT,
+                    sep.value as DESCRIPTION
+                FROM INFORMATION_SCHEMA.COLUMNS c
+                LEFT JOIN (
+                    SELECT k.TABLE_CATALOG, k.TABLE_SCHEMA, k.TABLE_NAME, k.COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS t
+                    JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE k ON t.CONSTRAINT_TYPE = 'PRIMARY KEY' 
+                        AND t.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+                        AND t.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
+                        AND t.TABLE_SCHEMA = k.TABLE_SCHEMA
+                        AND t.TABLE_NAME = k.TABLE_NAME
+                ) pk ON c.TABLE_CATALOG = pk.TABLE_CATALOG 
+                    AND c.TABLE_SCHEMA = pk.TABLE_SCHEMA 
+                    AND c.TABLE_NAME = pk.TABLE_NAME 
+                    AND c.COLUMN_NAME = pk.COLUMN_NAME
+                LEFT JOIN sys.tables st ON st.name = c.TABLE_NAME 
+                LEFT JOIN sys.extended_properties sep ON st.object_id = sep.major_id
+                    AND sep.minor_id = (
+                        SELECT column_id 
+                        FROM sys.columns 
+                        WHERE object_id = OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME)
+                        AND name = c.COLUMN_NAME
+                    )
+                    AND sep.name = 'MS_Description'
+                WHERE c.TABLE_NAME = @TableName
+                ORDER BY c.ORDINAL_POSITION";
+
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@TableName", table);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {                        string columnName = reader["COLUMN_NAME"].ToString();
+                        string dataType = reader["DATA_TYPE"].ToString();
+                        bool isNullable = reader["IS_NULLABLE"].ToString() == "YES";
+                        string maxLength = reader["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value ? reader["CHARACTER_MAXIMUM_LENGTH"].ToString() : null;
+                        string precision = reader["NUMERIC_PRECISION"] != DBNull.Value ? reader["NUMERIC_PRECISION"].ToString() : null;
+                        string scale = reader["NUMERIC_SCALE"] != DBNull.Value ? reader["NUMERIC_SCALE"].ToString() : null;
+                        bool isPrimaryKey = Convert.ToBoolean(reader["IS_PRIMARY_KEY"]);
+                        string defaultValue = reader["COLUMN_DEFAULT"] != DBNull.Value ? reader["COLUMN_DEFAULT"].ToString() : null;
+                        string description = reader["DESCRIPTION"] != DBNull.Value ? reader["DESCRIPTION"].ToString() : null;
+
+                        schema.Add((
+                            ColumnName: columnName,
+                            DataType: dataType,
+                            IsNullable: isNullable,
+                            MaxLength: maxLength,
+                            Precision: precision,
+                            Scale: scale,
+                            IsPrimaryKey: isPrimaryKey,
+                            DefaultValue: defaultValue,
+                            Description: description
+                        ));
+                    }
+                }
+            }
+            tableSchemas[table] = schema;
+        }
+    }
+#>
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace UniManage.Core.Models.Entities
+{
+<#
+    foreach (var table in tableSchemas)
+    {
+#>
+    #region <#= table.Key #>
+    /// <summary>
+    /// Entity class for table <#= table.Key #>
+    /// </summary>
+    [Table("<#= table.Key #>")]
+    public class <#= table.Key #>
+    {
+<#
+        foreach (var column in table.Value)
+        {
+            var propertyType = GetCSharpType(column.DataType, column.IsNullable);
+            if (!string.IsNullOrEmpty(column.Description))
+            {
+#>
+        /// <summary>
+        /// <#= column.Description #>
+        /// </summary>
+<#
+            }
+            if (column.IsPrimaryKey)
+            {
+#>
+        [Key]
+<#
+            }
+            if (!column.IsNullable)
+            {
+#>
+        [Required]
+<#
+            }
+            if (!string.IsNullOrEmpty(column.MaxLength) && column.MaxLength != "-1")
+            {
+#>
+        [StringLength(<#= column.MaxLength #>)]
+<#
+            }
+            if (!string.IsNullOrEmpty(column.DefaultValue))
+            {
+#>
+        [Column(TypeName = "<#= GetSqlType(column) #>")]
+<#
+            }
+#>
+        public <#= propertyType #> <#= column.ColumnName #> { get; set; }
+<#
+        }
+#>
+    }
+    #endregion
+
+<#
+    }
+#>
+}
+<#+
+    private string GetSqlType((string ColumnName, string DataType, bool IsNullable, string MaxLength, string Precision, string Scale, bool IsPrimaryKey, string DefaultValue, string Description) column)
+    {
+        string type = column.DataType.ToLower();
+        if (type == "decimal" || type == "numeric")
+        {
+            return $"{type}({column.Precision}, {column.Scale})";
+        }
+        else if (!string.IsNullOrEmpty(column.MaxLength) && column.MaxLength != "-1")
+        {
+            return $"{type}({column.MaxLength})";
+        }
+        return type;
+    }
+
+    private string GetCSharpType(string sqlType, bool isNullable)
+    {
+        var type = sqlType.ToLower() switch
+        {
+            "bigint" => "long",
+            "binary" => "byte[]",
+            "bit" => "bool",
+            "char" => "string",
+            "date" => "DateTime",
+            "datetime" => "DateTime",
+            "datetime2" => "DateTime",
+            "decimal" => "decimal",
+            "float" => "double",
+            "image" => "byte[]",
+            "int" => "int",
+            "money" => "decimal",
+            "nchar" => "string",
+            "ntext" => "string",
+            "numeric" => "decimal",
+            "nvarchar" => "string",
+            "real" => "float",
+            "smalldatetime" => "DateTime",
+            "smallint" => "short",
+            "smallmoney" => "decimal",
+            "text" => "string",
+            "time" => "TimeSpan",
+            "timestamp" => "byte[]",
+            "tinyint" => "byte",
+            "uniqueidentifier" => "Guid",
+            "varbinary" => "byte[]",
+            "varchar" => "string",
+            _ => "object"
+        };
+
+        return isNullable && type != "string" && type != "byte[]" ? type + "?" : type;
+    }
+#>

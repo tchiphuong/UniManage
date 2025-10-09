@@ -1,0 +1,155 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="Microsoft.Data.SqlClient" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="Microsoft.Data.SqlClient" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="Newtonsoft.Json" #>
+<#@ import namespace="Newtonsoft.Json.Linq" #>
+<#@ output extension=".cs" #>
+<#
+    // Đọc connection string từ appsettings.Development.json
+    string projectPath = Host.ResolveAssemblyReference("$(ProjectDir)");
+    string corePath = Path.Combine(projectPath, "..", "UniManage.Core");
+    string configPath = Path.Combine(corePath, "appsettings.Development.json");
+    
+    string connectionString = "";
+    
+    try 
+    {
+        if (File.Exists(configPath))
+        {
+            string json = File.ReadAllText(configPath);
+            var config = JObject.Parse(json);
+            var dbConfig = config["Database"];
+            
+            if (dbConfig != null)
+            {
+                string server = dbConfig["Server"]?.ToString() ?? "localhost";
+                string database = dbConfig["DefaultDatabase"]?.ToString() ?? "UniManage";
+                string userId = dbConfig["UserId"]?.ToString() ?? "sa";
+                string password = dbConfig["Password"]?.ToString() ?? "";
+                bool trustCert = dbConfig["TrustServerCertificate"]?.ToObject<bool>() ?? true;
+                
+                connectionString = $"Server={server};Database={database};User Id={userId};Password={password};TrustServerCertificate={trustCert};";
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        // Fallback connection string
+        connectionString = "Server=TCPHUONG\\SQLEXPRESS;Database=UniManage;User Id=uni_manager;Password=uni_manager@2024;TrustServerCertificate=True;";
+    }
+
+    var resources = new Dictionary<string, Dictionary<string, string>>();
+    
+    // Lấy danh sách languages
+    var languages = new List<string>();
+    string errorMessage = "";
+    
+    try 
+    {
+        using (var connection = new SqlConnection(connectionString))
+        {
+            connection.Open();
+            
+            // Lấy danh sách ngôn ngữ
+            using (var cmd = new SqlCommand("SELECT LanguageCode FROM sy_languages ORDER BY IsDefault DESC, LanguageCode", connection))
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        languages.Add(reader.GetString(0));
+                    }
+                }
+            }
+            
+            // Lấy tất cả resources cho từng ngôn ngữ
+            foreach (var lang in languages)
+            {
+                resources[lang] = new Dictionary<string, string>();
+                
+                string sql = @"
+                    SELECT ResourceKey, ResourceValue 
+                    FROM sy_resources 
+                    WHERE LanguageCode = @LanguageCode 
+                    ORDER BY ResourceKey";
+                
+                using (var cmd = new SqlCommand(sql, connection))
+                {
+                    cmd.Parameters.AddWithValue("@LanguageCode", lang);
+                    
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string key = reader.GetString(0);
+                            string value = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                            resources[lang][key] = value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"ERROR: Cannot connect to database or load resources.\\n{ex.Message}\\n\\nConnection: {connectionString}\\n\\nPlease check:\\n1. Database is running\\n2. Connection string in appsettings.Development.json is correct\\n3. Table sy_languages and sy_resources exist";
+    }
+    
+    // Lấy default language (language đầu tiên)
+    string defaultLang = languages.FirstOrDefault() ?? "vi-VN";
+    var defaultResources = resources.ContainsKey(defaultLang) ? resources[defaultLang] : new Dictionary<string, string>();
+#>
+namespace UniManage.Resource
+{
+    /// <summary>
+    /// Core resource strings for UniManage application
+    /// Auto-generated from database by T4 template
+    /// Last generated: <#= DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") #>
+    /// </summary>
+    public static class CoreResource
+    {
+<# 
+    if (!string.IsNullOrEmpty(errorMessage))
+    {
+        // Hiển thị lỗi nếu không kết nối được database
+#>
+        #error <#= errorMessage #>
+        
+        // T4 Template Error: Cannot generate CoreResource from database
+        // Please fix the database connection and regenerate this file
+<#
+    }
+    else if (defaultResources.Any())
+    {
+        foreach (var resource in defaultResources.OrderBy(x => x.Key))
+        {
+            string key = resource.Key;
+            string value = resource.Value.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
+#>
+        /// <summary>
+        /// <#= key #>: <#= value #>
+        /// </summary>
+        public static string <#= key #> => "<#= value #>";
+        
+<#
+        }
+    }
+    else
+    {
+        // Không có resource nào trong database
+#>
+        #warning No resources found in database. Please seed data to table sy_resources.
+        
+        // No resources available - please seed database with resource data
+<#
+    }
+#>
+    }
+}

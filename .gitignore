@@ -1,0 +1,74 @@
+# Ignore Visual Studio specific files
+.vs/
+*.user
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+*.sln.DotSettings.user
+*.slnLaunch.user
+
+# Ignore build output
+bin/
+obj/
+**/Properties/launchSettings.json
+
+# Ignore NuGet packages (using PackageReference)
+packages/
+*.nupkg
+*.snupkg
+
+# Ignore dependencies and packages
+node_modules/
+package-lock.json
+yarn.lock
+
+# Ignore logs and temp files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore environment and secrets
+.env
+.env.local
+secrets.json
+
+# Ignore database and migration files
+*.mdf
+*.ldf
+Migrations/
+
+# Ignore Docker and CI/CD files
+.dockerignore
+Dockerfile
+.docker-compose*
+
+# Ignore Redis cache and Hangfire database
+redis-data/
+hangfire.db
+
+# Ignore IIS and publish settings
+publish/
+*.pubxml
+*.publishsettings
+
+# Ignore Tailwind and frontend generated files
+tailwind.config.js
+dist/
+coverage/
+
+# Ignore compiled TypeScript files
+*.tsbuildinfo
+
+# Ignore JetBrains Rider / WebStorm IDE files
+.idea/
+
+# Ignore other OS-specific files
+.DS_Store
+Thumbs.db
+/src/Core/UniManage.Resource/*.resx
+/src/Core/UniManage.Resource/ResourcesGenerator.cs
+/src/Core/UniManage.Core/Database/Generator/CoreLanguage.cs
+/src/Core/UniManage.Core/Database/Generator/DatabaseModels.cs

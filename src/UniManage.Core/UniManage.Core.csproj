@@ -1,0 +1,101 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Database\DatabaseUtils.cs" />
+    <Compile Remove="Helpers\ValidatorHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="FluentValidation" Version="12.0.0" />
+    <PackageReference Include="log4net" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.5" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="app.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <None Include="app.Release.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>app.config</TargetPath>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Test'">
+    <None Include="app.Test.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>app.config</TargetPath>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Production'">
+    <None Include="app.Production.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>app.config</TargetPath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="app.config" />
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <DependentUpon>appsettings.json</DependentUpon>
+    </None>
+    <None Update="log4net.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Database\DbResources.txt">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DbResources.tt</DependentUpon>
+    </None>
+    <None Update="Database\Generator\CoreLanguage.tt">
+      <CustomToolNamespace></CustomToolNamespace>
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CoreLanguage.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Database\Generator\DatabaseModels.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DatabaseModels.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Database\Generator\CoreLanguage.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CoreLanguage.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Database\Generator\DatabaseModels.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DatabaseModels.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Migrations\**\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
