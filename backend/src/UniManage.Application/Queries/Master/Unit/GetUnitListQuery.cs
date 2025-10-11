@@ -3,8 +3,8 @@ using FluentValidation;
 using MediatR;
 using System.Text;
 using UniManage.Core.Database;
-using UniManage.Core.Extensions;
-using UniManage.Core.Helpers;
+
+using UniManage.Core.Utilities;
 using UniManage.Core.Logging;
 using UniManage.Core.Models;
 using UniManage.Resource;
@@ -12,7 +12,7 @@ using UniManage.Resource;
 namespace UniManage.Api.Domains.Query.Master.Unit
 {
     #region Query
-    public class GetUnitListQuery : CoreBaseQuery, IRequest<CoreResponse>
+    public class GetUnitListQuery : BaseQuery, IRequest<ApiResponse<object>>
     {
         public string? StatusCode { get; set; }
         public string? TypeCode { get; set; }
@@ -67,7 +67,7 @@ namespace UniManage.Api.Domains.Query.Master.Unit
     #endregion
 
     #region Handler
-    public class GetUnitListQueryHandler : IRequestHandler<GetUnitListQuery, CoreResponse>
+    public class GetUnitListQueryHandler : IRequestHandler<GetUnitListQuery, ApiResponse<object>>
     {
         public async Task<CoreResponse> Handle(GetUnitListQuery request, CancellationToken cancellationToken)
         {

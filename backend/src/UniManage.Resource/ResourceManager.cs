@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Globalization;
 using UniManage.Core.Database;
-using UniManage.Core.Helpers;
+using UniManage.Core.Utilities;
 using System.Linq;
 
 namespace UniManage.Resource
@@ -104,7 +104,7 @@ namespace UniManage.Resource
 
             var lstDataResource = new List<ResourceModel>();
 
-            using(DbContext dbContext = new DbContext())
+            using (DbContext dbContext = new DbContext())
             {
                 var languageDefault = GetDefaultLanguage(dbContext);
                 if (!string.IsNullOrEmpty(languageDefault))
@@ -160,7 +160,7 @@ namespace UniManage.Resource
             if (!string.IsNullOrEmpty(defaultLang) && _Table.ContainsKey(defaultLang))
             {
                 string defaultData = GetString(resourceName, new CultureInfo(defaultLang));
-                
+
                 translatedData = TranslateHelper.TranslateTextAsync(defaultData, langShortName).Result;
                 if (!string.IsNullOrEmpty(translatedData))
                 {

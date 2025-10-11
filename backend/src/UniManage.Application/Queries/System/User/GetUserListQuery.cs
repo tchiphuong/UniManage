@@ -8,7 +8,7 @@ using UniManage.Resource;
 namespace UniManage.Api.Domains.Query.System.User
 {
     #region Query
-    public class GetUserListQuery : CoreBaseQuery, IRequest<CoreResponse>
+    public class GetUserListQuery : BaseQuery, IRequest<ApiResponse<object>>
     {
         public class Result
         {
@@ -26,7 +26,7 @@ namespace UniManage.Api.Domains.Query.System.User
     #endregion
 
     #region Handler
-    public class GetUserListQueryHandler : CoreBaseQuery, IRequestHandler<GetUserListQuery, CoreResponse>
+    public class GetUserListQueryHandler : BaseQuery, IRequestHandler<GetUserListQuery, ApiResponse<object>>
     {
         public async Task<CoreResponse> Handle(GetUserListQuery request, CancellationToken cancellationToken)
         {

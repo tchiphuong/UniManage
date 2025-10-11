@@ -1,14 +1,16 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using UniManage.Api.Domains.Command.System.Auth;
+using UniManage.Application.Commands.System.Auth;
 using UniManage.Core.Models;
-using UniManage.Resource;
 
 namespace UniManage.Api.Controllers.System
 {
+    /// <summary>
+    /// Authentication Controller - Xử lý đăng nhập, đăng xuất
+    /// </summary>
     [ApiController]
-    [Route("api/v1/auth")]
-    public class AuthController : BaseController
+    [Route("api/auth")]
+    public class AuthController : ControllerBase
     {
         private readonly IMediator _mediator;
 
@@ -17,30 +19,38 @@ namespace UniManage.Api.Controllers.System
             _mediator = mediator;
         }
 
+        /// <summary>
+        /// Đăng nhập hệ thống
+        /// </summary>
+        /// <param name="request">Thông tin đăng nhập</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Access token và thông tin user</returns>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<ApiResponse<LoginCommand.Response>>> Login(
+            [FromBody] LoginCommand request,
+            CancellationToken ct)
         {
-            CoreResponse response;
-            command ??= new LoginCommand();
-            command.HeaderInfo = HeaderInfo;
+            var response = await _mediator.Send(request, ct);
 
-            try
+            if (response.ReturnCode != 0)
             {
-                var validationResult = await new LoginCommandValidator().ValidateAsync(command, cancellationToken);
-                if (!validationResult.IsValid)
-                {
-                    response = new CoreResponse(CoreApiReturnCode.InvalidData, CoreResource.Common_msg_InvalidData);
-                    response.Errors = validationResult.Errors.Select(response => new FieldErrorModel(response.PropertyName, response.ErrorMessage)).ToList();
-                    return BadRequest(response);
-                }
-                response = await _mediator.Send(command, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, CoreResource.Common_msg_ExceptionOccurred);
                 return BadRequest(response);
             }
+
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Đăng xuất hệ thống
+        /// </summary>
+        [HttpPost("logout")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<object>>> Logout()
+        {
+            // TODO: Implement logout logic (invalidate refresh token, etc.)
+            return Ok(ApiResponse<object>.Success(null, "Logged out successfully"));
         }
     }
 }

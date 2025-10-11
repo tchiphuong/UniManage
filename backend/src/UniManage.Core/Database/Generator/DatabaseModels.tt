@@ -1,11 +1,16 @@
 <#@ template debug="false" hostspecific="true" language="C#" #>
 <#@ assembly name="System.Core" #>
-<#@ assembly name="Newtonsoft.Json" #>
 <#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="Microsoft.Data.SqlClient" #>
+<#@ assembly name="Newtonsoft.Json" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Microsoft.Data.SqlClient" #>
 <#@ import namespace="Newtonsoft.Json.Linq" #>
-<#@ import namespace="System.Data.SqlClient" #>
+<#@ output extension=".cs" #>
 <#
     // Đọc cấu hình từ appsettings.json
     string configPath = Host.ResolvePath("..\\..\\appsettings.json");
@@ -13,13 +18,12 @@
     var dbConfig = jsonConfig["Database"];
 
     string dbServer = dbConfig["Server"].ToString();
-    string dbName = dbConfig["Database"].ToString();
-    string dbUser = dbConfig["User"].ToString();
+    string dbName = dbConfig["DefaultDatabase"].ToString();
+    string dbUser = dbConfig["UserId"].ToString();
     string dbPassword = dbConfig["Password"].ToString();
-    string dbPort = dbConfig["Port"]?.ToString() ?? "1433";
 
     // Tạo connection string
-    var connectionString = $"Data Source={dbServer};Initial Catalog={dbName};User ID={dbUser};Password={dbPassword};";    // Dictionary lưu thông tin schema của từng bảng
+    var connectionString = $"Data Source={dbServer};Initial Catalog={dbName};User ID={dbUser};Password={dbPassword};TrustServerCertificate=True;";    // Dictionary lưu thông tin schema của từng bảng
     var tableSchemas = new Dictionary<string, List<(
         string ColumnName, 
         string DataType, 

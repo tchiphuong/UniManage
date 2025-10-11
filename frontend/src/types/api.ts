@@ -30,12 +30,22 @@ export interface LoginResponse {
     accessToken: string;
     refreshToken: string;
     expiresIn: number;
+    tokenType: string;
+    user: UserInfo;
+}
+
+export interface UserInfo {
+    id: number;
+    userCode: string;
+    displayName: string;
+    email?: string;
+    roleCode?: string;
 }
 
 export interface User {
     id: number;
     userCode: string;
     displayName: string;
-    email: string;
-    status: number;
+    email?: string;
+    roleCode?: string;
 }

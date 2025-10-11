@@ -1,16 +1,16 @@
-﻿using Dapper;
+using Dapper;
 using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
 using UniManage.Core.Models;
-using UniManage.Core.Models.Entities;
+// using UniManage.Core.Models.Entities; // TODO: Uncomment when T4 generates entities
 using UniManage.Resource;
-using UniManage.Core.Helpers;
+using UniManage.Core.Utilities;
 
 namespace UniManage.Api.Domains.Command.Master.Employee
 {
 	#region Command
-	public class CreateEmployeeCommand : CoreBaseCommand, IRequest<CoreResponse>
+	public class CreateEmployeeCommand : BaseCommand, IRequest<ApiResponse<object>>
 	{
 		public string? Code { get; set; }
 		public string? FullNameVi { get; set; }
@@ -35,7 +35,7 @@ namespace UniManage.Api.Domains.Command.Master.Employee
 		public CreateEmployeeCommandValidator()
 		{
 			RuleFor(x => x.Code)
-                .NotEmpty()
+				.NotEmpty()
 				.WithMessage(CoreResource.Validation_msg_Required)
 				.MaximumLength(50)
 				.WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 50))
@@ -70,8 +70,8 @@ namespace UniManage.Api.Domains.Command.Master.Employee
 				.NotEmpty()
 				.WithMessage(CoreResource.Validation_msg_Required)
 				.MaximumLength(255)
-				.WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 255)); 
-			
+				.WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 255));
+
 			RuleFor(x => x.LastNameEn)
 				.NotEmpty()
 				.WithMessage(CoreResource.Validation_msg_Required)
@@ -131,7 +131,7 @@ namespace UniManage.Api.Domains.Command.Master.Employee
 	#endregion
 
 	#region Handler
-	public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, CoreResponse>
+	public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, ApiResponse<object>>
 	{
 		public async Task<CoreResponse> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
 		{

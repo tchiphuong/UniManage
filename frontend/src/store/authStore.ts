@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { User } from "@/types/api";
+import type { UserInfo } from "@/types/api";
 
 interface AuthState {
-    user: User | null;
+    user: UserInfo | null;
     accessToken: string | null;
     refreshToken: string | null;
     isAuthenticated: boolean;
-    setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+    setAuth: (user: UserInfo, accessToken: string, refreshToken: string) => void;
     clearAuth: () => void;
 }
 

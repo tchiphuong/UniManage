@@ -1,25 +1,13 @@
 namespace UniManage.Core.Models;
 
 /// <summary>
-/// Generic paged result container
+/// Generic paged API response container
 /// </summary>
-public class PagedResponse<T>
+public class PagedResponse<T> : ApiResponse<PagedResult<T>>
 {
-    /// <summary>
-    /// List of items for the current page
-    /// </summary>
-    public IReadOnlyList<T> Items { get; set; } = new List<T>();
-
-    /// <summary>
-    /// Paging information
-    /// </summary>
-    public PagingInfo Paging { get; set; } = new();
-
     public PagedResponse() { }
 
-    public PagedResponse(IReadOnlyList<T> items, PagingInfo paging)
+    public PagedResponse(PagedResult<T> data) : base(data)
     {
-        Items = items;
-        Paging = paging;
     }
 }

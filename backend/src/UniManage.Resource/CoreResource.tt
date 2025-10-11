@@ -1,14 +1,15 @@
 <#@ template debug="false" hostspecific="true" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
 <#@ assembly name="Microsoft.Data.SqlClient" #>
+<#@ assembly name="Newtonsoft.Json" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Data" #>
-<#@ import namespace="Microsoft.Data.SqlClient" #>
 <#@ import namespace="System.IO" #>
-<#@ import namespace="Newtonsoft.Json" #>
+<#@ import namespace="Microsoft.Data.SqlClient" #>
 <#@ import namespace="Newtonsoft.Json.Linq" #>
 <#@ output extension=".cs" #>
 <#

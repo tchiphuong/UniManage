@@ -1,40 +1,49 @@
 using Duende.IdentityServer;
-using Duende.IdentityServer.Models;
-using Duende.IdentityServer.Test;
-using Microsoft.Extensions.DependencyInjection;
-using UniManage.IdentityServer;
+using UniManage.IdentityServer.Stores;
+using UniManage.IdentityServer.Services;
 
-// Khởi tạo builder cho ứng dụng web
 var builder = WebApplication.CreateBuilder(args);
 
-// Thêm dịch vụ IdentityServer vào DI container
-builder.Services.AddIdentityServer()
-    .AddInMemoryIdentityResources(Config.IdentityResources)
-    .AddInMemoryApiScopes(Config.ApiScopes)
-    .AddInMemoryClients(Config.Clients)
-    .AddTestUsers(Config.TestUsers); // Đăng ký TestUsers ở đây
+// Configure services
+builder.Services.AddControllers();
+builder.Services.AddRazorPages();
 
-// Thêm dịch vụ static files và routing (nếu dùng UI)
-builder.Services.AddRouting();
-builder.Services.AddControllersWithViews(); // Thêm dòng này để hỗ trợ MVC
-builder.Services.AddRazorPages(); // Thêm dòng này để hỗ trợ Razor Pages
+// Add IdentityServer with Dapper stores
+builder.Services.AddIdentityServer(options =>
+    {
+        options.EmitStaticAudienceClaim = true;
+    })
+    .AddResourceStore<DapperResourceStore>()
+    .AddClientStore<DapperClientStore>()
+    .AddPersistedGrantStore<DapperPersistedGrantStore>()
+    .AddProfileService<CustomProfileService>()
+    .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>();
+
+// Add CORS for API communication
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "http://localhost:5297")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
+// Configure pipeline
+app.UseCors();
 app.UseStaticFiles();
 app.UseRouting();
 
-// Sử dụng middleware IdentityServer
 app.UseIdentityServer();
-
 app.UseAuthorization();
 
-// Map UI endpoints (IdentityServer UI)
-app.MapDefaultControllerRoute();
+app.MapControllers();
 app.MapRazorPages();
 
-// Định nghĩa endpoint GET "/" trả về thông báo trạng thái
-app.MapGet("/", () => "IdentityServer is running!");
+app.MapGet("/", () => "IdentityServer is running on port 5001!");
 
-// Chạy ứng dụng
 app.Run();

@@ -1,164 +1,207 @@
 using Dapper;
-using Duende.IdentityModel.Client;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using UniManage.Core.Database;
-using UniManage.Core.Logging;
 using UniManage.Core.Models;
-using UniManage.Resource;
 
-namespace UniManage.Api.Domains.Command.System.Auth
+namespace UniManage.Application.Commands.System.Auth
 {
-    public class LoginCommand : CoreBaseCommand, IRequest<CoreResponse>
+    /// <summary>
+    /// Login Command - Đăng nhập hệ thống
+    /// </summary>
+    public sealed class LoginCommand : IRequest<ApiResponse<LoginCommand.Response>>
     {
-        public string? Username { get; set; }
-        public string? Password { get; set; }
+        public string Username { get; init; } = default!;
+        public string Password { get; init; } = default!;
 
-        public class Result
+        /// <summary>
+        /// Login Response với JWT tokens
+        /// </summary>
+        public sealed class Response
         {
-            /// <summary>
-            /// Token truy cập (JWT).
-            /// </summary>
-            public string? AccessToken { get; set; }
+            public string AccessToken { get; init; } = default!;
+            public string RefreshToken { get; init; } = default!;
+            public int ExpiresIn { get; init; }
+            public string TokenType { get; init; } = "Bearer";
+            public UserInfo User { get; init; } = default!;
+        }
 
-            /// <summary>
-            /// Token làm mới (refresh).
-            /// </summary>
-            public string? RefreshToken { get; set; }
-
-            /// <summary>
-            /// Thời điểm hết hạn của access token.
-            /// </summary>
-            public DateTime AccessTokenExpiresAt { get; set; }
-
-            /// <summary>
-            /// Tên đăng nhập (định danh chính).
-            /// </summary>
-            public string? Username { get; set; }
-
-            /// <summary>
-            /// Tên hiển thị.
-            /// </summary>
-            public string? DisplayName { get; set; }
-
-            /// <summary>
-            /// Email hoặc tên đăng nhập.
-            /// </summary>
-            public string? Email { get; set; }
-
-            /// <summary>
-            /// Danh sách role của người dùng.
-            /// </summary>
-            public List<string> Roles { get; set; }
+        public sealed class UserInfo
+        {
+            public int Id { get; init; }
+            public string UserCode { get; init; } = default!;
+            public string DisplayName { get; init; } = default!;
+            public string? Email { get; init; }
+            public string? RoleCode { get; init; }
         }
     }
 
-    public class LoginCommandValidator : AbstractValidator<LoginCommand>
+    /// <summary>
+    /// Login Command Validator
+    /// </summary>
+    public sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
     {
         public LoginCommandValidator()
         {
-            RuleFor(x => x.Username).NotEmpty();
-            RuleFor(x => x.Password).NotEmpty();
+            RuleFor(x => x.Username)
+                .NotEmpty().WithMessage("Username is required")
+                .MaximumLength(50).WithMessage("Username must not exceed 50 characters");
+
+            RuleFor(x => x.Password)
+                .NotEmpty().WithMessage("Password is required")
+                .MinimumLength(6).WithMessage("Password must be at least 6 characters");
         }
     }
 
-    public class LoginCommandHandler : IRequestHandler<LoginCommand, CoreResponse>
+    /// <summary>
+    /// Login Command Handler
+    /// </summary>
+    public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<LoginCommand.Response>>
     {
-        public async Task<CoreResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
-        {
-            CoreResponse response = null;
-            CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
-            //logData.Parameter = new List<CoreParamModel>();
+        private readonly ILogger<LoginCommandHandler> _logger;
+        private readonly IConfiguration _configuration;
 
+        public LoginCommandHandler(
+            ILogger<LoginCommandHandler> logger,
+            IConfiguration configuration)
+        {
+            _logger = logger;
+            _configuration = configuration;
+        }
+
+        public async Task<ApiResponse<LoginCommand.Response>> Handle(
+            LoginCommand request,
+            CancellationToken ct)
+        {
             try
             {
-                using (DbContext dbContext = new DbContext(openTransaction: true))
+                using (var dbContext = new DbContext())
                 {
+                    // Query user from database
                     var sql = @"
                         SELECT TOP 1
                             [Id],
-                            [UserName],
+                            [UserName] AS UserCode,
                             [Password],
                             [EmployeeCode],
                             [RoleCode],
+                            [Email],
                             [Status]
                         FROM [dbo].[sy_users]
-                        WHERE
-                            [UserName] = @UserName
-                            AND [Password] = @Password
-                            AND [Status] = 1
-                    ";
-                    var user = await dbContext.connection.QueryFirstOrDefaultAsync<dynamic>(
+                        WHERE [UserName] = @Username
+                            AND [Status] = 1";
+
+                    var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
                         sql,
-                        new { UserName = request.Username, request.Password },
-                        dbContext.transaction
-                    );
+                        new { request.Username });
 
-                    if (user != null)
+                    if (user == null)
                     {
-                        using (var client = new HttpClient())
+                        _logger.LogWarning("Login failed: User {Username} not found", request.Username);
+                        return ApiResponse<LoginCommand.Response>.Fail("Invalid username or password");
+                    }
+
+                    // Verify password (simple comparison for demo - should use hashing in production)
+                    if (user.Password != request.Password)
+                    {
+                        _logger.LogWarning("Login failed: Invalid password for {Username}", request.Username);
+                        return ApiResponse<LoginCommand.Response>.Fail("Invalid username or password");
+                    }
+
+                    // Generate JWT tokens
+                    var accessToken = GenerateAccessToken(user);
+                    var refreshToken = GenerateRefreshToken();
+                    var expiresIn = 3600; // 1 hour
+
+                    var response = new LoginCommand.Response
+                    {
+                        AccessToken = accessToken,
+                        RefreshToken = refreshToken,
+                        ExpiresIn = expiresIn,
+                        TokenType = "Bearer",
+                        User = new LoginCommand.UserInfo
                         {
-                            var disco = await client.GetDiscoveryDocumentAsync("https://localhost:44370", cancellationToken);
-                            if (disco.IsError)
-                            {
-                                response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, "IdentityServer discovery failed");
-                            }
-                            else
-                            {
-                                var tokenResponse = await client.RequestPasswordTokenAsync(new PasswordTokenRequest
-                                {
-                                    Address = disco.TokenEndpoint,
-                                    ClientId = "client",
-                                    ClientSecret = "secret",
-                                    UserName = "testuser",
-                                    Password = "testpassword",
-                                    Scope = "api1 offline_access"
-                                }, cancellationToken);
-
-                                if (tokenResponse.IsError)
-                                {
-                                    response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, tokenResponse.ErrorDescription ?? tokenResponse.Error);
-                                }
-                                else
-                                {
-                                    // Sử dụng LoginCommand.Result để trả về dữ liệu chuẩn hóa
-                                    var result = new LoginCommand.Result
-                                    {
-                                        AccessToken = tokenResponse.AccessToken,
-                                        RefreshToken = tokenResponse.RefreshToken,
-                                        AccessTokenExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
-                                        Username = user.UserName,
-                                        DisplayName = user.UserName,
-                                        Email = null,
-                                        Roles = new List<string> { user.RoleCode?.ToString() },
-                                    };
-
-                                    response = new CoreResponse(CoreApiReturnCode.Succeed, "", result);
-                                }
-                            }
+                            Id = user.Id,
+                            UserCode = user.UserCode,
+                            DisplayName = user.EmployeeCode ?? user.UserCode,
+                            Email = user.Email,
+                            RoleCode = user.RoleCode
                         }
-                    }
-                    else
-                    {
-                        response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, "Invalid username or password");
-                    }
-                    await dbContext.transaction.CommitAsync();
+                    };
+
+                    _logger.LogInformation("User {Username} logged in successfully", request.Username);
+                    return ApiResponse<LoginCommand.Response>.Success(response, "Login successful");
                 }
             }
             catch (Exception ex)
             {
-                response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, CoreResource.Common_msg_ExceptionOccurred);
-                #region write log
-                logData.Result = response.Data;
-                logData.Message = ex.ToString();
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
-                #endregion
+                _logger.LogError(ex, "Error during login for {Username}", request.Username);
+                return ApiResponse<LoginCommand.Response>.Fail("An error occurred during login");
+            }
+        }
+
+        private string GenerateAccessToken(UserDto user)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? "UniManage_Secret_Key_2025_At_Least_32_Characters_Long";
+            var issuer = jwtSettings["Issuer"] ?? "UniManage.Api";
+            var audience = jwtSettings["Audience"] ?? "UniManage.Client";
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserCode),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim("role", user.RoleCode ?? "User"),
+                new Claim("employeeCode", user.EmployeeCode ?? "")
+            };
+
+            if (!string.IsNullOrEmpty(user.Email))
+            {
+                claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
             }
 
-            UniLogManager.WriteApiLog(logData);
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                notBefore: DateTime.UtcNow,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: credentials
+            );
 
-            return await Task.FromResult(response);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
+        }
+
+        private class UserDto
+        {
+            public int Id { get; set; }
+            public string UserCode { get; set; } = default!;
+            public string Password { get; set; } = default!;
+            public string? EmployeeCode { get; set; }
+            public string? RoleCode { get; set; }
+            public string? Email { get; set; }
+            public int Status { get; set; }
         }
     }
 }

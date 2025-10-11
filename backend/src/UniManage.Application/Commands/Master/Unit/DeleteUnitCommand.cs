@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
@@ -8,7 +8,7 @@ using UniManage.Resource;
 namespace UniManage.Api.Domains.Command.Master.Unit
 {
 	#region Command
-	public class DeleteUnitCommand : CoreBaseCommand, IRequest<CoreResponse>
+	public class DeleteUnitCommand : BaseCommand, IRequest<ApiResponse<object>>
 	{
 		public List<int> Ids { get; set; } = new List<int>();
 	}
@@ -24,13 +24,13 @@ namespace UniManage.Api.Domains.Command.Master.Unit
     #endregion
 
     #region Handler
-    public class DeleteUnitCommandHandler : IRequestHandler<DeleteUnitCommand, CoreResponse>
+    public class DeleteUnitCommandHandler : IRequestHandler<DeleteUnitCommand, ApiResponse<object>>
 	{
 		public async Task<CoreResponse> Handle(DeleteUnitCommand request, CancellationToken cancellationToken)
 		{
 			CoreResponse response = null;
 
-			// khai báo log & các tham số đầu vào
+			// khai b�o log & c�c tham s? d?u v�o
 			CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
 			logData.Parameter = new List<CoreParamModel>
 			{

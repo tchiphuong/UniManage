@@ -3,8 +3,8 @@ using FluentValidation;
 using MediatR;
 using System.Text;
 using UniManage.Core.Database;
-using UniManage.Core.Extensions;
-using UniManage.Core.Helpers;
+
+using UniManage.Core.Utilities;
 using UniManage.Core.Logging;
 using UniManage.Core.Models;
 using UniManage.Resource;
@@ -12,7 +12,7 @@ using UniManage.Resource;
 namespace UniManage.Api.Domains.Query.System
 {
     #region Query
-    public class GetLanguageListQuery : CoreBaseQuery, IRequest<CoreResponse>
+    public class GetLanguageListQuery : BaseQuery, IRequest<ApiResponse<object>>
     {
         public string? Keyword { get; set; }
         public string? StatusCode { get; set; }
@@ -64,7 +64,7 @@ namespace UniManage.Api.Domains.Query.System
     #endregion
 
     #region Handler
-    public class GetLanguageListQueryHandler : IRequestHandler<GetLanguageListQuery, CoreResponse>
+    public class GetLanguageListQueryHandler : IRequestHandler<GetLanguageListQuery, ApiResponse<object>>
     {
         public async Task<CoreResponse> Handle(GetLanguageListQuery request, CancellationToken cancellationToken)
         {

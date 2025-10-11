@@ -1,6 +1,34 @@
 Mục tiêu
 Sinh code cho dự án UniManage theo chuẩn CQRS, .NET 8, SQL Server, Dapper (không EF Core), IdentityServer (Duende) với store tự viết, và log4net (log theo ngày & theo API). Ưu tiên code truyền thống, rõ ràng, dễ bảo trì.
 
+**🔥 QUY TẮC QUAN TRỌNG: LUÔN SỬ DỤNG UTILITIES TRƯỚC**
+Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Utilities/ trước để sử dụng lại:
+
+-   ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword()
+-   ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels() (FluentValidation)
+-   ✅ **DatabaseHelper**: UserCodeExistsAsync(), ExecuteWithTransactionAsync(), QueryPagingAsync(), CheckTableExistsAsync()
+-   ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError() - API responses chuẩn
+-   ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
+-   ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
+-   ✅ **FileHelper**: IsValidImageFile(), ValidateFileUpload(), GetMimeType(), GetFileSizeText()
+-   ✅ **QueryHelper**: BuildOrderByClause(), BuildWhereClause(), EscapeSqlIdentifier() - SQL injection prevention
+-   ✅ **TranslateHelper**: TranslateAsync(), RemoveDiacritics(), TranslateCommonTerms() - Google Translate + Vietnamese
+
+**🚫 KHÔNG ĐƯỢC:**
+
+-   Viết lại logic đã có trong utilities
+-   Tạo response object thủ công thay vì dùng ResponseHelper
+-   Hash password bằng cách khác ngoài PasswordHelper.HashPassword()
+-   Validate email/phone thủ công thay vì dùng ValidationHelper
+-   Viết transaction logic thay vì dùng DatabaseHelper.ExecuteWithTransactionAsync()
+
+**✅ LUÔN LÀMM:**
+
+-   Check utilities trước khi code bất kỳ tính năng nào
+-   Extend utilities nếu thiếu method cần thiết
+-   Sử dụng ResponseHelper cho tất cả API responses
+-   Dùng DatabaseHelper cho tất cả database operations có transaction
+
 Tech stack (bắt buộc)
 Backend: ASP.NET Core .NET 8
 
@@ -166,6 +194,64 @@ using (var dbContext = new DbContext())
     -   Write repo: nhận IDbTransaction từ TransactionBehavior
     -   Read repo: tự quản lý connection lifecycle
     -   Đặt tên hàm: \*Async suffix cho async methods
+
+**Package Dependencies (Core project)**
+
+```xml
+<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+<PackageReference Include="Dapper" Version="2.1.66" />
+<PackageReference Include="FluentValidation" Version="12.0.0" />
+<PackageReference Include="log4net" Version="3.1.0" />
+<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+```
+
+**Model Architecture (chuẩn hóa)**
+
+```csharp
+// Base API Response
+public class ApiResponse<T>
+{
+    public int ReturnCode { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public T? Data { get; set; }
+    public List<string> Errors { get; set; } = new();
+}
+
+// Paged Response Structure
+public class PagedResponse<T> : ApiResponse<PagedResult<T>> { }
+public class PagedResult<T>
+{
+    public List<T> Items { get; set; } = new();
+    public PagingInfo Paging { get; set; } = new();
+}
+
+public class PagingInfo
+{
+    public int PageIndex { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+    public int TotalItems { get; set; }
+    public int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
+}
+
+// Validation Error Model
+public class FieldErrorModel
+{
+    public string Field { get; set; } = string.Empty;
+    public List<string> Messages { get; set; } = new();
+}
+```
+
+**Core Project Structure (sau cleanup)**
+
+```
+UniManage.Core/
+├── Database/           # DbContext, IDbContext, UniManageDbContext, Generator/
+├── Logging/           # UniLogger, UniLogManager
+├── Models/            # ApiResponse, PagedResponse, PagingInfo, FieldErrorModel, Entities/
+├── Security/          # ConfigEncryption
+└── Utilities/         # 9 comprehensive utility classes
+```
 
 IdentityServer (không EF)
 Lưu Clients, IdentityResources, ApiResources, ApiScopes, PersistedGrants, DeviceCodes, Keys trong SQL Server (schema thủ công).
@@ -577,5 +663,46 @@ Update/Delete kiểm tra ROWVERSION
 Query trả DTO đã shape + paging chuẩn
 
 Log per-day/per-api, có cid/user/method/path/status/ms, mask secrets
+
+**Cleanup & Code Quality Rules (từ experience)**
+✅ **Utilities-First Approach:**
+
+-   Luôn check UniManage.Core/Utilities/ trước khi viết logic mới
+-   Extend utilities thay vì duplicate code
+-   Utilities phải có XML documentation đầy đủ
+
+✅ **Package Dependencies:**
+
+-   BCrypt.Net-Next cho password hashing (không tự implement)
+-   FluentValidation cho validation rules
+-   Dapper cho data access (không EF Core)
+-   System.Data.SqlClient cho SQL Server connection
+
+✅ **Model Structure:**
+
+-   ApiResponse<T> cho tất cả API responses
+-   PagedResponse<T> : ApiResponse<PagedResult<T>> cho pagination
+-   FieldErrorModel cho validation errors từ FluentValidation
+
+✅ **Database Patterns:**
+
+-   using statements để đảm bảo disposal
+-   Write operations có transaction (openTransaction: true)
+-   Read operations không cần transaction
+-   Async methods với CancellationToken
+
+✅ **File Organization:**
+
+-   Không duplicate folders (tránh Helpers/ và Utilities/ cùng tồn tại)
+-   Xóa files không sử dụng (Database/Test/, empty handlers)
+-   Tổ chức theo responsibility: Database/, Models/, Utilities/, Security/
+
+🚫 **Anti-patterns:**
+
+-   Không tạo response objects thủ công
+-   Không hash passwords bằng MD5/SHA
+-   Không viết SQL injection vulnerable queries
+-   Không để files duplicate giữa các folders
+-   Không để external dependencies trong Core project
 
 Nguyên tắc: ít phép màu, ưu tiên rõ ràng, đúng “truyền thống” để team onboard nhanh, debug khỏe.

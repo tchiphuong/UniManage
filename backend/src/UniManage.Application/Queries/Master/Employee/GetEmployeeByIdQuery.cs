@@ -8,7 +8,7 @@ using UniManage.Resource;
 namespace UniManage.Api.Domains.Query.Master.Employee
 {
     #region Query
-    public class GetEmployeeByIdQuery : CoreBaseQuery, IRequest<CoreResponse>
+    public class GetEmployeeByIdQuery : BaseQuery, IRequest<ApiResponse<object>>
     {
         public int Id { get; set; }
         public class Result
@@ -27,7 +27,7 @@ namespace UniManage.Api.Domains.Query.Master.Employee
     #endregion
 
     #region Handler
-    public class GetEmployeeByIdQueryHandler : CoreBaseQuery, IRequestHandler<GetEmployeeByIdQuery, CoreResponse>
+    public class GetEmployeeByIdQueryHandler : BaseQuery, IRequestHandler<GetEmployeeByIdQuery, ApiResponse<object>>
     {
         public async Task<CoreResponse> Handle(GetEmployeeByIdQuery request, CancellationToken cancellationToken)
         {

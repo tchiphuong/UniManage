@@ -4,56 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UniManage.Core.Models.Entities
 {
-    #region ad_administrative_regions
-    /// <summary>
-    /// Entity class for table ad_administrative_regions
-    /// </summary>
-    [Table("ad_administrative_regions")]
-    public class ad_administrative_regions
-    {
-        [Key]
-        [Required]
-        public int Id { get; set; }
-        [Required]
-        [StringLength(255)]
-        public string NameVi { get; set; }
-        [Required]
-        [StringLength(255)]
-        public string NameEn { get; set; }
-        [StringLength(255)]
-        public string CodeNameVi { get; set; }
-        [StringLength(255)]
-        public string CodeNameEn { get; set; }
-    }
-    #endregion
-
-    #region ad_administrative_units
-    /// <summary>
-    /// Entity class for table ad_administrative_units
-    /// </summary>
-    [Table("ad_administrative_units")]
-    public class ad_administrative_units
-    {
-        [Key]
-        [Required]
-        public int Id { get; set; }
-        [StringLength(50)]
-        public string Code { get; set; }
-        [StringLength(255)]
-        public string FullNameVi { get; set; }
-        [StringLength(255)]
-        public string FullNameEn { get; set; }
-        [StringLength(255)]
-        public string ShortNameVi { get; set; }
-        [StringLength(255)]
-        public string ShortNameEn { get; set; }
-        [StringLength(255)]
-        public string CodeNameVi { get; set; }
-        [StringLength(255)]
-        public string CodeNameEn { get; set; }
-    }
-    #endregion
-
     #region ad_countries
     /// <summary>
     /// Entity class for table ad_countries
@@ -65,45 +15,49 @@ namespace UniManage.Core.Models.Entities
         [Required]
         [StringLength(20)]
         public string Code { get; set; }
-        [StringLength(255)]
-        public string CodeName { get; set; }
         [Required]
-        [StringLength(255)]
+        [StringLength(100)]
         public string NameVi { get; set; }
-        [StringLength(255)]
-        public string NameEn { get; set; }
-        [StringLength(255)]
-        public string FullName { get; set; }
-        [StringLength(255)]
-        public string FullNameEn { get; set; }
-    }
-    #endregion
-
-    #region ad_districts
-    /// <summary>
-    /// Entity class for table ad_districts
-    /// </summary>
-    [Table("ad_districts")]
-    public class ad_districts
-    {
-        [Key]
         [Required]
-        [StringLength(20)]
-        public string Code { get; set; }
-        [Required]
-        [StringLength(255)]
-        public string NameVi { get; set; }
-        [StringLength(255)]
+        [StringLength(100)]
         public string NameEn { get; set; }
-        [StringLength(255)]
-        public string FullName { get; set; }
-        [StringLength(255)]
+        [StringLength(200)]
+        public string FullNameVi { get; set; }
+        [StringLength(200)]
         public string FullNameEn { get; set; }
-        [StringLength(255)]
+        [StringLength(100)]
         public string CodeName { get; set; }
         [StringLength(20)]
-        public string ProvinceCode { get; set; }
-        public int? AdministrativeUnitId { get; set; }
+        public string PhoneCode { get; set; }
+        [Column(TypeName = "int")]
+        public int? SortOrder { get; set; }
+        [Required]
+        [Column(TypeName = "bit")]
+        public bool IsActive { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [StringLength(100)]
+        public string CountryType { get; set; }
+        [StringLength(100)]
+        public string CountrySubType { get; set; }
+        [StringLength(100)]
+        public string Sovereignty { get; set; }
+        [StringLength(100)]
+        public string Capital { get; set; }
+        [StringLength(100)]
+        public string CurrencyCode { get; set; }
+        [StringLength(100)]
+        public string CurrencyName { get; set; }
+        [StringLength(10)]
+        public string CountryCode3 { get; set; }
+        [StringLength(10)]
+        public string CountryNumber { get; set; }
+        [StringLength(100)]
+        public string InternetCountryCode { get; set; }
+        [StringLength(100)]
+        public string Flags { get; set; }
     }
     #endregion
 
@@ -116,24 +70,40 @@ namespace UniManage.Core.Models.Entities
     {
         [Key]
         [Required]
-        public int Id { get; set; }
-        [Required]
         [StringLength(20)]
         public string Code { get; set; }
         [Required]
-        [StringLength(255)]
+        [StringLength(100)]
         public string NameVi { get; set; }
-        [StringLength(255)]
-        public string NameEn { get; set; }
         [Required]
-        [StringLength(255)]
+        [StringLength(100)]
+        public string NameEn { get; set; }
+        [StringLength(200)]
         public string FullNameVi { get; set; }
-        [StringLength(255)]
+        [StringLength(200)]
         public string FullNameEn { get; set; }
-        [StringLength(255)]
+        [StringLength(100)]
         public string CodeName { get; set; }
         public int? AdministrativeUnitId { get; set; }
         public int? AdministrativeRegionId { get; set; }
+        [Required]
+        [StringLength(20)]
+        [Column(TypeName = "nvarchar(20)")]
+        public string CountryCode { get; set; }
+        [StringLength(20)]
+        public string PhoneCode { get; set; }
+        [StringLength(20)]
+        public string ZipCode { get; set; }
+        [Required]
+        [Column(TypeName = "int")]
+        public int SortOrder { get; set; }
+        [Required]
+        [Column(TypeName = "bit")]
+        public bool IsActive { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
     #endregion
 
@@ -149,117 +119,369 @@ namespace UniManage.Core.Models.Entities
         [StringLength(20)]
         public string Code { get; set; }
         [Required]
-        [StringLength(255)]
+        [StringLength(100)]
         public string NameVi { get; set; }
-        [StringLength(255)]
+        [Required]
+        [StringLength(100)]
         public string NameEn { get; set; }
-        [StringLength(255)]
+        [StringLength(200)]
         public string FullNameVi { get; set; }
-        [StringLength(255)]
+        [StringLength(200)]
         public string FullNameEn { get; set; }
-        [StringLength(255)]
+        [StringLength(100)]
         public string CodeName { get; set; }
-        [StringLength(20)]
-        public string DistrictCode { get; set; }
         public int? AdministrativeUnitId { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string ProvinceCode { get; set; }
+        [StringLength(20)]
+        public string PhoneCode { get; set; }
+        [StringLength(20)]
+        public string ZipCode { get; set; }
+        [Required]
+        [Column(TypeName = "int")]
+        public int SortOrder { get; set; }
+        [Required]
+        [Column(TypeName = "bit")]
+        public bool IsActive { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
     #endregion
 
-    #region ms_employees
+    #region hr_attendance
     /// <summary>
-    /// Entity class for table ms_employees
+    /// Entity class for table hr_attendance
     /// </summary>
-    [Table("ms_employees")]
-    public class ms_employees
+    [Table("hr_attendance")]
+    public class hr_attendance
     {
         [Key]
         [Required]
         public int Id { get; set; }
-        [Key]
         [Required]
         [StringLength(50)]
-        public string Code { get; set; }
-        [StringLength(255)]
-        [Column(TypeName = "nvarchar(255)")]
-        public string FullNameVi { get; set; }
-        [StringLength(255)]
-        [Column(TypeName = "nvarchar(255)")]
-        public string FullNameEn { get; set; }
-        [StringLength(255)]
-        public string FirstNameVi { get; set; }
-        [StringLength(255)]
-        public string FirstNameEn { get; set; }
-        [StringLength(255)]
-        public string LastNameVi { get; set; }
-        [StringLength(255)]
-        public string LastNameEn { get; set; }
-        [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
-        public string PositionCode { get; set; }
-        [StringLength(255)]
-        [Column(TypeName = "nvarchar(255)")]
-        public string Email { get; set; }
-        [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
-        public string Phone { get; set; }
+        public string EmployeeCode { get; set; }
+        [Required]
+        public DateTime AttendanceDate { get; set; }
+        public DateTime? CheckInTime { get; set; }
+        public DateTime? CheckOutTime { get; set; }
+        [Required]
         [StringLength(20)]
-        [Column(TypeName = "varchar(20)")]
-        public string GenderCode { get; set; }
-        [Column(TypeName = "varchar")]
-        public string Images { get; set; }
-        [StringLength(20)]
-        [Column(TypeName = "varchar(20)")]
-        public string StatusCode { get; set; }
-        [Column(TypeName = "int")]
-        public int? TypeCode { get; set; }
+        public string Status { get; set; }
+        [Required]
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
-        public string InsertBy { get; set; }
+        public string CreatedBy { get; set; }
+        [Required]
         [Column(TypeName = "datetime2")]
-        public DateTime? InsertOn { get; set; }
+        public DateTime CreatedAt { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
-        public string UpdateBy { get; set; }
-        [Column(TypeName = "datetime2")]
-        public DateTime? UpdateOn { get; set; }
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
         public byte[] DataRowVersion { get; set; }
     }
     #endregion
 
-    #region ms_item_color
+    #region hr_departments
     /// <summary>
-    /// Entity class for table ms_item_color
+    /// Entity class for table hr_departments
     /// </summary>
-    [Table("ms_item_color")]
-    public class ms_item_color
+    [Table("hr_departments")]
+    public class hr_departments
     {
         [Key]
         [Required]
-        public long Id { get; set; }
+        public int Id { get; set; }
+        [Required]
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
         public string Code { get; set; }
+        [Required]
         [StringLength(100)]
-        [Column(TypeName = "nvarchar(100)")]
         public string NameVi { get; set; }
+        [Required]
         [StringLength(100)]
-        [Column(TypeName = "nvarchar(100)")]
         public string NameEn { get; set; }
+        [StringLength(255)]
+        public string Description { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
     }
     #endregion
 
-    #region ms_item_details
+    #region hr_employee_shifts
     /// <summary>
-    /// Entity class for table ms_item_details
+    /// Entity class for table hr_employee_shifts
     /// </summary>
-    [Table("ms_item_details")]
-    public class ms_item_details
+    [Table("hr_employee_shifts")]
+    public class hr_employee_shifts
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string EmployeeCode { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string WorkShiftCode { get; set; }
+        [Required]
+        public DateTime WorkDate { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region hr_employees
+    /// <summary>
+    /// Entity class for table hr_employees
+    /// </summary>
+    [Table("hr_employees")]
+    public class hr_employees
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string EmployeeCode { get; set; }
+        [Required]
+        [StringLength(150)]
+        public string FullName { get; set; }
+        [StringLength(20)]
+        public string Gender { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        [StringLength(100)]
+        public string Email { get; set; }
+        [StringLength(20)]
+        public string PhoneNumber { get; set; }
+        [StringLength(50)]
+        public string DepartmentCode { get; set; }
+        [StringLength(50)]
+        public string PositionCode { get; set; }
+        [StringLength(250)]
+        public string Address { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
+    }
+    #endregion
+
+    #region hr_positions
+    /// <summary>
+    /// Entity class for table hr_positions
+    /// </summary>
+    [Table("hr_positions")]
+    public class hr_positions
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string PositionCode { get; set; }
+        [Required]
+        [StringLength(150)]
+        public string NameVi { get; set; }
+        [Required]
+        [StringLength(150)]
+        public string NameEn { get; set; }
+        [StringLength(500)]
+        public string Description { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
+    }
+    #endregion
+
+    #region hr_salaries
+    /// <summary>
+    /// Entity class for table hr_salaries
+    /// </summary>
+    [Table("hr_salaries")]
+    public class hr_salaries
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string EmployeeCode { get; set; }
+        [Required]
+        public decimal SalaryAmount { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
+    }
+    #endregion
+
+    #region hr_salary_history
+    /// <summary>
+    /// Entity class for table hr_salary_history
+    /// </summary>
+    [Table("hr_salary_history")]
+    public class hr_salary_history
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public int SalaryId { get; set; }
+        [Required]
+        public decimal SalaryAmount { get; set; }
+        [Required]
+        public DateTime FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
+    }
+    #endregion
+
+    #region hr_work_shifts
+    /// <summary>
+    /// Entity class for table hr_work_shifts
+    /// </summary>
+    [Table("hr_work_shifts")]
+    public class hr_work_shifts
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string Code { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
+        [Required]
+        public TimeSpan StartTime { get; set; }
+        [Required]
+        public TimeSpan EndTime { get; set; }
+        [StringLength(250)]
+        public string Description { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region it_item_brand
+    /// <summary>
+    /// Entity class for table it_item_brand
+    /// </summary>
+    [Table("it_item_brand")]
+    public class it_item_brand
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string Code { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+    }
+    #endregion
+
+    #region it_item_category
+    /// <summary>
+    /// Entity class for table it_item_category
+    /// </summary>
+    [Table("it_item_category")]
+    public class it_item_category
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string Code { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
+        public int? ParentId { get; set; }
+    }
+    #endregion
+
+    #region it_item_color
+    /// <summary>
+    /// Entity class for table it_item_color
+    /// </summary>
+    [Table("it_item_color")]
+    public class it_item_color
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string Code { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
+    }
+    #endregion
+
+    #region it_item_details
+    /// <summary>
+    /// Entity class for table it_item_details
+    /// </summary>
+    [Table("it_item_details")]
+    public class it_item_details
     {
         [Key]
         [Required]
         public long Id { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
+        [Column(TypeName = "varchar(50)")]
         public string ItemCode { get; set; }
         [Column(TypeName = "int")]
         public int? Type { get; set; }
@@ -285,63 +507,225 @@ namespace UniManage.Core.Models.Entities
     }
     #endregion
 
-    #region ms_item_size
+    #region it_item_image
     /// <summary>
-    /// Entity class for table ms_item_size
+    /// Entity class for table it_item_image
     /// </summary>
-    [Table("ms_item_size")]
-    public class ms_item_size
+    [Table("it_item_image")]
+    public class it_item_image
     {
         [Key]
         [Required]
-        public long Id { get; set; }
+        public int Id { get; set; }
+        [Required]
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
-        public string Code { get; set; }
-        [StringLength(100)]
-        [Column(TypeName = "nvarchar(100)")]
-        public string NameVi { get; set; }
-        [StringLength(100)]
-        [Column(TypeName = "nvarchar(100)")]
-        public string NameEn { get; set; }
+        public string ItemCode { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string ImageUrl { get; set; }
+        [Required]
+        [Column(TypeName = "bit")]
+        public bool IsThumbnail { get; set; }
+        [Required]
+        [Column(TypeName = "int")]
+        public int SortOrder { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
     }
     #endregion
 
-    #region ms_positions
+    #region it_item_inventory
     /// <summary>
-    /// Entity class for table ms_positions
+    /// Entity class for table it_item_inventory
     /// </summary>
-    [Table("ms_positions")]
-    public class ms_positions
+    [Table("it_item_inventory")]
+    public class it_item_inventory
     {
         [Key]
         [Required]
-        public long Id { get; set; }
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ItemCode { get; set; }
+        [Required]
+        [Column(TypeName = "int")]
+        public int Quantity { get; set; }
+        [StringLength(100)]
+        public string WarehouseLocation { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region it_item_price
+    /// <summary>
+    /// Entity class for table it_item_price
+    /// </summary>
+    [Table("it_item_price")]
+    public class it_item_price
+    {
         [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ItemCode { get; set; }
+        [Required]
+        public decimal Price { get; set; }
+        [Required]
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+    }
+    #endregion
+
+    #region it_item_review
+    /// <summary>
+    /// Entity class for table it_item_review
+    /// </summary>
+    [Table("it_item_review")]
+    public class it_item_review
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ItemCode { get; set; }
+        [Required]
+        public int Rating { get; set; }
+        public string Comment { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+    }
+    #endregion
+
+    #region it_item_size
+    /// <summary>
+    /// Entity class for table it_item_size
+    /// </summary>
+    [Table("it_item_size")]
+    public class it_item_size
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string Code { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
+        public int? ParentId { get; set; }
+    }
+    #endregion
+
+    #region it_item_tag
+    /// <summary>
+    /// Entity class for table it_item_tag
+    /// </summary>
+    [Table("it_item_tag")]
+    public class it_item_tag
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Tag { get; set; }
+    }
+    #endregion
+
+    #region it_item_tag_map
+    /// <summary>
+    /// Entity class for table it_item_tag_map
+    /// </summary>
+    [Table("it_item_tag_map")]
+    public class it_item_tag_map
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ItemCode { get; set; }
+        [Required]
+        public int TagId { get; set; }
+    }
+    #endregion
+
+    #region it_items
+    /// <summary>
+    /// Entity class for table it_items
+    /// </summary>
+    [Table("it_items")]
+    public class it_items
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
         [Required]
         [StringLength(50)]
         public string Code { get; set; }
+        [Required]
         [StringLength(255)]
-        [Column(TypeName = "nvarchar(255)")]
+        public string Name { get; set; }
+        public string Description { get; set; }
+        [StringLength(20)]
+        public string BrandCode { get; set; }
+        [StringLength(20)]
+        public string CategoryCode { get; set; }
+        [StringLength(20)]
+        public string ColorCode { get; set; }
+        [StringLength(20)]
+        public string SizeCode { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+    }
+    #endregion
+
+    #region ms_currencies
+    /// <summary>
+    /// Entity class for table ms_currencies
+    /// </summary>
+    [Table("ms_currencies")]
+    public class ms_currencies
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(10)]
+        public string Code { get; set; }
+        [Required]
+        [StringLength(100)]
         public string NameVi { get; set; }
-        [StringLength(255)]
-        [Column(TypeName = "nvarchar(255)")]
+        [Required]
+        [StringLength(100)]
         public string NameEn { get; set; }
-        [Column(TypeName = "int")]
-        public int? Status { get; set; }
-        [StringLength(255)]
-        [Column(TypeName = "nvarchar(255)")]
-        public string Remark { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
-        public string InsertBy { get; set; }
-        [Column(TypeName = "datetime2")]
-        public DateTime? InsertOn { get; set; }
+        public string Symbol { get; set; }
+        [Required]
+        [Column(TypeName = "bit")]
+        public bool IsActive { get; set; }
+        [Required]
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
-        public string UpdateBy { get; set; }
+        public string CreatedBy { get; set; }
+        [Required]
         [Column(TypeName = "datetime2")]
-        public DateTime? UpdateOn { get; set; }
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
     #endregion
 
@@ -361,14 +745,141 @@ namespace UniManage.Core.Models.Entities
         public string NameVi { get; set; }
         [StringLength(100)]
         public string NameEn { get; set; }
+        [StringLength(100)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(100)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
+    }
+    #endregion
+
+    #region sa_customers
+    /// <summary>
+    /// Entity class for table sa_customers
+    /// </summary>
+    [Table("sa_customers")]
+    public class sa_customers
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
         [StringLength(50)]
-        public string InsertBy { get; set; }
-        [Column(TypeName = "datetime2")]
-        public DateTime? InsertOn { get; set; }
+        public string CustomerCode { get; set; }
+        [Required]
+        [StringLength(150)]
+        public string FullName { get; set; }
+        [StringLength(20)]
+        public string PhoneNumber { get; set; }
+        [StringLength(100)]
+        public string Email { get; set; }
+        [StringLength(250)]
+        public string Address { get; set; }
         [StringLength(50)]
-        public string UpdateBy { get; set; }
+        public string CreatedBy { get; set; }
         [Column(TypeName = "datetime2")]
-        public DateTime? UpdateOn { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region sa_order_items
+    /// <summary>
+    /// Entity class for table sa_order_items
+    /// </summary>
+    [Table("sa_order_items")]
+    public class sa_order_items
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string OrderCode { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ItemCode { get; set; }
+        [Required]
+        [Column(TypeName = "int")]
+        public int Quantity { get; set; }
+        [Required]
+        public decimal UnitPrice { get; set; }
+        public decimal? TotalPrice { get; set; }
+    }
+    #endregion
+
+    #region sa_orders
+    /// <summary>
+    /// Entity class for table sa_orders
+    /// </summary>
+    [Table("sa_orders")]
+    public class sa_orders
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string OrderCode { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string CustomerCode { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? OrderDate { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal? TotalAmount { get; set; }
+        [StringLength(20)]
+        [Column(TypeName = "varchar(20)")]
+        public string Status { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string EmployeeCode { get; set; }
+    }
+    #endregion
+
+    #region sa_payments
+    /// <summary>
+    /// Entity class for table sa_payments
+    /// </summary>
+    [Table("sa_payments")]
+    public class sa_payments
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string PaymentCode { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string OrderCode { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? PaymentDate { get; set; }
+        [Required]
+        public decimal Amount { get; set; }
+        [StringLength(50)]
+        public string PaymentMethod { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
     #endregion
 
@@ -394,6 +905,15 @@ namespace UniManage.Core.Models.Entities
         public short Sort { get; set; }
         [StringLength(150)]
         public string Icon { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -440,33 +960,6 @@ namespace UniManage.Core.Models.Entities
     }
     #endregion
 
-    #region sy_function_group
-    /// <summary>
-    /// Entity class for table sy_function_group
-    /// </summary>
-    [Table("sy_function_group")]
-    public class sy_function_group
-    {
-        [Required]
-        public long Id { get; set; }
-        [Key]
-        [Required]
-        [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
-        public string Code { get; set; }
-        [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
-        public string ResourceKey { get; set; }
-        [Column(TypeName = "bit")]
-        public bool? IsActive { get; set; }
-        [Column(TypeName = "int")]
-        public int? Sort { get; set; }
-        [StringLength(150)]
-        [Column(TypeName = "nvarchar(150)")]
-        public string Icon { get; set; }
-    }
-    #endregion
-
     #region sy_function_mapping
     /// <summary>
     /// Entity class for table sy_function_mapping
@@ -479,34 +972,16 @@ namespace UniManage.Core.Models.Entities
         public long Id { get; set; }
         [Required]
         [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
         public string ActionCode { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
         public string FunctionCode { get; set; }
-        /// <summary>
-        /// Ngu?i t?o b?n ghi
-        /// </summary>
         [StringLength(100)]
         public string CreatedBy { get; set; }
-        /// <summary>
-        /// Ngày t?o b?n ghi
-        /// </summary>
         [Required]
-        [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        /// <summary>
-        /// Ngu?i c?p nh?t b?n ghi
-        /// </summary>
         [StringLength(100)]
         public string UpdatedBy { get; set; }
-        /// <summary>
-        /// Ngày c?p nh?t b?n ghi
-        /// </summary>
         public DateTime? UpdatedAt { get; set; }
-        /// <summary>
-        /// Phiên b?n d? li?u (rowversion)
-        /// </summary>
         [Required]
         public byte[] DataRowVersion { get; set; }
     }
@@ -519,24 +994,29 @@ namespace UniManage.Core.Models.Entities
     [Table("sy_functions")]
     public class sy_functions
     {
-        [Required]
-        public long Id { get; set; }
         [Key]
         [Required]
+        public long Id { get; set; }
+        [Required]
         [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
         public string Code { get; set; }
         [Required]
         [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
         public string ResourceKey { get; set; }
         [Required]
         [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
         public string GroupCode { get; set; }
         [Required]
-        [Column(TypeName = "bit")]
         public bool IsActive { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -583,30 +1063,30 @@ namespace UniManage.Core.Models.Entities
         [Required]
         public int Id { get; set; }
         /// <summary>
-        /// Mã ngôn ng? theo chu?n ISO (ví d?: en, vi, zh-CN)
+        /// Mï¿½ ngï¿½n ng? theo chu?n ISO (vï¿½ d?: en, vi, zh-CN)
         /// </summary>
         [Required]
         [StringLength(10)]
         public string LanguageCode { get; set; }
         /// <summary>
-        /// Tên d?y d? c?a ngôn ng?
+        /// Tï¿½n d?y d? c?a ngï¿½n ng?
         /// </summary>
         [Required]
         [StringLength(100)]
         public string LanguageName { get; set; }
         /// <summary>
-        /// Bi?u tu?ng ngôn ng? (emoji ho?c URL ?nh)
+        /// Bi?u tu?ng ngï¿½n ng? (emoji ho?c URL ?nh)
         /// </summary>
         [StringLength(100)]
         public string Icon { get; set; }
         /// <summary>
-        /// Ngôn ng? m?c d?nh c?a h? th?ng (1 = có, 0 = không)
+        /// Ngï¿½n ng? m?c d?nh c?a h? th?ng (1 = cï¿½, 0 = khï¿½ng)
         /// </summary>
         [Required]
         [Column(TypeName = "bit")]
         public bool IsDefault { get; set; }
         /// <summary>
-        /// Tr?ng thái ngôn ng?: 1 = dang dùng, 0 = không dùng
+        /// Tr?ng thï¿½i ngï¿½n ng?: 1 = dang dï¿½ng, 0 = khï¿½ng dï¿½ng
         /// </summary>
         [Required]
         [Column(TypeName = "bit")]
@@ -617,7 +1097,7 @@ namespace UniManage.Core.Models.Entities
         [StringLength(100)]
         public string CreatedBy { get; set; }
         /// <summary>
-        /// Ngày t?o b?n ghi
+        /// Ngï¿½y t?o b?n ghi
         /// </summary>
         [Required]
         [Column(TypeName = "datetime")]
@@ -628,11 +1108,11 @@ namespace UniManage.Core.Models.Entities
         [StringLength(100)]
         public string UpdatedBy { get; set; }
         /// <summary>
-        /// Ngày c?p nh?t b?n ghi
+        /// Ngï¿½y c?p nh?t b?n ghi
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
         /// <summary>
-        /// Phiên b?n d? li?u (rowversion)
+        /// Phiï¿½n b?n d? li?u (rowversion)
         /// </summary>
         [Required]
         public byte[] DataRowVersion { get; set; }
@@ -646,15 +1126,13 @@ namespace UniManage.Core.Models.Entities
     [Table("sy_menus")]
     public class sy_menus
     {
+        [Key]
         [Required]
         public int Id { get; set; }
-        [Key]
         [Required]
         [StringLength(50)]
         public string Code { get; set; }
-        [Required]
         [StringLength(50)]
-        [Column(TypeName = "varchar(50)")]
         public string FunctionCode { get; set; }
         [StringLength(50)]
         public string ParentCode { get; set; }
@@ -667,12 +1145,13 @@ namespace UniManage.Core.Models.Entities
         public string Icon { get; set; }
         [StringLength(50)]
         public string CreatedBy { get; set; }
-        public DateTime? CreatedAt { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
         [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         [Required]
-        public byte[] DataRowVersion { get; set; }
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -687,6 +1166,9 @@ namespace UniManage.Core.Models.Entities
         [Required]
         public int Id { get; set; }
         [Required]
+        [StringLength(50)]
+        public string UserName { get; set; }
+        [Required]
         public string Token { get; set; }
         [Required]
         public long UserId { get; set; }
@@ -694,6 +1176,15 @@ namespace UniManage.Core.Models.Entities
         public DateTime Expiration { get; set; }
         [Required]
         public bool IsRevoked { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -740,6 +1231,7 @@ namespace UniManage.Core.Models.Entities
     [Table("sy_role_permissions")]
     public class sy_role_permissions
     {
+        [Key]
         [Required]
         public int Id { get; set; }
         [Required]
@@ -751,6 +1243,15 @@ namespace UniManage.Core.Models.Entities
         [Required]
         [StringLength(50)]
         public string ActionCode { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -761,9 +1262,9 @@ namespace UniManage.Core.Models.Entities
     [Table("sy_roles")]
     public class sy_roles
     {
+        [Key]
         [Required]
         public long Id { get; set; }
-        [Key]
         [Required]
         [StringLength(50)]
         public string Code { get; set; }
@@ -775,7 +1276,6 @@ namespace UniManage.Core.Models.Entities
         public string Status { get; set; }
         [StringLength(50)]
         public string CreatedBy { get; set; }
-        [Column(TypeName = "datetime2")]
         public DateTime? CreatedAt { get; set; }
         [StringLength(50)]
         public string UpdatedBy { get; set; }
@@ -791,12 +1291,22 @@ namespace UniManage.Core.Models.Entities
     [Table("sy_token_revoked")]
     public class sy_token_revoked
     {
+        [Key]
         [Required]
         public int Id { get; set; }
-        [StringLength(2147483647)]
+        [StringLength(50)]
+        public string Username { get; set; }
         public string Token { get; set; }
         public DateTime? TokenExpiration { get; set; }
-        public DateTime? InsertOn { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -818,9 +1328,15 @@ namespace UniManage.Core.Models.Entities
         public string Token { get; set; }
         [Required]
         public DateTime TokenExpiration { get; set; }
-        [Required]
         [StringLength(50)]
-        public string InsertOn { get; set; }
+        public string CreatedBy { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -845,16 +1361,14 @@ namespace UniManage.Core.Models.Entities
         [StringLength(50)]
         public string Status { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
         public string CreatedBy { get; set; }
-        [Column(TypeName = "datetime")]
-        public DateTime? CreatedAt { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
         public string UpdatedBy { get; set; }
-        [Column(TypeName = "datetime")]
         public DateTime? UpdatedAt { get; set; }
-        public byte[] DataRowVersion { get; set; }
+        [Required]
+        public byte[] RowVersion { get; set; }
     }
     #endregion
 
@@ -875,6 +1389,170 @@ namespace UniManage.Core.Models.Entities
         public int diagram_id { get; set; }
         public int? version { get; set; }
         public byte[] definition { get; set; }
+    }
+    #endregion
+
+    #region wf_approval_route
+    /// <summary>
+    /// Entity class for table wf_approval_route
+    /// </summary>
+    [Table("wf_approval_route")]
+    public class wf_approval_route
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string RequestTypeKey { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string RouteName { get; set; }
+        [StringLength(500)]
+        public string Description { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(100)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region wf_approval_route_approver
+    /// <summary>
+    /// Entity class for table wf_approval_route_approver
+    /// </summary>
+    [Table("wf_approval_route_approver")]
+    public class wf_approval_route_approver
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public int ApprovalRouteLevelId { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ApproverEmployeeCode { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string ApproverUsername { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(100)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region wf_approval_route_level
+    /// <summary>
+    /// Entity class for table wf_approval_route_level
+    /// </summary>
+    [Table("wf_approval_route_level")]
+    public class wf_approval_route_level
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public int ApprovalRouteId { get; set; }
+        [Required]
+        public int LevelOrder { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string LevelName { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(100)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region wf_request
+    /// <summary>
+    /// Entity class for table wf_request
+    /// </summary>
+    [Table("wf_request")]
+    public class wf_request
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string RequestTypeKey { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ApplicantEmployeeCode { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string ApplicantUsername { get; set; }
+        public int? ApprovalRouteId { get; set; }
+        [Required]
+        [StringLength(50)]
+        [Column(TypeName = "varchar(50)")]
+        public string Status { get; set; }
+        public string RequestData { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(100)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region wf_request_approval
+    /// <summary>
+    /// Entity class for table wf_request_approval
+    /// </summary>
+    [Table("wf_request_approval")]
+    public class wf_request_approval
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public int RequestId { get; set; }
+        [Required]
+        public int ApprovalRouteLevelId { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ApproverEmployeeCode { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string ApproverUsername { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ApprovalStatus { get; set; }
+        [StringLength(1000)]
+        public string ApprovalComment { get; set; }
+        public DateTime? ApprovedAt { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(100)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
     #endregion
 

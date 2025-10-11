@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
@@ -8,7 +8,7 @@ using UniManage.Resource;
 namespace UniManage.Api.Domains.Command.System.User
 {
     #region Command
-    public class UpdateUserCommand : CoreBaseCommand, IRequest<CoreResponse>
+    public class UpdateUserCommand : BaseCommand, IRequest<ApiResponse<object>>
 	{
 		public int Id { get; set; }
     }
@@ -24,13 +24,13 @@ namespace UniManage.Api.Domains.Command.System.User
     #endregion
 
     #region Handler
-    public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, CoreResponse>
+    public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, ApiResponse<object>>
 	{
 		public async Task<CoreResponse> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
 		{
 			CoreResponse response = null;
 
-			// khai báo log & các tham số đầu vào
+			// khai b�o log & c�c tham s? d?u v�o
 			CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
 			logData.Parameter = new List<CoreParamModel>
 			{
