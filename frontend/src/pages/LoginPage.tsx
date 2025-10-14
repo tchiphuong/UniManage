@@ -62,9 +62,12 @@ export const LoginPage = () => {
             } else {
                 setErrorMessage(response.message || "Login failed");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Login error:", error);
-            setErrorMessage(error.response?.data?.message || "An error occurred during login");
+            const errorMessage = error && typeof error === "object" && "response" in error
+                ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+                : undefined;
+            setErrorMessage(errorMessage || "An error occurred during login");
         } finally {
             setIsLoading(false);
         }
