@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using FluentValidation.Results;
-using UniManage.Core.Models;
+using UniManage.Model.Common;
 
 namespace UniManage.Core.Utilities
 {

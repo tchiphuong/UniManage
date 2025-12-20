@@ -1,4 +1,4 @@
-using UniManage.Core.Models;
+using UniManage.Model.Common;
 
 namespace UniManage.Core.Utilities
 {
@@ -48,8 +48,8 @@ namespace UniManage.Core.Utilities
             {
                 ReturnCode = returnCode,
                 Message = "Operation failed",
-                Data = default,
-                Errors = errors.ToList()
+                Errors = errors.ToList(),
+                Data = default
             };
         }
 
@@ -105,68 +105,6 @@ namespace UniManage.Core.Utilities
         public static ApiResponse<T> Forbidden<T>()
         {
             return Error<T>("Access forbidden", returnCode: 403);
-        }
-
-        /// <summary>
-        /// Create successful paged response
-        /// </summary>
-        /// <typeparam name="T">Item type</typeparam>
-        /// <param name="items">List of items</param>
-        /// <param name="totalItems">Total number of items</param>
-        /// <param name="pageIndex">Current page index</param>
-        /// <param name="pageSize">Page size</param>
-        /// <param name="message">Success message</param>
-        /// <returns>Paged response</returns>
-        public static PagedResponse<T> PagedSuccess<T>(
-            IEnumerable<T> items,
-            int totalItems,
-            int pageIndex,
-            int pageSize,
-            string message = "Data retrieved successfully")
-        {
-            var paging = new PagingInfo
-            {
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalItems = totalItems
-            };
-
-            var pagedResult = new PagedResult<T>
-            {
-                Items = items.ToList(),
-                Paging = paging
-            };
-
-            return new PagedResponse<T>
-            {
-                ReturnCode = 0,
-                Message = message,
-                Data = pagedResult,
-                Errors = new List<string>()
-            };
-        }        /// <summary>
-                 /// Create error paged response
-                 /// </summary>
-                 /// <typeparam name="T">Item type</typeparam>
-                 /// <param name="errors">Error messages</param>
-                 /// <param name="returnCode">Error code</param>
-                 /// <returns>Error paged response</returns>
-        public static PagedResponse<T> PagedError<T>(IEnumerable<string> errors, int returnCode = 1)
-        {
-            var emptyPaging = new PagingInfo { PageIndex = 1, PageSize = 20, TotalItems = 0 };
-            var emptyResult = new PagedResult<T>
-            {
-                Items = new List<T>(),
-                Paging = emptyPaging
-            };
-
-            return new PagedResponse<T>
-            {
-                ReturnCode = returnCode,
-                Message = "Operation failed",
-                Data = emptyResult,
-                Errors = errors.ToList()
-            };
         }
     }
 }

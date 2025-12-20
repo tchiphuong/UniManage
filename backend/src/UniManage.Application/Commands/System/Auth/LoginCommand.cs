@@ -2,44 +2,73 @@ using Dapper;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using UniManage.Core.Database;
-using UniManage.Core.Models;
+using UniManage.Core.Logging;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 
 namespace UniManage.Application.Commands.System.Auth
 {
     /// <summary>
     /// Login Command - Đăng nhập hệ thống
     /// </summary>
-    public sealed class LoginCommand : IRequest<ApiResponse<LoginCommand.Response>>
+    public sealed class LoginCommand : BaseCommand, IRequest<ApiResponse<LoginCommand.Response>>
     {
-        public string Username { get; init; } = default!;
-        public string Password { get; init; } = default!;
-
         /// <summary>
-        /// Login Response với JWT tokens
+        /// Username
         /// </summary>
-        public sealed class Response
+        public string Username { get; set; } = string.Empty;
+        /// <summary>
+        /// Password
+        /// </summary>
+        public string Password { get; set; } = string.Empty;
+
+        public class Response
         {
-            public string AccessToken { get; init; } = default!;
-            public string RefreshToken { get; init; } = default!;
-            public int ExpiresIn { get; init; }
-            public string TokenType { get; init; } = "Bearer";
-            public UserInfo User { get; init; } = default!;
+            /// <summary>
+            /// Access Token
+            /// </summary>
+            public string AccessToken { get; set; } = string.Empty;
+            /// <summary>
+            /// Refresh Token
+            /// </summary>
+            public string RefreshToken { get; set; } = string.Empty;
+            /// <summary>
+            /// Expires In (seconds)
+            /// </summary>
+            public int ExpiresIn { get; set; }
+            /// <summary>
+            /// Token Type
+            /// </summary>
+            public string TokenType { get; set; } = "Bearer";
+            /// <summary>
+            /// User Information
+            /// </summary>
+            public UserInfo User { get; set; } = new UserInfo();
         }
 
-        public sealed class UserInfo
+        public class UserInfo
         {
-            public int Id { get; init; }
-            public string UserCode { get; init; } = default!;
-            public string DisplayName { get; init; } = default!;
-            public string? Email { get; init; }
-            public string? RoleCode { get; init; }
+            /// <summary>
+            /// User ID
+            /// </summary>
+            public long Id { get; set; }
+            /// <summary>
+            /// User Code
+            /// </summary>
+            public string UserCode { get; set; } = string.Empty;
+            /// <summary>
+            /// Display Name
+            /// </summary>
+            public string DisplayName { get; set; } = string.Empty;
+            /// <summary>
+            /// Email
+            /// </summary>
+            public string? Email { get; set; }
+            /// <summary>
+            /// Role Code
+            /// </summary>
+            public string? RoleCode { get; set; }
         }
     }
 
@@ -65,38 +94,88 @@ namespace UniManage.Application.Commands.System.Auth
     /// </summary>
     public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<LoginCommand.Response>>
     {
-        private readonly ILogger<LoginCommandHandler> _logger;
-        private readonly IConfiguration _configuration;
-
-        public LoginCommandHandler(
-            ILogger<LoginCommandHandler> logger,
-            IConfiguration configuration)
-        {
-            _logger = logger;
-            _configuration = configuration;
-        }
-
         public async Task<ApiResponse<LoginCommand.Response>> Handle(
             LoginCommand request,
             CancellationToken ct)
         {
             try
             {
+                UniLogger.Info($"[Login] Start processing login for user: {request.Username}");
+
+                // Build configuration manually
+                var configuration = new ConfigurationBuilder()
+                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                    .AddJsonFile("appsettings.json", optional: true)
+                    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+                    .Build();
+
+                // 1. Call IdentityServer to get token
+                UniLogger.Info($"[Login] Calling IdentityServer to get token for user: {request.Username}");
+
+                var authority = configuration["IdentityServer:Authority"] ?? "http://localhost:5001";
+                var clientId = configuration["IdentityServer:ClientId"];
+                var clientSecret = configuration["IdentityServer:ClientSecret"];
+                var scope = configuration["IdentityServer:Scope"];
+
+                if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) || string.IsNullOrEmpty(scope))
+                {
+                    UniLogger.Error("[Login] Missing IdentityServer configuration (ClientId, ClientSecret, or Scope)");
+                    return ResponseHelper.Error<LoginCommand.Response>("System configuration error");
+                }
+
+                var tokenEndpoint = $"{authority}/connect/token";
+                UniLogger.Info($"[Login] Token Endpoint: {tokenEndpoint}");
+
+                // Bypass SSL validation in Development
+                var handler = new HttpClientHandler();
+                var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                if (env == "Development")
+                {
+                    handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                }
+
+                using var client = new HttpClient(handler);
+
+                var tokenResponse = await client.PostAsync(tokenEndpoint, new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("grant_type", "password"),
+                    new KeyValuePair<string, string>("client_id", clientId),
+                    new KeyValuePair<string, string>("client_secret", clientSecret),
+                    new KeyValuePair<string, string>("username", request.Username),
+                    new KeyValuePair<string, string>("password", request.Password),
+                    new KeyValuePair<string, string>("scope", scope)
+                }), ct);
+
+                if (!tokenResponse.IsSuccessStatusCode)
+                {
+                    var errorContent = await tokenResponse.Content.ReadAsStringAsync(ct);
+                    UniLogger.Warn($"[Login] IdentityServer login failed for {request.Username}: {errorContent}");
+                    return ResponseHelper.Error<LoginCommand.Response>("Invalid username or password");
+                }
+
+                UniLogger.Info($"[Login] IdentityServer returned success. Parsing token...");
+                var tokenContent = await tokenResponse.Content.ReadAsStringAsync(ct);
+                var tokenData = global::System.Text.Json.JsonSerializer.Deserialize<IdentityTokenResponse>(tokenContent);
+
+                if (tokenData == null)
+                {
+                    UniLogger.Error($"[Login] Failed to parse token response for {request.Username}");
+                    return ResponseHelper.Error<LoginCommand.Response>("Failed to parse token response");
+                }
+
+                // 2. Get User Info from Database (to enrich response if needed, or just use token claims)
+                UniLogger.Info($"[Login] Querying user info from database for user: {request.Username}");
                 using (var dbContext = new DbContext())
                 {
-                    // Query user from database
                     var sql = @"
                         SELECT TOP 1
                             [Id],
                             [UserName] AS UserCode,
-                            [Password],
                             [EmployeeCode],
                             [RoleCode],
-                            [Email],
-                            [Status]
+                            [Email]
                         FROM [dbo].[sy_users]
-                        WHERE [UserName] = @Username
-                            AND [Status] = 1";
+                        WHERE [UserName] = @Username";
 
                     var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
                         sql,
@@ -104,28 +183,16 @@ namespace UniManage.Application.Commands.System.Auth
 
                     if (user == null)
                     {
-                        _logger.LogWarning("Login failed: User {Username} not found", request.Username);
-                        return ApiResponse<LoginCommand.Response>.Fail("Invalid username or password");
+                        UniLogger.Warn($"[Login] User data not found in database for: {request.Username}");
+                        return ResponseHelper.Error<LoginCommand.Response>("User data not found");
                     }
-
-                    // Verify password (simple comparison for demo - should use hashing in production)
-                    if (user.Password != request.Password)
-                    {
-                        _logger.LogWarning("Login failed: Invalid password for {Username}", request.Username);
-                        return ApiResponse<LoginCommand.Response>.Fail("Invalid username or password");
-                    }
-
-                    // Generate JWT tokens
-                    var accessToken = GenerateAccessToken(user);
-                    var refreshToken = GenerateRefreshToken();
-                    var expiresIn = 3600; // 1 hour
 
                     var response = new LoginCommand.Response
                     {
-                        AccessToken = accessToken,
-                        RefreshToken = refreshToken,
-                        ExpiresIn = expiresIn,
-                        TokenType = "Bearer",
+                        AccessToken = tokenData.access_token,
+                        RefreshToken = tokenData.refresh_token,
+                        ExpiresIn = tokenData.expires_in,
+                        TokenType = tokenData.token_type,
                         User = new LoginCommand.UserInfo
                         {
                             Id = user.Id,
@@ -136,72 +203,33 @@ namespace UniManage.Application.Commands.System.Auth
                         }
                     };
 
-                    _logger.LogInformation("User {Username} logged in successfully", request.Username);
-                    return ApiResponse<LoginCommand.Response>.Success(response, "Login successful");
+                    UniLogger.Info($"[Login] User {request.Username} logged in successfully via IdentityServer");
+                    return ResponseHelper.Success(response, "Login successful");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during login for {Username}", request.Username);
-                return ApiResponse<LoginCommand.Response>.Fail("An error occurred during login");
+                UniLogger.Error($"[Login] Error during login for {request.Username}", ex);
+                return ResponseHelper.Error<LoginCommand.Response>("An error occurred during login");
             }
         }
 
-        private string GenerateAccessToken(UserDto user)
+        private class IdentityTokenResponse
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"] ?? "UniManage_Secret_Key_2025_At_Least_32_Characters_Long";
-            var issuer = jwtSettings["Issuer"] ?? "UniManage.Api";
-            var audience = jwtSettings["Audience"] ?? "UniManage.Client";
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserCode),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("role", user.RoleCode ?? "User"),
-                new Claim("employeeCode", user.EmployeeCode ?? "")
-            };
-
-            if (!string.IsNullOrEmpty(user.Email))
-            {
-                claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
-            }
-
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                notBefore: DateTime.UtcNow,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private string GenerateRefreshToken()
-        {
-            var randomNumber = new byte[32];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomNumber);
-                return Convert.ToBase64String(randomNumber);
-            }
+            public string access_token { get; set; } = string.Empty;
+            public int expires_in { get; set; }
+            public string token_type { get; set; } = string.Empty;
+            public string refresh_token { get; set; } = string.Empty;
+            public string scope { get; set; } = string.Empty;
         }
 
         private class UserDto
         {
-            public int Id { get; set; }
+            public long Id { get; set; }
             public string UserCode { get; set; } = default!;
-            public string Password { get; set; } = default!;
             public string? EmployeeCode { get; set; }
             public string? RoleCode { get; set; }
             public string? Email { get; set; }
-            public int Status { get; set; }
         }
     }
 }

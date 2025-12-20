@@ -1,29 +1,29 @@
 using Dapper;
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
-using UniManage.Core.Models;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
-using UniManage.Resource;
+using UniManage.Model.Common;
 
 namespace UniManage.Application.Commands.System.User
 {
-	public sealed class CreateUserCommand : IRequest<ApiResponse<CreateUserCommand.Response>>
-	{
-		public string Username { get; init; } = default!;
-		public string Password { get; init; } = default!;
-		public string EmployeeCode { get; init; } = default!;
-		public string RoleCode { get; init; } = default!;
-		public string? Email { get; init; }
-		public int Status { get; init; } = 1;
+	public sealed class CreateUserCommand : BaseCommand, IRequest<ApiResponse<CreateUserCommand.Response>>
+    {
+        public string Username { get; set; } = default!;
+        public string Password { get; set; } = default!;
+        public string EmployeeCode { get; set; } = default!;
+        public string RoleCode { get; set; } = default!;
+        public string? Email { get; set; }
+        public string Status { get; set; } = "ACTIVE";
 
-		public sealed class Response
-		{
-			public int Id { get; init; }
-			public string Username { get; init; } = default!;
-		}
-	}
+        public class Response
+        {
+            public int Id { get; set; }
+            public string Username { get; set; } = default!;
+        }
+    }
 
 	public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 	{
@@ -65,57 +65,52 @@ namespace UniManage.Application.Commands.System.User
 		{
 			try
 			{
-				// Check if username already exists using DatabaseHelper
-				if (await DatabaseHelper.UserCodeExistsAsync(request.Username))
-				{
-					UniLogger.Warn($"Attempt to create user with existing username: {request.Username}");
-					return ResponseHelper.Error<CreateUserCommand.Response>("Username already exists");
-				}
-
-				// Check if employee code already exists
-				if (await DatabaseHelper.EmployeeCodeExistsAsync(request.EmployeeCode))
-				{
-					UniLogger.Warn($"Attempt to create user with existing employee code: {request.EmployeeCode}");
-					return ResponseHelper.Error<CreateUserCommand.Response>("Employee code already exists");
-				}
-
-				// Check if email already exists (if provided)
-				if (!string.IsNullOrWhiteSpace(request.Email) && await DatabaseHelper.EmailExistsAsync(request.Email))
-				{
-					UniLogger.Warn($"Attempt to create user with existing email: {request.Email}");
-					return ResponseHelper.Error<CreateUserCommand.Response>("Email already exists");
-				}
-
 				// Hash password using PasswordHelper
 				var hashedPassword = PasswordHelper.HashPassword(request.Password);
 
-				// Insert new user using DatabaseHelper transaction wrapper
+				// Generate Uuid
+				var uuid = Guid.NewGuid();
+
+				// Insert new user using DbContext with transaction
 				var insertSql = @"
 					INSERT INTO [dbo].[sy_users] 
-					([UserName], [Password], [EmployeeCode], [RoleCode], [Email], [Status], [CreatedBy], [CreatedAt])
+					([Uuid], [UserName], [Password], [EmployeeCode], [RoleCode], [Email], [Status], [CreatedBy], [CreatedAt])
 					VALUES 
-					(@Username, @Password, @EmployeeCode, @RoleCode, @Email, @Status, 'SYSTEM', SYSUTCDATETIME());
+					(@Uuid, @Username, @Password, @EmployeeCode, @RoleCode, @Email, @Status, @CreatedBy, SYSUTCDATETIME());
 					SELECT SCOPE_IDENTITY();";
 
-				var userId = await DatabaseHelper.ExecuteWithTransactionAsync<int>(insertSql, new
+				using var dbContext = new DbContext(openTransaction: true);
+				try
 				{
-					request.Username,
-					Password = hashedPassword,
-					request.EmployeeCode,
-					request.RoleCode,
-					request.Email,
-					request.Status
-				});
-
-				UniLogger.Info($"User created successfully: {request.Username} (ID: {userId})");
-
-				return ResponseHelper.Success(
-					new CreateUserCommand.Response
+					var userId = await dbContext.connection.ExecuteScalarAsync<int>(insertSql, new
 					{
-						Id = userId,
-						Username = request.Username
-					},
-					"User created successfully");
+						Uuid = uuid,
+						request.Username,
+						Password = hashedPassword,
+						request.EmployeeCode,
+						request.RoleCode,
+						request.Email,
+						request.Status,
+						CreatedBy = ApplicationConstants.Defaults.SystemUser
+					}, dbContext.transaction);
+
+					await dbContext.CommitAsync();
+
+					UniLogger.Info($"User created successfully: {request.Username} (ID: {userId})");
+
+					return ResponseHelper.Success(
+						new CreateUserCommand.Response
+						{
+							Id = userId,
+							Username = request.Username
+						},
+						"User created successfully");
+				}
+				catch
+				{
+					await dbContext.RollbackAsync();
+					throw;
+				}
 			}
 			catch (Exception ex)
 			{

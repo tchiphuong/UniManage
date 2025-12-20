@@ -1,0 +1,167 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="Microsoft.Data.SqlClient" #>
+<#@ assembly name="Newtonsoft.Json" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Microsoft.Data.SqlClient" #>
+<#@ import namespace="Newtonsoft.Json.Linq" #>
+<#@ output extension=".cs" encoding="utf-8" #>
+<#
+    // Đọc config từ appsettings.json
+    string configPath = Host.ResolvePath("..\\appsettings.json");
+    if (!File.Exists(configPath))
+    {
+        throw new FileNotFoundException("Không tìm thấy file appsettings.json tại: " + configPath);
+    }
+
+    var jsonConfig = JObject.Parse(File.ReadAllText(configPath));
+    var dbConfig = jsonConfig["Database"];
+
+    string dbServer = dbConfig["Server"]?.ToString();
+    string dbDatabase = dbConfig["DefaultDatabase"]?.ToString();
+    string dbUser = dbConfig["UserId"]?.ToString();
+    string dbPassword = dbConfig["Password"]?.ToString();
+
+    string connectionString = $"Data Source={dbServer};Initial Catalog={dbDatabase};User ID={dbUser};Password={dbPassword};TrustServerCertificate=True;";
+
+    // Lấy dữ liệu từ bảng sy_commons
+    var commons = new List<(string TypeKey, string TypeNameVi, string ValueKey, string ValueNameVi)>();
+    string errorMessage = "";
+
+    try 
+    {
+        using (var conn = new SqlConnection(connectionString))
+        {
+            conn.Open();
+            using (var cmd = new SqlCommand(@"
+                    SELECT [TypeKey], [TypeNameVi], [ValueKey], [ValueNameVi]
+                    FROM [dbo].[sy_commons]
+                    WHERE [Status] = 1
+                    ORDER BY [TypeKey], [Sort]
+                ", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string typeKey = reader["TypeKey"]?.ToString();
+                    string typeNameVi = reader["TypeNameVi"]?.ToString();
+                    string valueKey = reader["ValueKey"]?.ToString();
+                    string valueNameVi = reader["ValueNameVi"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(typeKey) && !string.IsNullOrEmpty(valueKey))
+                    {
+                        commons.Add((typeKey, typeNameVi, valueKey, valueNameVi));
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        errorMessage = ex.ToString();
+    }
+
+    var groupedCommons = commons.GroupBy(x => x.TypeKey);
+#>
+namespace UniManage.Core.Constant
+{
+    public static class CoreCommon
+    {
+<#
+    if (!string.IsNullOrEmpty(errorMessage))
+    {
+#>
+        /*
+            ERROR GENERATING CONSTANTS:
+            <#= errorMessage #>
+        */
+<#
+    }
+#>
+        public static class Type
+        {
+<#
+    foreach (var group in groupedCommons)
+    {
+        var firstItem = group.First();
+        var typeName = ToPascalCase(group.Key);
+        var typeSummary = !string.IsNullOrEmpty(firstItem.TypeNameVi) ? firstItem.TypeNameVi : group.Key;
+#>
+            /// <summary>
+            /// <#= typeSummary #>
+            /// </summary>
+            public const string <#= typeName #> = "<#= group.Key #>";
+
+<#
+    }
+#>
+        }
+
+        public static class Value
+        {
+<#
+    foreach (var group in groupedCommons)
+    {
+        var typeName = ToPascalCase(group.Key);
+#>
+            public static class <#= typeName #>
+            {
+<#
+        foreach (var item in group)
+        {
+            var valueName = ToPascalCase(item.ValueKey);
+            var valueSummary = !string.IsNullOrEmpty(item.ValueNameVi) ? item.ValueNameVi : item.ValueKey;
+#>
+                /// <summary>
+                /// <#= valueSummary #>
+                /// </summary>
+                public const string <#= valueName #> = "<#= item.ValueKey #>";
+
+<#
+        }
+#>
+            }
+
+<#
+    }
+#>
+        }
+    }
+}
+<#+
+    private string ToPascalCase(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        
+        var words = text.Split(new[] { '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var sb = new StringBuilder();
+        
+        foreach (var word in words)
+        {
+            if (word.Length > 0)
+            {
+                sb.Append(char.ToUpper(word[0]));
+                if (word.Length > 1)
+                {
+                    sb.Append(word.Substring(1).ToLower());
+                }
+            }
+        }
+        
+        var result = sb.ToString();
+        if (string.IsNullOrEmpty(result)) return text;
+        
+        if (char.IsDigit(result[0]))
+        {
+            return "_" + result;
+        }
+        
+        return result;
+    }
+#>

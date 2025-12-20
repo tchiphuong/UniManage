@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using UniManage.Core.Models;
+using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers
 {
@@ -30,24 +30,24 @@ namespace UniManage.Api.Controllers
             HttpContext?.Connection?.RemoteIpAddress?.ToString();
 
         /// <summary>
-        /// Lấy tên controller hiện tại
+        /// L?y t�n controller hi?n t?i
         /// </summary>
         protected string CurrentController =>
             ControllerContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
 
         /// <summary>
-        /// Lấy tên action method hiện tại
+        /// L?y t�n action method hi?n t?i
         /// </summary>
         protected string CurrentAction =>
             ControllerContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
 
         /// <summary>
-        /// Lấy tên API dạng "Controller/Action"
+        /// L?y t�n API d?ng "Controller/Action"
         /// </summary>
         protected string ApiName => $"{CurrentController}/{CurrentAction}";
 
         /// <summary>
-        /// Thông tin header gom gọn một chỗ, dễ gọi lại.
+        /// Th�ng tin header gom g?n m?t ch?, d? g?i l?i.
         /// </summary>
         protected HeaderInfo HeaderInfo => BuildHeaderInfo();
 
@@ -61,6 +61,9 @@ namespace UniManage.Api.Controllers
                 Username = Username,
                 Role = User?.FindFirstValue(ClaimTypes.Role),
 
+                CorrelationId = headers.TryGetValue("X-Correlation-Id", out var cid) ? cid.ToString() : HttpContext.TraceIdentifier,
+                ClientTimezoneOffset = headers.TryGetValue("X-Timezone-Offset", out var offset) && int.TryParse(offset, out var val) ? val : null,
+
                 IpAddress = ClientIp,
                 AccessToken = AccessToken,
                 ApiName = ApiName,
@@ -68,11 +71,8 @@ namespace UniManage.Api.Controllers
                 UserAgent = headers.TryGetValue("User-Agent", out var ua) ? ua.ToString() : null,
                 AppVersion = headers.TryGetValue("App-Version", out var appVer) ? appVer.ToString() : null,
                 DeviceId = headers.TryGetValue("Device-Id", out var deviceId) ? deviceId.ToString() : null,
-                DeviceName = headers.TryGetValue("Device-Name", out var deviceName) ? deviceName.ToString() : null,
                 DeviceType = headers.TryGetValue("Device-Type", out var deviceType) ? deviceType.ToString() : null,
                 SessionId = headers.TryGetValue("Session-Id", out var sessionId) ? sessionId.ToString() : null,
-                Location = headers.TryGetValue("X-Location", out var location) ? location.ToString() : null,
-                Service = headers.TryGetValue("X-Service", out var service) ? service.ToString() : null,
             };
         }
     }

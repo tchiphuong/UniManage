@@ -1,6 +1,7 @@
 using Dapper;
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using SysClaim = System.Security.Claims.Claim;
@@ -16,7 +17,7 @@ namespace UniManage.IdentityServer.Services
         {
             try
             {
-                var userId = context.Subject.FindFirst("sub")?.Value;
+                var userId = context.Subject.FindFirst(ClaimConstants.StandardClaims.Subject)?.Value;
 
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -35,11 +36,15 @@ namespace UniManage.IdentityServer.Services
                         [Email]
                     FROM [dbo].[sy_users]
                     WHERE [Id] = @UserId
-                        AND [Status] = 1";
+                        AND [Status] = @ActiveStatus";
 
                 var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
                     sql,
-                    new { UserId = int.Parse(userId) });
+                    new
+                    {
+                        UserId = int.Parse(userId),
+                        ActiveStatus = CoreCommon.Value.Commonstatus.Active
+                    });
 
                 if (user == null)
                 {
@@ -49,15 +54,15 @@ namespace UniManage.IdentityServer.Services
 
                 var claims = new List<SysClaim>
                 {
-                    new SysClaim("sub", user.Id.ToString()),
-                    new SysClaim("username", user.UserName),
-                    new SysClaim("employeeCode", user.EmployeeCode ?? ""),
-                    new SysClaim("role", user.RoleCode ?? "User")
+                    new System.Security.Claims.Claim(ClaimConstants.StandardClaims.Subject, user.Id.ToString()),
+                    new System.Security.Claims.Claim(ClaimConstants.CustomClaims.Username, user.UserName),
+                    new System.Security.Claims.Claim(ClaimConstants.CustomClaims.EmployeeCode, user.EmployeeCode ?? ""),
+                    new System.Security.Claims.Claim(ClaimConstants.CustomClaims.Role, user.RoleCode ?? ApplicationConstants.Defaults.DefaultRole)
                 };
 
                 if (!string.IsNullOrEmpty(user.Email))
                 {
-                    claims.Add(new SysClaim("email", user.Email));
+                    claims.Add(new System.Security.Claims.Claim(ClaimConstants.StandardClaims.Email, user.Email));
                 }
 
                 // Only include requested claims
@@ -79,7 +84,7 @@ namespace UniManage.IdentityServer.Services
         {
             try
             {
-                var userId = context.Subject.FindFirst("sub")?.Value;
+                var userId = context.Subject.FindFirst(ClaimConstants.StandardClaims.Subject)?.Value;
 
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -93,11 +98,15 @@ namespace UniManage.IdentityServer.Services
                     SELECT COUNT(*)
                     FROM [dbo].[sy_users]
                     WHERE [Id] = @UserId
-                        AND [Status] = 1";
+                        AND [Status] = @ActiveStatus";
 
                 var count = await dbContext.connection.ExecuteScalarAsync<int>(
                     sql,
-                    new { UserId = int.Parse(userId) });
+                    new
+                    {
+                        UserId = int.Parse(userId),
+                        ActiveStatus = CoreCommon.Value.Commonstatus.Active
+                    });
 
                 context.IsActive = count > 0;
             }

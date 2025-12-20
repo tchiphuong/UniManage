@@ -1,6 +1,4 @@
 using Duende.IdentityServer.Models;
-using Duende.IdentityServer.Test;
-using System.Collections.Generic;
 
 namespace UniManage.IdentityServer
 {
@@ -16,7 +14,7 @@ namespace UniManage.IdentityServer
         public static IEnumerable<ApiScope> ApiScopes =>
             new ApiScope[]
             {
-                new ApiScope("api1", "My API")
+                new ApiScope("unimanage.api", "UniManage API"),
             };
 
         public static IEnumerable<Client> Clients =>
@@ -24,46 +22,20 @@ namespace UniManage.IdentityServer
             {
                 new Client
                 {
-                    ClientId = "client",
-                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+                    ClientId = "unimanage-client",
+                    ClientName = "UniManage Client",
                     ClientSecrets = { new Secret("secret".Sha256()) },
-                    AllowedScopes = { "api1" },
-                    AllowOfflineAccess = true ,// Cho phép refresh token
-                    AccessTokenLifetime = 3600, // Token sống 1 tiếng
-                    RefreshTokenUsage = TokenUsage.ReUse,
-                    RefreshTokenExpiration = TokenExpiration.Sliding,
-                    SlidingRefreshTokenLifetime = 2592000 // 30 ngày
-                },
-                // Cho phép user test đăng nhập với ResourceOwnerPassword
-                new Client
-                {
-                    ClientId = "testuser",
-                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
-                    ClientSecrets = { new Secret("secret".Sha256()) },
-                    AllowedScopes = { "api1", "openid", "profile", "offline_access" },
-                    AllowOfflineAccess = true ,// Cho phép refresh token
-                    AccessTokenLifetime = 3600, // Token sống 1 tiếng
-                    RefreshTokenUsage = TokenUsage.ReUse,
-                    RefreshTokenExpiration = TokenExpiration.Sliding,
-                    SlidingRefreshTokenLifetime = 2592000 // 30 ngày
-                }
-            };
 
-        // Thêm user test cho ResourceOwnerPassword grant type
-        public static List<TestUser> TestUsers =>
-            new List<TestUser>
-            {
-                new TestUser
-                {
-                    SubjectId = "1",
-                    Username = "testuser",
-                    Password = "testpassword",
-                    Claims =
-                    {
-                        new System.Security.Claims.Claim("name", "Test User"),
-                        new System.Security.Claims.Claim("role", "Admin"),
-                        new System.Security.Claims.Claim("email", "testuser@unimanage.local")
-                    }
+                    // Hỗ trợ LoginCommand (Password) và Frontend (Code)
+                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+
+                    AllowedScopes = { "openid", "profile", "unimanage.api" },
+                    
+                    // Cấu hình cho Frontend (nếu dùng Code flow sau này)
+                    RedirectUris = { "http://localhost:5173/signin-oidc" },
+                    PostLogoutRedirectUris = { "http://localhost:5173/signout-callback-oidc" },
+                    AllowOfflineAccess = true,
+                    AccessTokenLifetime = 3600
                 }
             };
     }

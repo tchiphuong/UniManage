@@ -1,30 +1,45 @@
-using Duende.IdentityServer;
-using UniManage.IdentityServer.Stores;
+using log4net;
+using log4net.Config;
+using System.Reflection;
+using UniManage.IdentityServer;
 using UniManage.IdentityServer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load configuration from UniManage.Core (copied to output directory)
+builder.Configuration.SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
+// Configure log4net
+var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+var logConfigFile = Path.Combine(AppContext.BaseDirectory, "log4net.config");
+XmlConfigurator.Configure(logRepository, new FileInfo(logConfigFile));
 
 // Configure services
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
-// Add IdentityServer with Dapper stores
+// Add IdentityServer with In-Memory stores (Simplified)
 builder.Services.AddIdentityServer(options =>
     {
         options.EmitStaticAudienceClaim = true;
     })
-    .AddResourceStore<DapperResourceStore>()
-    .AddClientStore<DapperClientStore>()
-    .AddPersistedGrantStore<DapperPersistedGrantStore>()
+    .AddInMemoryIdentityResources(Config.IdentityResources)
+    .AddInMemoryApiScopes(Config.ApiScopes)
+    .AddInMemoryClients(Config.Clients)
     .AddProfileService<CustomProfileService>()
-    .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>();
+    .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>()
+    .AddDeveloperSigningCredential();
 
 // Add CORS for API communication
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:5297")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -44,6 +59,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapRazorPages();
 
-app.MapGet("/", () => "IdentityServer is running on port 5001!");
+app.MapGet("/", () => "IdentityServer is running!");
 
 app.Run();

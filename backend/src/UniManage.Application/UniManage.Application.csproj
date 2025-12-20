@@ -18,11 +18,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UniManage.Core\UniManage.Core.csproj" />
+    <ProjectReference Include="..\UniManage.Model\UniManage.Model.csproj" />
     <ProjectReference Include="..\UniManage.Resource\UniManage.Resource.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Common\" />
+    <Folder Include="Commands\Master\" />
+    <Folder Include="Queries\Master\" />
   </ItemGroup>
 
 </Project>

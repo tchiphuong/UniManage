@@ -1,8 +1,10 @@
 using Dapper;
 using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Validation;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
+using UniManage.Core.Utilities;
 using SysClaim = System.Security.Claims.Claim;
 
 namespace UniManage.IdentityServer.Services
@@ -29,11 +31,15 @@ namespace UniManage.IdentityServer.Services
                         [Status]
                     FROM [dbo].[sy_users]
                     WHERE [UserName] = @UserName
-                        AND [Status] = 1"; // Status = 1 = ACTIVE
+                        AND [Status] = @ActiveStatus"; // Status = 1 = ACTIVE
 
                 var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
                     sql,
-                    new { UserName = context.UserName });
+                    new
+                    {
+                        UserName = context.UserName,
+                        ActiveStatus = CoreCommon.Value.Commonstatus.Active
+                    });
 
                 if (user == null)
                 {
@@ -44,12 +50,8 @@ namespace UniManage.IdentityServer.Services
                     return;
                 }
 
-                // Verify password (base64 encoded for now)
-                // TODO: Use proper password hashing (BCrypt, PBKDF2, etc.)
-                var expectedPassword = Convert.ToBase64String(
-                    System.Text.Encoding.UTF8.GetBytes(context.Password));
-
-                if (user.Password != expectedPassword)
+                // Verify password using PasswordHelper (BCrypt)
+                if (!PasswordHelper.VerifyPassword(context.Password, user.Password))
                 {
                     UniLogger.WarnFormat("Invalid password for user {0}", context.UserName);
                     context.Result = new GrantValidationResult(
@@ -61,15 +63,15 @@ namespace UniManage.IdentityServer.Services
                 // Create claims
                 var claims = new List<SysClaim>
                 {
-                    new SysClaim("sub", user.Id.ToString()),
-                    new SysClaim("username", user.UserName),
-                    new SysClaim("employeeCode", user.EmployeeCode ?? ""),
-                    new SysClaim("role", user.RoleCode ?? "User")
+                    new System.Security.Claims.Claim(ClaimConstants.StandardClaims.Subject, user.Id.ToString()),
+                    new System.Security.Claims.Claim(ClaimConstants.CustomClaims.Username, user.UserName),
+                    new System.Security.Claims.Claim(ClaimConstants.CustomClaims.EmployeeCode, user.EmployeeCode ?? ""),
+                    new System.Security.Claims.Claim(ClaimConstants.CustomClaims.Role, user.RoleCode ?? ApplicationConstants.Defaults.DefaultRole)
                 };
 
                 if (!string.IsNullOrEmpty(user.Email))
                 {
-                    claims.Add(new SysClaim("email", user.Email));
+                    claims.Add(new System.Security.Claims.Claim(ClaimConstants.StandardClaims.Email, user.Email));
                 }
 
                 UniLogger.InfoFormat("User {0} authenticated successfully", context.UserName);
@@ -96,7 +98,7 @@ namespace UniManage.IdentityServer.Services
             public string? EmployeeCode { get; set; }
             public string? RoleCode { get; set; }
             public string? Email { get; set; }
-            public int Status { get; set; }
+            public string Status { get; set; }
         }
     }
 }

@@ -3,8 +3,25 @@ using log4net.Config;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Threading.RateLimiting;
 using UniManage.Api.Middleware;
+using UniManage.Api.Filters;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using UniManage.Api.Infrastructure.AutofacModules;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load configuration from UniManage.Core (copied to output directory)
+builder.Configuration.SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
+// Use Autofac as the service provider factory
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+{
+    containerBuilder.RegisterModule(new ApplicationModule());
+});
 
 // ============================================================================
 // SERVICES CONFIGURATION
@@ -17,16 +34,37 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
-// MediatR for CQRS
+// MediatR for CQRS (Core services only, handlers registered via Autofac)
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 
 // log4net configuration
 var logRepository = LogManager.GetRepository(System.Reflection.Assembly.GetEntryAssembly());
-XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
+var logConfigFile = Path.Combine(AppContext.BaseDirectory, "log4net.config");
+
+// Set LogPath from configuration
+var logPath = builder.Configuration["AppSettings:LogPath"] ?? "logs";
+if (!Path.IsPathRooted(logPath))
+{
+    logPath = Path.Combine(AppContext.BaseDirectory, logPath);
+}
+// Ensure directory exists
+if (!Directory.Exists(logPath))
+{
+    Directory.CreateDirectory(logPath);
+}
+log4net.GlobalContext.Properties["LogPath"] = logPath;
+
+XmlConfigurator.Configure(logRepository, new FileInfo(logConfigFile));
+
+// Test log to verify configuration
+var startupLogger = LogManager.GetLogger(typeof(Program));
+startupLogger.Info($"Application Starting Up. LogPath: {logPath}");
 
 // Swagger/OpenAPI
 builder.Services.AddSwaggerGen(options =>
 {
+    options.OperationFilter<SwaggerIgnoreFilter>();
+
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
         Title = "UniManage API",
@@ -34,9 +72,9 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API for UniManage system - CQRS + Dapper + .NET 9",
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
         {
-            Name = "UniManage Team",
-            Email = "support@unimanage.local",
-            Url = new Uri("https://unimanage.local")
+            Name = "Phuong Tran",
+            Email = "chiphuong9299@hotmail.com",
+            Url = new Uri("https://www.facebook.com/tchiphuong")
         },
         License = new Microsoft.OpenApi.Models.OpenApiLicense
         {
@@ -138,8 +176,8 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 // 5. Culture/Localization
 app.UseMiddleware<CultureMiddleware>();
 
-// 6. API Logging (request/response)
-app.UseMiddleware<ApiLoggingMiddleware>();
+// 6. API Logging (request/response) - Moved after Routing to get Controller/Action
+// app.UseMiddleware<ApiLoggingMiddleware>();
 
 // 7. Swagger (Development only)
 if (app.Environment.IsDevelopment())
@@ -167,6 +205,9 @@ app.UseStaticFiles();
 
 // 11. Routing
 app.UseRouting();
+
+// 11.1 API Logging (request/response) - Must be after Routing to access RouteData
+app.UseMiddleware<ApiLoggingMiddleware>();
 
 // 12. CORS
 app.UseCors("AllowAll");

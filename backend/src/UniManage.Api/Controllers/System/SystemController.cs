@@ -1,10 +1,11 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
-using UniManage.Api.Domains.Query.System;
-using UniManage.Core.Helpers;
-using UniManage.Core.Models;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 using UniManage.Resource;
+using UniManage.Application.Queries.System.Language;
+using UniManage.Core.Constant;
 
 namespace UniManage.Api.Controllers.System
 {
@@ -33,7 +34,7 @@ namespace UniManage.Api.Controllers.System
             CultureInfo.CurrentUICulture = culture;
             var resourceManager = new ResourceManager();
             Dictionary<string, string?> resources = resourceManager.GetResources();
-            var response = new CoreResponse(CoreApiReturnCode.Succeed, CoreResource.Common_msg_Success, resources);
+            var response = ResponseHelper.Success(resources, CoreResource.Common_msg_Success);
             return Ok(response);
         }
 
@@ -49,8 +50,10 @@ namespace UniManage.Api.Controllers.System
 
             var validation = await new GetLanguageListQueryValidator().ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
-                return BadRequest(new CoreResponse(CoreApiReturnCode.InvalidData, CoreResource.Common_msg_InvalidData)
+                return BadRequest(new ApiResponse<object>
                 {
+                    ReturnCode = CoreApiReturnCode.InvalidData,
+                    Message = CoreResource.Common_msg_InvalidData,
                     Errors = validation.Errors.ToFieldErrorModels()
                 });
 

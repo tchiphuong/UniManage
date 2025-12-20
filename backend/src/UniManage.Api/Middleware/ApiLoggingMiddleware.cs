@@ -1,8 +1,8 @@
-using System.Diagnostics;
-using System.Text;
 using log4net;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Primitives;
+using System.Diagnostics;
+using System.Text;
 
 namespace UniManage.Api.Middleware;
 
@@ -31,10 +31,29 @@ public class ApiLoggingMiddleware
         {
             // Log request
             var correlationId = GetCorrelationId(context);
-            var api = context.Items["ApiEndpoint"]?.ToString() ?? "unknown-endpoint";
             var user = context.User?.Identity?.Name ?? "anonymous";
             var method = context.Request.Method;
             var path = context.Request.GetDisplayUrl();
+
+            // Determine API name for log file
+            string apiName = "general";
+            var endpoint = context.GetEndpoint();
+            if (endpoint != null)
+            {
+                var routeValues = context.GetRouteData().Values;
+                if (routeValues.TryGetValue("controller", out var controller) &&
+                    routeValues.TryGetValue("action", out var action))
+                {
+                    apiName = $"{controller}-{action}".ToLower();
+                }
+            }
+
+            // Set log4net context
+            LogicalThreadContext.Properties["api"] = apiName;
+            LogicalThreadContext.Properties["cid"] = correlationId;
+            LogicalThreadContext.Properties["user"] = user;
+            LogicalThreadContext.Properties["method"] = method;
+            LogicalThreadContext.Properties["path"] = path;
 
             // Capture request body for non-GET methods
             if (!HttpMethods.IsGet(context.Request.Method))
@@ -58,8 +77,6 @@ public class ApiLoggingMiddleware
                 maskedRequest = maskedRequest[..64000] + "... [truncated]";
             }
 
-            _logger.Info($"[{correlationId}] REQUEST: {user} {method} {path}\n{maskedRequest}");
-
             // Capture response
             using var memStream = new MemoryStream();
             context.Response.Body = memStream;
@@ -75,6 +92,10 @@ public class ApiLoggingMiddleware
             var status = context.Response.StatusCode;
             var elapsed = sw.ElapsedMilliseconds;
 
+            // Update context for response log
+            LogicalThreadContext.Properties["status"] = status;
+            LogicalThreadContext.Properties["ms"] = elapsed;
+
             // Log masked response
             var maskedResponse = MaskSensitiveData(responseBody);
             if (maskedResponse.Length > 64000)
@@ -82,7 +103,14 @@ public class ApiLoggingMiddleware
                 maskedResponse = maskedResponse[..64000] + "... [truncated]";
             }
 
-            _logger.Info($"[{correlationId}] RESPONSE: {status} in {elapsed}ms\n{maskedResponse}");
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{correlationId}] SUMMARY: {method} {path} -> {status} ({elapsed}ms)");
+            sb.AppendLine("REQUEST BODY:");
+            sb.AppendLine(string.IsNullOrWhiteSpace(maskedRequest) ? "(empty)" : maskedRequest);
+            sb.AppendLine("RESPONSE BODY:");
+            sb.AppendLine(string.IsNullOrWhiteSpace(maskedResponse) ? "(empty)" : maskedResponse);
+
+            _logger.Info(sb.ToString());
         }
         finally
         {

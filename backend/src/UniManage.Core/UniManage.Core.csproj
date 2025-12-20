@@ -49,12 +49,30 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="app.config" />
+    <ProjectReference Include="..\UniManage.Model\UniManage.Model.csproj" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <DependentUpon>appsettings.json</DependentUpon>
+    </None>
+    <None Update="Constant\CoreCommon.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CoreCommon.cs</LastGenOutput>
+    </None>
+    <None Update="Constant\CoreLanguage.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <CustomToolNamespace></CustomToolNamespace>
+      <LastGenOutput>CoreLanguage.cs</LastGenOutput>
+    </None>
+    <None Update="Database\DatabaseModels.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DatabaseModels.cs</LastGenOutput>
+    </None>
+    <None Update="Database\Generator\CoreCommon.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CoreCommon.cs</LastGenOutput>
     </None>
     <None Update="log4net.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -82,6 +100,26 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="Constant\CoreCommon.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CoreCommon.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Constant\CoreLanguage.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CoreLanguage.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Database\DatabaseModels.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DatabaseModels.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Database\Generator\CoreCommon.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CoreCommon.tt</DependentUpon>
+    </Compile>
     <Compile Update="Database\Generator\CoreLanguage.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -92,11 +130,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>DatabaseModels.tt</DependentUpon>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Migrations\**\*.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
