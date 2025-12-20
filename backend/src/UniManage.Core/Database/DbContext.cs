@@ -8,7 +8,7 @@ namespace UniManage.Core.Database
     public class DbContext : IDisposable, IAsyncDisposable
     {
         public readonly SqlConnection connection;
-        public SqlTransaction? transaction;
+        public SqlTransaction transaction;
         private bool _disposed;
 
         public DbContext(bool openTransaction = false)

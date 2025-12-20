@@ -1,9 +1,9 @@
 ﻿using Dapper;
 using System.Collections;
 using System.Globalization;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Utilities;
-using System.Linq;
 
 namespace UniManage.Resource
 {
@@ -181,6 +181,7 @@ namespace UniManage.Resource
                         if (exists == 0)
                         {
                             string insertSql = @" INSERT INTO sy_resources (
+                                                            Uuid,
                                                             ResourceKey,
                                                             ResourceValue,
                                                             SourceLanguage,
@@ -191,6 +192,7 @@ namespace UniManage.Resource
                                                             UpdatedAt
                                                         )
                                                         VALUES (
+                                                            @Uuid,
                                                             @ResourceKey,
                                                             @ResourceValue,
                                                             @SourceLanguage,
@@ -205,13 +207,14 @@ namespace UniManage.Resource
 
                             dbContext.connection.Execute(insertSql, new
                             {
+                                Uuid = Guid.NewGuid(),
                                 ResourceKey = resourceName,
                                 ResourceValue = translatedData,
                                 SourceLanguage = defaultLang,
                                 LanguageCode = langShortName,
-                                CreatedBy = "system",
+                                CreatedBy = ApplicationConstants.Defaults.SystemUser,
                                 CreatedAt = now,
-                                UpdatedBy = "system",
+                                UpdatedBy = ApplicationConstants.Defaults.SystemUser,
                                 UpdatedAt = now
                             });
                         }

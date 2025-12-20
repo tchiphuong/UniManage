@@ -2,35 +2,39 @@ using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
-using UniManage.Core.Models;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 using UniManage.Resource;
 
-namespace UniManage.Api.Domains.Command.System.User
+namespace UniManage.Application.Commands.System.User
 {
-    #region Command
-    public class UpdateUserCommand : BaseCommand, IRequest<ApiResponse<object>>
-	{
-		public int Id { get; set; }
+	#region Command
+	public class UpdateUserCommand : BaseCommand, IRequest<ApiResponse<bool>>
+    {
+        public int Id { get; set; }
+        public string? Email { get; set; }
+        public string? RoleCode { get; set; }
+        public string? Status { get; set; }
     }
-    #endregion
+	#endregion
 
-    #region Validator
-    public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
+	#region Validator
+	public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
 	{
 		public UpdateUserCommandValidator()
 		{
 		}
 	}
-    #endregion
+	#endregion
 
-    #region Handler
-    public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, ApiResponse<object>>
+	#region Handler
+	public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, ApiResponse<bool>>
 	{
-		public async Task<CoreResponse> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+		public async Task<ApiResponse<bool>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
 		{
-			CoreResponse response = null;
+			ApiResponse<bool> response;
 
-			// khai báo log & các tham s? d?u vào
+			// khai bï¿½o log & cï¿½c tham s? d?u vï¿½o
 			CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
 			logData.Parameter = new List<CoreParamModel>
 			{
@@ -40,25 +44,25 @@ namespace UniManage.Api.Domains.Command.System.User
 			{
 				try
 				{
-					response = new CoreResponse(returnCode: CoreApiReturnCode.Succeed);
+					response = ResponseHelper.Success<bool>(false);
 					await dbContext.transaction.CommitAsync();
 				}
 				catch (Exception ex)
 				{
 					await dbContext.transaction.RollbackAsync();
-                    response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, CoreResource.Common_msg_ExceptionOccurred);
-                    #region write log
-                    logData.Result = response.Data;
-                    logData.Message = ex.ToString();
-                    logData.IsException = 1;
-                    logData.ReturnCode = response.ReturnCode;
-                    #endregion
-                }
+					response = ResponseHelper.Error<bool>(CoreResource.Common_msg_ExceptionOccurred);
+					#region write log
+					logData.Result = response.Data;
+					logData.Message = ex.ToString();
+					logData.IsException = 1;
+					logData.ReturnCode = response.ReturnCode;
+					#endregion
+				}
 			}
 
 			UniLogManager.WriteApiLog(logData);
 
-			return await Task.FromResult(response);
+			return response;
 		}
 	}
 	#endregion

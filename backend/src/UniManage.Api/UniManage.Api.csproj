@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="9.0.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Duende.IdentityServer" Version="7.3.0" />
     <PackageReference Include="FluentValidation" Version="12.0.0" />
@@ -23,6 +25,10 @@
     <ProjectReference Include="..\UniManage.Application\UniManage.Application.csproj" />
     <ProjectReference Include="..\UniManage.Core\UniManage.Core.csproj" />
     <ProjectReference Include="..\UniManage.Resource\UniManage.Resource.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\Master\" />
   </ItemGroup>
 
 </Project>

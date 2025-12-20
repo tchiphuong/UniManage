@@ -1,7 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using UniManage.Application.Commands.System.Auth;
-using UniManage.Core.Models;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.System
 {
@@ -12,12 +13,18 @@ namespace UniManage.Api.Controllers.System
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
+        #region Properties
+
         private readonly IMediator _mediator;
 
         public AuthController(IMediator mediator)
         {
             _mediator = mediator;
         }
+
+        #endregion
+
+        #region Login
 
         /// <summary>
         /// Đăng nhập hệ thống
@@ -28,9 +35,7 @@ namespace UniManage.Api.Controllers.System
         [HttpPost("login")]
         [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ApiResponse<LoginCommand.Response>>> Login(
-            [FromBody] LoginCommand request,
-            CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<LoginCommand.Response>>> Login([FromBody] LoginCommand request, CancellationToken ct)
         {
             var response = await _mediator.Send(request, ct);
 
@@ -42,6 +47,10 @@ namespace UniManage.Api.Controllers.System
             return Ok(response);
         }
 
+        #endregion
+
+        #region Logout
+
         /// <summary>
         /// Đăng xuất hệ thống
         /// </summary>
@@ -50,7 +59,9 @@ namespace UniManage.Api.Controllers.System
         public async Task<ActionResult<ApiResponse<object>>> Logout()
         {
             // TODO: Implement logout logic (invalidate refresh token, etc.)
-            return Ok(ApiResponse<object>.Success(null, "Logged out successfully"));
+            return Ok(ResponseHelper.Success("Logged out successfully"));
         }
+
+        #endregion
     }
 }

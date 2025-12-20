@@ -1,7 +1,7 @@
 using log4net;
 using System.Reflection;
 using System.Text.Json;
-using UniManage.Core.Models;
+using UniManage.Model.Common;
 
 namespace UniManage.Core.Logging
 {
@@ -55,6 +55,20 @@ namespace UniManage.Core.Logging
             {
                 log.Info(logMessage);
             }
+        }
+
+        /// <summary>
+        /// Log API request/response using CoreLogModel
+        /// </summary>
+        /// <param name="logData">Log data model</param>
+        public static void WriteApiLog(CoreLogModel logData)
+        {
+            WriteApiLog(
+                apiName: logData.HeaderInfo?.ApiName ?? "Unknown",
+                message: logData.Message ?? (logData.IsException == 1 ? "Exception occurred" : "Success"),
+                headerInfo: logData.HeaderInfo,
+                isException: logData.IsException == 1
+            );
         }
 
         /// <summary>

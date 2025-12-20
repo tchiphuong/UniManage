@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Net;
 using System.Text;
-using UniManage.Core.Models;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 using UniManage.Resource;
 
 namespace UniManage.Api.Middleware
@@ -30,10 +31,7 @@ namespace UniManage.Api.Middleware
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.ContentType = "application/json; charset=utf-8";
 
-                var response = new CoreResponse(
-                    CoreApiReturnCode.ExceptionOccurred,
-                    CoreResource.Common_msg_ExceptionOccurred
-                );
+                var response = ResponseHelper.Error<object>(CoreResource.Common_msg_ExceptionOccurred);
 
                 var json = JsonConvert.SerializeObject(response);
                 await context.Response.WriteAsync(json, Encoding.UTF8);

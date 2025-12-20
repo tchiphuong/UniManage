@@ -1,4 +1,4 @@
-namespace UniManage.Resource;
+namespace UniManage.Resource.Interfaces;
 
 /// <summary>
 /// Interface for accessing localized resources

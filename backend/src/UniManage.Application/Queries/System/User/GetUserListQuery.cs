@@ -1,67 +1,104 @@
+using Dapper;
 using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
-using UniManage.Core.Models;
-using UniManage.Resource;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 
-namespace UniManage.Api.Domains.Query.System.User
+namespace UniManage.Application.Queries.System.User
 {
-    #region Query
-    public class GetUserListQuery : BaseQuery, IRequest<ApiResponse<object>>
+    public sealed class GetUserListQuery : BaseQuery, IRequest<ApiResponse<PagedResult>>
     {
+        public int? Status { get; set; }
+
         public class Result
         {
+            public int Id { get; set; }
+            public string Username { get; set; } = default!;
+            public string EmployeeCode { get; set; } = default!;
+            public string RoleCode { get; set; } = default!;
+            public string? Email { get; set; }
+            public int Status { get; set; }
+            public DateTime CreatedAt { get; set; }
         }
     }
-    #endregion
 
-    #region Validator
-    public class GetUserListQueryValidator : AbstractValidator<GetUserListQuery>
+    public sealed class ListUsersQueryValidator : AbstractValidator<GetUserListQuery>
     {
-        public GetUserListQueryValidator()
+        public ListUsersQueryValidator()
         {
+            RuleFor(x => x.PageIndex).GreaterThan(0).WithMessage("Page index must be greater than 0");
+            RuleFor(x => x.PageSize).InclusiveBetween(1, 100).WithMessage("Page size must be between 1 and 100");
         }
     }
-    #endregion
 
-    #region Handler
-    public class GetUserListQueryHandler : BaseQuery, IRequestHandler<GetUserListQuery, ApiResponse<object>>
+    public sealed class ListUsersQueryHandler : IRequestHandler<GetUserListQuery, ApiResponse<PagedResult>>
     {
-        public async Task<CoreResponse> Handle(GetUserListQuery request, CancellationToken cancellationToken)
+        public async Task<ApiResponse<PagedResult>> Handle(GetUserListQuery request, CancellationToken ct)
         {
-            CoreResponse response;
-
-            // Initialize log data
-            CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
-            logData.Parameter = new List<CoreParamModel>
+            try
             {
-            };
-            List<GetUserListQuery.Result> result = new List<GetUserListQuery.Result>();
+                using (var dbContext = new DbContext())
+                {
+                    var sql = """
+                        SELECT Id, Username, EmployeeCode, RoleCode, Email, Status, CreatedAt
+                        FROM Users
+                        WHERE (@Keyword IS NULL 
+                            OR Username LIKE @Keyword + '%' 
+                            OR EmployeeCode LIKE @Keyword + '%'
+                            OR Email LIKE '%' + @Keyword + '%')
+                        AND (@Status IS NULL OR Status = @Status)
+                        ORDER BY CreatedAt DESC
+                        OFFSET (@PageIndex - 1) * @PageSize ROWS
+                        FETCH NEXT @PageSize ROWS ONLY;
 
-            // Use a using statement to manage the DbContext lifecycle
-            using (DbContext dbContext = new DbContext())
-            {
-                try
-                {
-                    response = new CoreResponse(returnCode: CoreApiReturnCode.Succeed, result: result);
-                }
-                catch (Exception ex)
-                {
-                    response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, CoreResource.Common_msg_ExceptionOccurred);
-                    #region write log
-                    logData.Result = response.Data;
-                    logData.Message = ex.ToString();
-                    logData.IsException = 1;
-                    logData.ReturnCode = response.ReturnCode;
-                    #endregion
+                        SELECT COUNT(*)
+                        FROM Users
+                        WHERE (@Keyword IS NULL 
+                            OR Username LIKE @Keyword + '%' 
+                            OR EmployeeCode LIKE @Keyword + '%'
+                            OR Email LIKE '%' + @Keyword + '%')
+                        AND (@Status IS NULL OR Status = @Status);
+                        """;
+
+                    var cmd = new CommandDefinition(
+                        sql,
+                        new
+                        {
+                            request.Keyword,
+                            request.Status,
+                            request.PageIndex,
+                            request.PageSize
+                        },
+                        dbContext.transaction,
+                        cancellationToken: ct);
+
+                    using (var multi = await dbContext.connection.QueryMultipleAsync(cmd))
+                    {
+                        var items = await multi.ReadAsync<GetUserListQuery.Result>();
+                        var total = await multi.ReadSingleAsync<int>();
+
+                        var result = new PagedResult
+                        {
+                            Items = items.Cast<object>().ToList(),
+                            Paging = new PagingInfo
+                            {
+                                PageIndex = request.PageIndex,
+                                PageSize = request.PageSize,
+                                TotalItems = total
+                            }
+                        };
+
+                        return ResponseHelper.Success(result, "Users retrieved successfully");
+                    }
                 }
             }
-
-            UniLogManager.WriteApiLog(logData);
-
-            return await Task.FromResult(response);
+            catch (Exception ex)
+            {
+                UniLogger.Error($"Error retrieving users list: {ex.Message}", ex);
+                return ResponseHelper.Error<PagedResult>("Failed to retrieve users");
+            }
         }
     }
-    #endregion
 }

@@ -1,0 +1,86 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="Microsoft.Data.SqlClient" #>
+<#@ assembly name="Newtonsoft.Json" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="Microsoft.Data.SqlClient" #>
+<#@ import namespace="Newtonsoft.Json.Linq" #>
+<#@ output extension=".cs" encoding="utf-8" #>
+<#
+    // Đọc config từ appsettings.json
+    string configPath = Host.ResolvePath("..\\appsettings.json");
+    if (!File.Exists(configPath))
+    {
+        throw new FileNotFoundException("Không tìm thấy file appsettings.json tại: " + configPath);
+    }
+
+    var jsonConfig = JObject.Parse(File.ReadAllText(configPath));
+    var dbConfig = jsonConfig["Database"];
+
+    string dbServer = dbConfig["Server"]?.ToString();
+    string dbDatabase = dbConfig["DefaultDatabase"]?.ToString();
+    string dbUser = dbConfig["UserId"]?.ToString();
+    string dbPassword = dbConfig["Password"]?.ToString();
+
+    string connectionString = $"Data Source={dbServer};Initial Catalog={dbDatabase};User ID={dbUser};Password={dbPassword};TrustServerCertificate=True;";
+
+    // Lấy dữ liệu từ bảng sy_languages
+    var languages = new List<(string Code, string Name, string Icon, bool IsDefault, bool IsActive)>();
+    using (var conn = new SqlConnection(connectionString))
+    {
+        conn.Open();
+        using (var cmd = new SqlCommand(@"
+                SELECT [LanguageCode], [LanguageName], [Icon], [IsDefault], [IsActive]
+                FROM [dbo].[sy_languages]
+            ", conn))
+        using (var reader = cmd.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                string code = reader["LanguageCode"]?.ToString();
+                // Đảm bảo lấy đúng Unicode cho nvarchar
+                string name = reader.GetString(reader.GetOrdinal("LanguageName"));
+                string icon = reader["Icon"]?.ToString();
+                bool isDefault = reader["IsDefault"] != DBNull.Value && (bool)reader["IsDefault"];
+                bool isActive = reader["IsActive"] != DBNull.Value && (bool)reader["IsActive"];
+                languages.Add((code, name, icon, isDefault, isActive));
+            }
+        }
+    }
+#>
+namespace UniManage.Core.Contants
+{
+    public static class LanguageData
+    {
+        public static readonly List<(string Code, string Name, string Icon, bool IsDefault, bool IsActive)> All = new List<(string, string, string, bool, bool)>
+        {
+<#
+    foreach (var lang in languages)
+    {
+        // Đảm bảo chuỗi Unicode được encode đúng trong T4
+        string code = lang.Code ?? "";
+        string name = lang.Name ?? "";
+        string icon = lang.Icon ?? "";
+        string safeName = name.Replace("\"", "\\\""); // escape dấu "
+#>
+            ("<#= code #>", @"<#= safeName #>", "<#= icon #>", <#= lang.IsDefault.ToString().ToLower() #>, <#= lang.IsActive.ToString().ToLower() #>),
+<#
+    }
+#>
+        };
+
+<#
+    foreach (var lang in languages)
+    {
+        var constName = lang.Code.Replace("-", "_").Replace(" ", "_").ToUpperInvariant();
+#>
+        public const string <#= constName #> = "<#= lang.Code #>";
+<#
+    }
+#>
+    }
+}

@@ -1,12 +1,13 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using UniManage.Api.Domains.Command.System.User;
-using UniManage.Api.Domains.Query.System.User;
-using UniManage.Core.Helpers;
-using UniManage.Core.Models;
+using UniManage.Application.Commands.System.User;
+using UniManage.Application.Queries.System.User;
+using UniManage.Core.Constant;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 using UniManage.Resource;
 
-namespace UniManage.Api.Controllers
+namespace UniManage.Api.Controllers.System
 {
     [ApiController]
     [Route("api/v1/users")]
@@ -33,8 +34,10 @@ namespace UniManage.Api.Controllers
 
             var validation = await new CreateUserCommandValidator().ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
-                return BadRequest(new CoreResponse(CoreApiReturnCode.InvalidData, CoreResource.Common_msg_InvalidData)
+                return BadRequest(new ApiResponse<object>
                 {
+                    ReturnCode = CoreApiReturnCode.InvalidData,
+                    Message = CoreResource.Common_msg_InvalidData,
                     Errors = validation.Errors.ToFieldErrorModels()
                 });
 
@@ -53,8 +56,10 @@ namespace UniManage.Api.Controllers
 
             var validation = await new GetUserByIdQueryValidator().ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
-                return BadRequest(new CoreResponse(CoreApiReturnCode.InvalidData, CoreResource.Common_msg_InvalidData)
+                return BadRequest(new ApiResponse<object>
                 {
+                    ReturnCode = CoreApiReturnCode.InvalidData,
+                    Message = CoreResource.Common_msg_InvalidData,
                     Errors = validation.Errors.ToFieldErrorModels()
                 });
 
@@ -71,14 +76,6 @@ namespace UniManage.Api.Controllers
         {
             request ??= new();
             request.HeaderInfo = HeaderInfo;
-
-            var validation = await new GetUserListQueryValidator().ValidateAsync(request, cancellationToken);
-            if (!validation.IsValid)
-                return BadRequest(new CoreResponse(CoreApiReturnCode.InvalidData, CoreResource.Common_msg_InvalidData)
-                {
-                    Errors = validation.Errors.ToFieldErrorModels()
-                });
-
             var result = await _mediator.Send(request, cancellationToken);
             return Ok(result);
         }
@@ -96,8 +93,10 @@ namespace UniManage.Api.Controllers
 
             var validation = await new UpdateUserCommandValidator().ValidateAsync(request, cancellationToken);
             if (!validation.IsValid)
-                return BadRequest(new CoreResponse(CoreApiReturnCode.InvalidData, CoreResource.Common_msg_InvalidData)
+                return BadRequest(new ApiResponse<object>
                 {
+                    ReturnCode = CoreApiReturnCode.InvalidData,
+                    Message = CoreResource.Common_msg_InvalidData,
                     Errors = validation.Errors.ToFieldErrorModels()
                 });
 
@@ -109,21 +108,23 @@ namespace UniManage.Api.Controllers
 
         #region DELETE: /api/v1/users/{id}
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromRoute] List<int> ids, CancellationToken cancellationToken)
-        {
-            var request = new DeleteUserCommand{ Ids = ids, HeaderInfo = HeaderInfo };
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> Delete([FromRoute] List<int> ids, CancellationToken cancellationToken)
+        //{
+        //    var request = new DeleteUserCommand { Ids = ids, HeaderInfo = HeaderInfo };
 
-            var validation = await new DeleteUserCommandValidator().ValidateAsync(request, cancellationToken);
-            if (!validation.IsValid)
-                return BadRequest(new CoreResponse(CoreApiReturnCode.InvalidData, CoreResource.Common_msg_InvalidData)
-                {
-                    Errors = validation.Errors.ToFieldErrorModels()
-                });
+        //    var validation = await new DeleteUserCommandValidator().ValidateAsync(request, cancellationToken);
+        //    if (!validation.IsValid)
+        //        return BadRequest(new ApiResponse<object>
+        //        {
+        //            ReturnCode = CoreApiReturnCode.InvalidData,
+        //            Message = CoreResource.Common_msg_InvalidData,
+        //            Errors = validation.Errors.ToFieldErrorModels()
+        //        });
 
-            var result = await _mediator.Send(request, cancellationToken);
-            return Ok(result);
-        }
+        //    var result = await _mediator.Send(request, cancellationToken);
+        //    return Ok(result);
+        //}
 
         #endregion
     }

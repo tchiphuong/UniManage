@@ -2,17 +2,20 @@ using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
-using UniManage.Core.Models;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
 using UniManage.Resource;
 
-namespace UniManage.Api.Domains.Query.System.User
+namespace UniManage.Application.Queries.System.User
 {
     #region Query
-    public class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<object>>
+    public class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<GetUserByIdQuery.Result>>
     {
         public int Id { get; set; }
+
         public class Result
         {
+
         }
     }
     #endregion
@@ -27,29 +30,29 @@ namespace UniManage.Api.Domains.Query.System.User
     #endregion
 
     #region Handler
-    public class GetUserByIdQueryHandler : BaseQuery, IRequestHandler<GetUserByIdQuery, ApiResponse<object>>
+    public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, ApiResponse<GetUserByIdQuery.Result>>
     {
-        public async Task<CoreResponse> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
+        public async Task<ApiResponse<GetUserByIdQuery.Result>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
         {
-            CoreResponse response;
+            ApiResponse<GetUserByIdQuery.Result> response;
 
             // Initialize log data
             CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
             logData.Parameter = new List<CoreParamModel>
             {
             };
-            List<GetUserByIdQuery.Result> result = new List<GetUserByIdQuery.Result>();
+            GetUserByIdQuery.Result result = new GetUserByIdQuery.Result();
 
             // Use a using statement to manage the DbContext lifecycle
             using (DbContext dbContext = new DbContext())
             {
                 try
                 {
-                    response = new CoreResponse(returnCode: CoreApiReturnCode.Succeed, result: result);
+                    response = ResponseHelper.Success(result);
                 }
                 catch (Exception ex)
                 {
-                    response = new CoreResponse(CoreApiReturnCode.ExceptionOccurred, CoreResource.Common_msg_ExceptionOccurred);
+                    response = ResponseHelper.Error<GetUserByIdQuery.Result>(CoreResource.Common_msg_ExceptionOccurred);
                     #region write log
                     logData.Result = response.Data;
                     logData.Message = ex.ToString();
@@ -61,7 +64,7 @@ namespace UniManage.Api.Domains.Query.System.User
 
             UniLogManager.WriteApiLog(logData);
 
-            return await Task.FromResult(response);
+            return response;
         }
     }
     #endregion

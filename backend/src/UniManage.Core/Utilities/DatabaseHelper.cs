@@ -1,6 +1,6 @@
-using Dapper;
+﻿using Dapper;
 using UniManage.Core.Database;
-using UniManage.Core.Models;
+using UniManage.Model.Common;
 
 namespace UniManage.Core.Utilities
 {
@@ -166,48 +166,63 @@ namespace UniManage.Core.Utilities
             return (whereClause, parameters);
         }
 
-        /// <summary>
-        /// Execute paginated query with total count
-        /// </summary>
-        /// <typeparam name="T">Result type</typeparam>
-        /// <param name="baseQuery">Base SELECT query</param>
-        /// <param name="whereClause">WHERE clause</param>
-        /// <param name="orderByClause">ORDER BY clause</param>
-        /// <param name="parameters">Query parameters</param>
-        /// <param name="pageIndex">Page number (1-based)</param>
-        /// <param name="pageSize">Items per page</param>
-        /// <returns>Paginated results with total count</returns>
-        public static async Task<(IReadOnlyList<T> Items, int TotalCount)> QueryPagingAsync<T>(
-            string baseQuery,
-            string whereClause,
-            string orderByClause,
-            object parameters,
-            int pageIndex,
-            int pageSize)
+        public static async Task<PagedResult> QueryPagingAsync(DbContext dbContext, string baseQuery, string whereClause, string orderByClause, object parameters, int pageIndex, int pageSize)
         {
-            using (var db = new DbContext())
+            // 1. Validation cơ bản
+            if (pageIndex < 1) pageIndex = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            // 2. Xử lý bắt buộc có ORDER BY cho hàm OFFSET
+            if (string.IsNullOrWhiteSpace(orderByClause))
             {
-                // Get total count
-                var countQuery = $@"
-                    SELECT COUNT(*)
-                    FROM ({baseQuery}) t
-                    {whereClause}";
-
-                var totalCount = await db.connection.ExecuteScalarAsync<int>(countQuery, parameters);
-
-                // Get paginated data
-                var dataQuery = $@"
-                    SELECT t.*
-                    FROM ({baseQuery}) t
-                    {whereClause}
-                    {orderByClause} 
-                    OFFSET {(pageIndex - 1) * pageSize} ROWS 
-                    FETCH NEXT {pageSize} ROWS ONLY";
-
-                var results = await db.connection.QueryAsync<T>(dataQuery, parameters);
-
-                return (results.ToList(), totalCount);
+                // Fallback: Nếu không có sort, SQL Server cần một cái gì đó để order trước khi offset
+                // Lưu ý: Cách này có thể không ổn định thứ tự, tốt nhất nên bắt buộc truyền order by
+                orderByClause = "ORDER BY (SELECT NULL)";
+                // Hoặc throw exception yêu cầu dev phải truyền vào
+                // throw new ArgumentException("ORDER BY clause is required for pagination.");
             }
+
+            // 3. Get total count
+            // Lưu ý: Thêm "WHERE 1=1" hoặc xử lý logic để đảm bảo cú pháp whereClause đúng (có chữ WHERE hay chưa)
+            // Giả sử whereClause bạn truyền vào đã bao gồm chữ "WHERE" hoặc rỗng.
+            var countQuery = $@"
+                                SELECT COUNT(1)
+                                FROM ({baseQuery}) AS TotalQuery
+                                {whereClause}";
+
+            var totalCount = await dbContext.connection.ExecuteScalarAsync<int>(countQuery, parameters, transaction: dbContext.transaction);
+
+            // 4. Get data (chỉ chạy nếu có dữ liệu)
+            List<dynamic> items = new List<dynamic>();
+            if (totalCount > 0)
+            {
+                var dataQuery = $@"
+                                    SELECT t.*
+                                    FROM ({baseQuery}) AS DataQuery
+                                    {whereClause}
+                                    {orderByClause} 
+                                    OFFSET @Skip ROWS 
+                                    FETCH NEXT @Take ROWS ONLY";
+
+                // Sử dụng DynamicParameters để merge tham số phân trang an toàn
+                var dynamicParams = new DynamicParameters(parameters);
+                dynamicParams.Add("@Skip", (pageIndex - 1) * pageSize);
+                dynamicParams.Add("@Take", pageSize);
+
+                var results = await dbContext.connection.QueryAsync(dataQuery, dynamicParams, transaction: dbContext.transaction);
+                items = results.ToList();
+            }
+
+            return new PagedResult
+            {
+                Items = items,
+                Paging = new PagingInfo
+                {
+                    TotalItems = totalCount,
+                    PageSize = pageSize,
+                    PageIndex = pageIndex // Nên trả về cả trang hiện tại
+                }
+            };
         }
     }
 }
