@@ -134,7 +134,7 @@ CREATE DATABASE UniManageLog;
 #### Tạo user:
 
 ```sql
-CREATE LOGIN uni_manager WITH PASSWORD = 'uni_manager@2024';
+CREATE LOGIN uni_manager WITH PASSWORD = 'YOUR_STRONG_PASSWORD';
 USE UniManage;
 CREATE USER uni_manager FOR LOGIN uni_manager;
 ALTER ROLE db_owner ADD MEMBER uni_manager;
@@ -156,11 +156,11 @@ Cập nhật `src/UniManage.Core/appsettings.Development.json`:
 ```json
 {
     "Database": {
-        "Server": "YOUR_SERVER\\SQLEXPRESS",
+        "Server": "YOUR_SERVER_NAME",
         "DefaultDatabase": "UniManage",
         "LogDatabase": "UniManageLog",
         "UserId": "uni_manager",
-        "Password": "uni_manager@2024",
+        "Password": "YOUR_DB_PASSWORD",
         "TrustServerCertificate": true
     }
 }
@@ -394,10 +394,10 @@ UniManage hỗ trợ mã hóa password trong configuration file với AES-256.
 ```json
 {
     "Database": {
-        "Server": "TCPHUONG\\SQLEXPRESS",
+        "Server": "YOUR_SERVER_NAME",
         "DefaultDatabase": "UniManage",
         "UserId": "uni_manager",
-        "Password": "uni_manager@2024",
+        "Password": "YOUR_DB_PASSWORD",
         "TrustServerCertificate": true
     }
 }
@@ -423,10 +423,10 @@ UniManage hỗ trợ mã hóa password trong configuration file với AES-256.
 
 ```powershell
 # PowerShell (User-level - permanent)
-[Environment]::SetEnvironmentVariable("UNIMANAGE_ENCRYPTION_SEED", "YourSecretSeed2024", "User")
+[Environment]::SetEnvironmentVariable("UNIMANAGE_ENCRYPTION_SEED", "YOUR_SECRET_SEED_HERE", "User")
 
 # Hoặc session hiện tại
-$env:UNIMANAGE_ENCRYPTION_SEED = "YourSecretSeed2024"
+$env:UNIMANAGE_ENCRYPTION_SEED = "YOUR_SECRET_SEED_HERE"
 ```
 
 #### 2. Encrypt Password:
@@ -437,7 +437,7 @@ $env:UNIMANAGE_ENCRYPTION_SEED = "YourSecretSeed2024"
 
 # Cách 2: Command line
 cd src\UniManage.Core
-dotnet run -- encrypt "uni_manager@2024"
+dotnet run -- encrypt "YOUR_DB_PASSWORD"
 ```
 
 Output:
