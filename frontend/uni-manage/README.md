@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UniManage Frontend
 
-## Getting Started
+This is the frontend application for the **UniManage** system, built with **Next.js 15 (App Router)** and **HeroUI v3**.
 
-First, run the development server:
+## 🚀 Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+-   **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+-   **Language**: [TypeScript](https://www.typescriptlang.org/)
+-   **UI Library**: [HeroUI v3](https://www.heroui.com/) (formerly NextUI)
+-   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+-   **Icons**: [Iconify](https://iconify.design/)
+-   **Data Fetching**: [TanStack Query v5](https://tanstack.com/query/latest)
+-   **Internationalization**: `next-intl`
+-   **Validation**: `zod` + `react-hook-form`
+
+## 📂 Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages & layouts
+│   ├── (dashboard)/        # Dashboard layout routes (System, HR, etc.)
+│   ├── auth/               # Authentication routes (Login)
+│   ├── providers.tsx       # Global providers (Theme, Query, UI)
+│   └── layout.tsx          # Root layout
+│
+├── components/             # Reusable UI components
+│   ├── common/             # Generic atoms (DataTable, Input, etc.)
+│   ├── layout/             # Sidebar, Header, etc.
+│   └── ...
+│
+├── hooks/                  # Custom React hooks (useAuth, etc.)
+├── lib/                    # Utilities, API, Constants
+│   ├── api-endpoints.ts    # Centralized API URLs
+│   └── http-client.ts      # Axios wrapper
+│
+├── services/               # API service layers (UserService, AuthService)
+└── types/                  # TypeScript interfaces & types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+-   Node.js 20+
+-   Backend API running (usually at `http://localhost:5297`)
 
-## Learn More
+### Installation
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Install dependencies**:
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2.  **Environment Setup**:
+    Create a `.env.local` file in the root of `frontend/uni-manage`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    ```env
+    # Base URL for the Backend API
+    NEXT_PUBLIC_API_URL=http://localhost:5297/api/v1
+    ```
 
-## Deploy on Vercel
+3.  **Run Development Server**:
+    ```bash
+    npm run dev
+    ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 UI Guidelines
+
+-   **Components**: Always ensure consistency by using components from `@heroui/react`.
+-   **Icons**: Use Iconify icons (e.g., `<Icon icon="solar:user-bold" />`).
+-   **Responsive**: Use Tailwind's utility classes (`md:`, `lg:`) to ensure responsiveness.
+-   **Theme**: The app supports Dark/Light mode via `next-themes` (built into HeroUI).
+
+## 🌍 Internationalization
+
+We use `next-intl` for translations.
+-   Run the backend to serve dynamic resources/languages if applicable, or check `messages/` folder (if using file-based).
+-   Current supported locales: `vi` (Vietnamese - Default), `en` (English).
+
+## 📦 Scripts
+
+-   `npm run dev`: Start dev server.
+-   `npm run build`: Build for production.
+-   `npm run start`: Start production server.
+-   `npm run lint`: Run ESLint.
