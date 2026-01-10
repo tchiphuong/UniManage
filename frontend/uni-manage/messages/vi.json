@@ -1,0 +1,132 @@
+{
+    "common": {
+        "appName": "UniManage",
+        "appDescription": "Hệ thống quản lý đại học toàn diện",
+        "loading": "Đang tải...",
+        "save": "Lưu",
+        "cancel": "Hủy",
+        "delete": "Xóa",
+        "edit": "Sửa",
+        "add": "Thêm",
+        "search": "Tìm kiếm",
+        "filter": "Lọc",
+        "export": "Xuất dữ liệu",
+        "import": "Nhập dữ liệu",
+        "confirm": "Xác nhận",
+        "back": "Quay lại",
+        "next": "Tiếp theo",
+        "previous": "Trước",
+        "submit": "Gửi",
+        "reset": "Đặt lại",
+        "dashboard": "Trang chủ",
+        "users": "Người dùng",
+        "settings": "Cài đặt",
+        "logout": "Đăng xuất",
+        "close": "Đóng",
+        "yes": "Có",
+        "no": "Không",
+        "language": "Ngôn ngữ",
+        "languageVietnamese": "Tiếng Việt",
+        "languageEnglish": "Tiếng Anh",
+        "languageSelect": "Chọn ngôn ngữ"
+    },
+    "auth": {
+        "login": "Đăng nhập",
+        "logout": "Đăng xuất",
+        "register": "Đăng ký",
+        "forgotPassword": "Quên mật khẩu?",
+        "resetPassword": "Đặt lại mật khẩu",
+        "changePassword": "Đổi mật khẩu",
+        "username": "Tên đăng nhập",
+        "password": "Mật khẩu",
+        "email": "Email",
+        "rememberMe": "Ghi nhớ đăng nhập",
+        "loginSuccess": "Đăng nhập thành công",
+        "loginFailed": "Đăng nhập thất bại",
+        "logoutSuccess": "Đăng xuất thành công",
+        "loginTitle": "Chào mừng trở lại",
+        "loginSubtitle": "Đăng nhập vào tài khoản của bạn",
+        "usernamePlaceholder": "Nhập tên đăng nhập",
+        "passwordPlaceholder": "Nhập mật khẩu",
+        "loggingIn": "Đang đăng nhập...",
+        "noAccount": "Chưa có tài khoản?",
+        "createAccount": "Tạo tài khoản",
+        "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không đúng",
+        "requiredField": "Trường này là bắt buộc",
+        "orContinueWith": "Hoặc tiếp tục với",
+        "signInWithGoogle": "Đăng nhập với Google"
+    },
+    "nav": {
+        "dashboard": "Tổng quan",
+        "students": "Sinh viên",
+        "teachers": "Giảng viên",
+        "courses": "Khóa học",
+        "classes": "Lớp học",
+        "schedules": "Thời khóa biểu",
+        "grades": "Điểm số",
+        "finance": "Tài chính",
+        "reports": "Báo cáo",
+        "settings": "Cài đặt",
+        "profile": "Hồ sơ cá nhân"
+    },
+    "home": {
+        "title": "UniManage - Hệ thống Quản lý Đại học",
+        "learnMore": "Tìm hiểu thêm",
+        "students": {
+            "title": "Quản lý Sinh viên",
+            "description": "Quản lý thông tin, điểm số và hoạt động của sinh viên"
+        },
+        "teachers": {
+            "title": "Quản lý Giảng viên",
+            "description": "Quản lý hồ sơ, lịch giảng và nghiên cứu khoa học"
+        },
+        "courses": {
+            "title": "Quản lý Khóa học",
+            "description": "Quản lý chương trình đào tạo và thời khóa biểu"
+        }
+    },
+    "validation": {
+        "required": "{field} là bắt buộc",
+        "email": "Email không hợp lệ",
+        "phone": "Số điện thoại không hợp lệ",
+        "minLength": "{field} phải có ít nhất {min} ký tự",
+        "maxLength": "{field} không được vượt quá {max} ký tự",
+        "min": "{field} phải lớn hơn hoặc bằng {min}",
+        "max": "{field} phải nhỏ hơn hoặc bằng {max}"
+    },
+    "error": {
+        "general": "Đã có lỗi xảy ra",
+        "network": "Lỗi kết nối mạng",
+        "unauthorized": "Bạn không có quyền truy cập",
+        "notFound": "Không tìm thấy dữ liệu",
+        "serverError": "Lỗi máy chủ",
+        "tryAgain": "Vui lòng thử lại"
+    },
+    "success": {
+        "saved": "Lưu thành công",
+        "deleted": "Xóa thành công",
+        "updated": "Cập nhật thành công",
+        "created": "Tạo mới thành công"
+    },
+    "pagination": {
+        "showing": "Hiển thị",
+        "of": "của",
+        "results": "kết quả",
+        "page": "Trang",
+        "rowsPerPage": "Số dòng mỗi trang"
+    },
+    "dashboard": {
+        "title": "Tổng quan",
+        "welcome": "Chào mừng trở lại! Đây là những gì đang diễn ra hôm nay.",
+        "totalUsers": "Tổng người dùng",
+        "revenue": "Doanh thu",
+        "activeSessions": "Phiên hoạt động",
+        "pendingTasks": "Công việc chờ xử lý",
+        "recentActivity": "Hoạt động gần đây",
+        "quickActions": "Thao tác nhanh",
+        "refresh": "Làm mới",
+        "addUser": "Thêm người dùng",
+        "newReport": "Báo cáo mới",
+        "support": "Hỗ trợ"
+    }
+}

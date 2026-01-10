@@ -1,178 +1,124 @@
-using log4net;
-using log4net.Config;
-using System.Reflection;
+using Serilog;
 
 namespace UniManage.Core.Logging
 {
     /// <summary>
-    /// Static logger utility - không cần dependency injection
-    /// Sử dụng log4net, tự động load config từ app.config
+    /// Static logger utility - Wrapper for Serilog
     /// </summary>
     public static class UniLogger
     {
-        private static readonly ILog _logger;
-        private static bool _isConfigured = false;
-
-        static UniLogger()
-        {
-            // Auto-configure log4net từ app.config
-            var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
-            XmlConfigurator.Configure(logRepository, new FileInfo("app.config"));
-
-            _logger = LogManager.GetLogger(typeof(UniLogger));
-            _isConfigured = true;
-        }
+        // Serilog Logger is configured globally in Program.cs/UniLogManager.Initialize
 
         /// <summary>
-        /// Log thông tin debug (chỉ hiển thị khi Debug mode)
+        /// Log debug
         /// </summary>
         public static void Debug(string message)
         {
-            if (_isConfigured && _logger.IsDebugEnabled)
-            {
-                _logger.Debug(message);
-            }
+            Log.Debug(message);
         }
 
         /// <summary>
-        /// Log thông tin debug với exception
+        /// Log debug with exception
         /// </summary>
         public static void Debug(string message, Exception exception)
         {
-            if (_isConfigured && _logger.IsDebugEnabled)
-            {
-                _logger.Debug(message, exception);
-            }
+            Log.Debug(exception, message);
         }
 
         /// <summary>
-        /// Log thông tin (Info level)
+        /// Log info
         /// </summary>
         public static void Info(string message)
         {
-            if (_isConfigured && _logger.IsInfoEnabled)
-            {
-                _logger.Info(message);
-            }
+            Log.Information(message);
         }
 
         /// <summary>
-        /// Log thông tin với exception
+        /// Log info with exception
         /// </summary>
         public static void Info(string message, Exception exception)
         {
-            if (_isConfigured && _logger.IsInfoEnabled)
-            {
-                _logger.Info(message, exception);
-            }
+            Log.Information(exception, message);
         }
 
         /// <summary>
-        /// Log cảnh báo (Warning)
+        /// Log warning
         /// </summary>
         public static void Warn(string message)
         {
-            if (_isConfigured && _logger.IsWarnEnabled)
-            {
-                _logger.Warn(message);
-            }
+            Log.Warning(message);
         }
 
         /// <summary>
-        /// Log cảnh báo với exception
+        /// Log warning with exception
         /// </summary>
         public static void Warn(string message, Exception exception)
         {
-            if (_isConfigured && _logger.IsWarnEnabled)
-            {
-                _logger.Warn(message, exception);
-            }
+            Log.Warning(exception, message);
         }
 
         /// <summary>
-        /// Log lỗi (Error)
+        /// Log error
         /// </summary>
         public static void Error(string message)
         {
-            if (_isConfigured && _logger.IsErrorEnabled)
-            {
-                _logger.Error(message);
-            }
+            Log.Error(message);
         }
 
         /// <summary>
-        /// Log lỗi với exception
+        /// Log error with exception
         /// </summary>
         public static void Error(string message, Exception exception)
         {
-            if (_isConfigured && _logger.IsErrorEnabled)
-            {
-                _logger.Error(message, exception);
-            }
+            Log.Error(exception, message);
         }
 
         /// <summary>
-        /// Log lỗi nghiêm trọng (Fatal)
+        /// Log fatal
         /// </summary>
         public static void Fatal(string message)
         {
-            if (_isConfigured && _logger.IsFatalEnabled)
-            {
-                _logger.Fatal(message);
-            }
+            Log.Fatal(message);
         }
 
         /// <summary>
-        /// Log lỗi nghiêm trọng với exception
+        /// Log fatal with exception
         /// </summary>
         public static void Fatal(string message, Exception exception)
         {
-            if (_isConfigured && _logger.IsFatalEnabled)
-            {
-                _logger.Fatal(message, exception);
-            }
+            Log.Fatal(exception, message);
         }
 
         /// <summary>
-        /// Log với format string (tránh string interpolation nếu log level disabled)
+        /// Log info with format
         /// </summary>
         public static void InfoFormat(string format, params object[] args)
         {
-            if (_isConfigured && _logger.IsInfoEnabled)
-            {
-                _logger.InfoFormat(format, args);
-            }
+            // Use string.Format to maintain compatibility with legacy log4net calls that expect index placeholders
+            Log.Information(string.Format(format, args));
         }
 
         /// <summary>
-        /// Log warning với format string
+        /// Log warning with format
         /// </summary>
         public static void WarnFormat(string format, params object[] args)
         {
-            if (_isConfigured && _logger.IsWarnEnabled)
-            {
-                _logger.WarnFormat(format, args);
-            }
+            Log.Warning(string.Format(format, args));
         }
 
         /// <summary>
-        /// Log error với format string
+        /// Log error with format
         /// </summary>
         public static void ErrorFormat(string format, params object[] args)
         {
-            if (_isConfigured && _logger.IsErrorEnabled)
-            {
-                _logger.ErrorFormat(format, args);
-            }
+            Log.Error(string.Format(format, args));
         }
 
-        /// <summary>
-        /// Kiểm tra log level có enabled không
-        /// </summary>
-        public static bool IsDebugEnabled => _isConfigured && _logger.IsDebugEnabled;
-        public static bool IsInfoEnabled => _isConfigured && _logger.IsInfoEnabled;
-        public static bool IsWarnEnabled => _isConfigured && _logger.IsWarnEnabled;
-        public static bool IsErrorEnabled => _isConfigured && _logger.IsErrorEnabled;
-        public static bool IsFatalEnabled => _isConfigured && _logger.IsFatalEnabled;
+        // Checks (Serilog checks internally usually, but we map them)
+        public static bool IsDebugEnabled => Log.IsEnabled(Serilog.Events.LogEventLevel.Debug);
+        public static bool IsInfoEnabled => Log.IsEnabled(Serilog.Events.LogEventLevel.Information);
+        public static bool IsWarnEnabled => Log.IsEnabled(Serilog.Events.LogEventLevel.Warning);
+        public static bool IsErrorEnabled => Log.IsEnabled(Serilog.Events.LogEventLevel.Error);
+        public static bool IsFatalEnabled => Log.IsEnabled(Serilog.Events.LogEventLevel.Fatal);
     }
 }

@@ -1,24 +1,24 @@
-using log4net;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
 using System.Diagnostics;
 using System.Text;
+using Serilog;
+using Serilog.Context;
 
 namespace UniManage.Api.Middleware;
 
 /// <summary>
-/// Middleware to log API requests and responses
+/// Middleware to log API requests and responses (Serilog implementation)
 /// </summary>
 public class ApiLoggingMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ILog _logger;
     private readonly string[] _sensitiveData = { "password", "token", "secret", "authorization" };
 
     public ApiLoggingMiddleware(RequestDelegate next)
     {
         _next = next;
-        _logger = LogManager.GetLogger(typeof(ApiLoggingMiddleware));
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -27,95 +27,136 @@ public class ApiLoggingMiddleware
         var originalBody = context.Response.Body;
         var requestBody = string.Empty;
 
-        try
-        {
-            // Log request
-            var correlationId = GetCorrelationId(context);
-            var user = context.User?.Identity?.Name ?? "anonymous";
-            var method = context.Request.Method;
-            var path = context.Request.GetDisplayUrl();
+        // Extract Context Info
+        var correlationId = GetCorrelationId(context);
+        var user = context.User?.Identity?.Name ?? "anonymous";
+        var method = context.Request.Method;
+        var path = context.Request.GetDisplayUrl();
+        var apiName = GetApiName(context);
+        var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-            // Determine API name for log file
-            string apiName = "general";
-            var endpoint = context.GetEndpoint();
-            if (endpoint != null)
+        // Push properties to LogContext for Sifting/Map sink
+        using (LogContext.PushProperty("ApiName", apiName))
+        using (LogContext.PushProperty("Cid", correlationId))
+        using (LogContext.PushProperty("Username", user))
+        using (LogContext.PushProperty("Method", method))
+        using (LogContext.PushProperty("Path", path))
+        using (LogContext.PushProperty("IpAddress", ipAddress))
+        {
+            try
             {
-                var routeValues = context.GetRouteData().Values;
-                if (routeValues.TryGetValue("controller", out var controller) &&
-                    routeValues.TryGetValue("action", out var action))
+                // Capture request body for non-GET methods
+                if (!HttpMethods.IsGet(context.Request.Method))
                 {
-                    apiName = $"{controller}-{action}".ToLower();
+                    context.Request.EnableBuffering();
+                    using var reader = new StreamReader(
+                        context.Request.Body,
+                        encoding: Encoding.UTF8,
+                        detectEncodingFromByteOrderMarks: false,
+                        leaveOpen: true);
+                    requestBody = await reader.ReadToEndAsync();
+
+                    // Reset position to allow re-reading
+                    context.Request.Body.Position = 0;
+                }
+
+                // Capture Headers
+                var headers = new StringBuilder();
+                foreach (var header in context.Request.Headers)
+                {
+                    // Skip sensitive headers or mask them
+                    if (header.Key.Equals("Authorization", StringComparison.OrdinalIgnoreCase) ||
+                        header.Key.Equals("Cookie", StringComparison.OrdinalIgnoreCase))
+                    {
+                        headers.AppendLine($"{header.Key}: ***");
+                    }
+                    else
+                    {
+                        headers.AppendLine($"{header.Key}: {header.Value}");
+                    }
+                }
+
+                // Log masked request (Logic kept but handled in final summary)
+                var maskedRequest = MaskSensitiveData(requestBody);
+                if (maskedRequest.Length > 64000)
+                {
+                    maskedRequest = maskedRequest[..64000] + "... [truncated]";
+                }
+
+                // Capture response
+                using var memStream = new MemoryStream();
+                context.Response.Body = memStream;
+
+                await _next(context);
+
+                memStream.Position = 0;
+                var responseBody = await new StreamReader(memStream).ReadToEndAsync();
+                memStream.Position = 0;
+                await memStream.CopyToAsync(originalBody);
+
+                sw.Stop();
+                var status = context.Response.StatusCode;
+                var elapsed = sw.ElapsedMilliseconds;
+
+                // Log masked response
+                var maskedResponse = MaskSensitiveData(responseBody);
+                if (maskedResponse.Length > 64000)
+                {
+                    maskedResponse = maskedResponse[..64000] + "... [truncated]";
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine($"[{correlationId}] SUMMARY: {method} {path} -> {status} ({elapsed}ms)");
+                sb.AppendLine($"IP: {ipAddress}");
+                sb.AppendLine("HEADERS:");
+                sb.AppendLine(headers.ToString().TrimEnd());
+                sb.AppendLine("REQUEST BODY:");
+                sb.AppendLine(string.IsNullOrWhiteSpace(maskedRequest) ? "(empty)" : maskedRequest);
+                sb.AppendLine("RESPONSE BODY:");
+                sb.AppendLine(string.IsNullOrWhiteSpace(maskedResponse) ? "(empty)" : maskedResponse);
+
+                // Additional properties for final log
+                using (LogContext.PushProperty("Status", status))
+                using (LogContext.PushProperty("ExecutionTime", elapsed))
+                {
+                    Log.Information(sb.ToString());
                 }
             }
-
-            // Set log4net context
-            LogicalThreadContext.Properties["api"] = apiName;
-            LogicalThreadContext.Properties["cid"] = correlationId;
-            LogicalThreadContext.Properties["user"] = user;
-            LogicalThreadContext.Properties["method"] = method;
-            LogicalThreadContext.Properties["path"] = path;
-
-            // Capture request body for non-GET methods
-            if (!HttpMethods.IsGet(context.Request.Method))
+            finally
             {
-                context.Request.EnableBuffering();
-                using var reader = new StreamReader(
-                    context.Request.Body,
-                    encoding: Encoding.UTF8,
-                    detectEncodingFromByteOrderMarks: false,
-                    leaveOpen: true);
-                requestBody = await reader.ReadToEndAsync();
-
-                // Reset position to allow re-reading
-                context.Request.Body.Position = 0;
+                context.Response.Body = originalBody;
             }
-
-            // Log masked request
-            var maskedRequest = MaskSensitiveData(requestBody);
-            if (maskedRequest.Length > 64000) // Truncate if > 64KB
-            {
-                maskedRequest = maskedRequest[..64000] + "... [truncated]";
-            }
-
-            // Capture response
-            using var memStream = new MemoryStream();
-            context.Response.Body = memStream;
-
-            await _next(context);
-
-            memStream.Position = 0;
-            var responseBody = await new StreamReader(memStream).ReadToEndAsync();
-            memStream.Position = 0;
-            await memStream.CopyToAsync(originalBody);
-
-            sw.Stop();
-            var status = context.Response.StatusCode;
-            var elapsed = sw.ElapsedMilliseconds;
-
-            // Update context for response log
-            LogicalThreadContext.Properties["status"] = status;
-            LogicalThreadContext.Properties["ms"] = elapsed;
-
-            // Log masked response
-            var maskedResponse = MaskSensitiveData(responseBody);
-            if (maskedResponse.Length > 64000)
-            {
-                maskedResponse = maskedResponse[..64000] + "... [truncated]";
-            }
-
-            var sb = new StringBuilder();
-            sb.AppendLine($"[{correlationId}] SUMMARY: {method} {path} -> {status} ({elapsed}ms)");
-            sb.AppendLine("REQUEST BODY:");
-            sb.AppendLine(string.IsNullOrWhiteSpace(maskedRequest) ? "(empty)" : maskedRequest);
-            sb.AppendLine("RESPONSE BODY:");
-            sb.AppendLine(string.IsNullOrWhiteSpace(maskedResponse) ? "(empty)" : maskedResponse);
-
-            _logger.Info(sb.ToString());
         }
-        finally
+    }
+
+    private string GetApiName(HttpContext context)
+    {
+        string apiName = "general";
+        var endpoint = context.GetEndpoint();
+        
+        if (endpoint is RouteEndpoint routeEndpoint)
         {
-            context.Response.Body = originalBody;
+            // Use Route Pattern (e.g. "api/users/{id}") instead of Controller-Action
+            var routePattern = routeEndpoint.RoutePattern.RawText;
+            if (!string.IsNullOrEmpty(routePattern))
+            {
+                apiName = $"{routePattern}_{context.Request.Method}"
+                    .Replace("/", "_")
+                    .Replace("{", "")
+                    .Replace("}", "")
+                    .ToLower();
+            }
         }
+        else if (endpoint != null)
+        {
+            var routeValues = context.GetRouteData().Values;
+            if (routeValues.TryGetValue("controller", out var controller) &&
+                routeValues.TryGetValue("action", out var action))
+            {
+                apiName = $"{controller}-{action}".ToLower();
+            }
+        }
+        return apiName;
     }
 
     private string GetCorrelationId(HttpContext context)

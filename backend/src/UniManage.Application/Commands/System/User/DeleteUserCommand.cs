@@ -1,68 +1,107 @@
 using FluentValidation;
 using MediatR;
+using Newtonsoft.Json;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
-using UniManage.Resource;
 
-namespace UniManage.Application.Commands.System.User
+namespace UniManage.Application.Commands.System.User;
+
+/// <summary>
+/// Command to delete (soft delete) users
+/// </summary>
+public sealed class DeleteUserCommand : BaseCommand, IRequest<ApiResponse<DeleteUserCommand.Response>>
 {
-	#region Command
-	public class DeleteUserCommand : BaseCommand, IRequest<ApiResponse<bool>>
+    public List<long> Ids { get; init; } = new();
+
+    // Internal - set by controller from token
+    internal string DeletedBy { get; init; } = default!;
+
+    public sealed class Response
     {
-        public List<int> Ids { get; set; } = new List<int>();
+        public List<long> Ids { get; init; } = new();
     }
-	#endregion
+}
 
-	#region Validator
-	public class DeleteUserCommandValidator : AbstractValidator<DeleteUserCommand>
-	{
-		public DeleteUserCommandValidator()
-		{
-			RuleFor(x => x.Ids)
-				.NotEmpty().WithMessage("Ids are required");
-		}
-	}
-	#endregion
+/// <summary>
+/// Validator for DeleteUserCommand
+/// </summary>
+public sealed class DeleteUserCommandValidator : AbstractValidator<DeleteUserCommand>
+{
+    public DeleteUserCommandValidator()
+    {
+        RuleFor(x => x.Ids)
+            .NotEmpty().WithMessage("At least one Id is required")
+            .Must(ids => ids.All(id => id > 0)).WithMessage("All Ids must be greater than 0");
+    }
+}
 
-	#region Handler
-	public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, ApiResponse<bool>>
-	{
-		public async Task<ApiResponse<bool>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
-		{
-			ApiResponse<bool> response;
+/// <summary>
+/// Handler for DeleteUserCommand
+/// </summary>
+public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, ApiResponse<DeleteUserCommand.Response>>
+{
+    public async Task<ApiResponse<DeleteUserCommand.Response>> Handle(DeleteUserCommand request, CancellationToken ct)
+    {
+        var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
+        {
+            Parameter = new List<CoreParamModel>
+            {
+                new() { Name = nameof(request.Ids), Value = JsonConvert.SerializeObject(request.Ids) },
+                new() { Name = nameof(request.DeletedBy), Value = request.DeletedBy }
+            }
+        };
 
-			// khai bao log & cac tham so dau vao
-			CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
-			logData.Parameter = new List<CoreParamModel>
-			{
-			};
+        using (var db = new DbContext(openTransaction: true))
+        {
+            try
+            {
+                // Soft delete by setting Status = 0
+                // Dapper handles List<long> for IN clause automatically
+                var rowsAffected = await db.ExecuteAsync(
+                    """
+                    UPDATE sy_users
+                    SET Status = 0,
+                        UpdatedBy = @DeletedBy,
+                        UpdatedAt = GETDATE()
+                    WHERE Id IN @Ids
+                    """,
+                    new
+                    {
+                        Ids = request.Ids,
+                        request.DeletedBy
+                    },
+                    ct);
 
-			using (DbContext dbContext = new DbContext(openTransaction: true))
-			{
-				try
-				{
-					response = ResponseHelper.Success<bool>(true);
-					await dbContext.transaction.CommitAsync(cancellationToken);
-				}
-				catch (Exception ex)
-				{
-					await dbContext.transaction.RollbackAsync(cancellationToken);
-					response = ResponseHelper.Error<bool>(CoreResource.Common_msg_ExceptionOccurred);
-					#region write log
-					logData.Result = response.Data;
-					logData.Message = ex.ToString();
-					logData.IsException = 1;
-					logData.ReturnCode = response.ReturnCode;
-					#endregion
-				}
-			}
+                if (rowsAffected == 0)
+                {
+                    await db.RollbackAsync(ct);
+                    return ResponseHelper.NotFound<DeleteUserCommand.Response>("No users found to delete");
+                }
 
-			UniLogManager.WriteApiLog(logData);
+                await db.CommitAsync(ct);
 
-			return response;
-		}
-	}
-	#endregion
+                var response = ResponseHelper.Success(new DeleteUserCommand.Response { Ids = request.Ids }, $"{rowsAffected} user(s) deleted successfully");
+                log.ReturnCode = response.ReturnCode;
+                log.Message = response.Message;
+                UniLogger.Info(JsonConvert.SerializeObject(log));
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                await db.RollbackAsync(ct);
+
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = 500;
+                UniLogger.Error(JsonConvert.SerializeObject(log));
+
+                return ResponseHelper.Error<DeleteUserCommand.Response>(
+                    $"Failed to delete users: {ex.Message}");
+            }
+        }
+    }
 }

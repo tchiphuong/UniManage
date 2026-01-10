@@ -281,5 +281,14 @@ namespace UniManage.Core.Utilities
 
             return source.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
         }
+        /// <summary>
+        /// Generates a random code with alphanumeric characters
+        /// </summary>
+        /// <param name="length">Length of the code</param>
+        /// <returns>Random code string</returns>
+        public static string GenerateCode(int length = 6)
+        {
+            return GenerateRandomString(length, useUppercase: true, useLowercase: false, useNumbers: true, useSpecialChars: false);
+        }
     }
 }

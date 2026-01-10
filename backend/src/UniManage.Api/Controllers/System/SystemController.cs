@@ -1,15 +1,15 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
+using UniManage.Application.Queries.System.Language;
+using UniManage.Core.Constant;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Resource;
-using UniManage.Application.Queries.System.Language;
-using UniManage.Core.Constant;
 
 namespace UniManage.Api.Controllers.System
 {
-    [Route("api/v1/system")]
+    [Route("api/v1")]
     [ApiController]
     public class SystemController : BaseController
     {

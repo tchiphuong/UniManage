@@ -1,104 +1,110 @@
-using Dapper;
 using FluentValidation;
 using MediatR;
+using System.Text;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Resource;
 
-namespace UniManage.Application.Queries.System.User
+namespace UniManage.Application.Queries.System.User;
+
+#region Query
+
+public sealed class GetUserListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetUserListQuery.Response>>>
 {
-    public sealed class GetUserListQuery : BaseQuery, IRequest<ApiResponse<PagedResult>>
-    {
-        public int? Status { get; set; }
+    public string? Status { get; set; }
 
-        public class Result
-        {
-            public int Id { get; set; }
-            public string Username { get; set; } = default!;
-            public string EmployeeCode { get; set; } = default!;
-            public string RoleCode { get; set; } = default!;
-            public string? Email { get; set; }
-            public int Status { get; set; }
-            public DateTime CreatedAt { get; set; }
-        }
+    public sealed record Response
+    {
+        public long Id { get; set; }
+        public string Username { get; set; } = default!;
+        public string EmployeeCode { get; set; } = default!;
+        public string RoleCode { get; set; } = default!;
+        public string? Email { get; set; }
+        public string Status { get; set; } = default!;
+        public DateTime CreatedAt { get; set; }
     }
+}
 
-    public sealed class ListUsersQueryValidator : AbstractValidator<GetUserListQuery>
+#endregion
+
+#region Validator
+
+public sealed class GetUserListQueryValidator : AbstractValidator<GetUserListQuery>
+{
+    public GetUserListQueryValidator()
     {
-        public ListUsersQueryValidator()
-        {
-            RuleFor(x => x.PageIndex).GreaterThan(0).WithMessage("Page index must be greater than 0");
-            RuleFor(x => x.PageSize).InclusiveBetween(1, 100).WithMessage("Page size must be between 1 and 100");
-        }
+        RuleFor(x => x.PageIndex)
+            .GreaterThan(0).WithMessage("Page index must be greater than 0");
+
+        RuleFor(x => x.PageSize)
+            .InclusiveBetween(1, 100).WithMessage("Page size must be between 1 and 100");
     }
+}
 
-    public sealed class ListUsersQueryHandler : IRequestHandler<GetUserListQuery, ApiResponse<PagedResult>>
+#endregion
+
+#region Handler
+
+public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, ApiResponse<PagedResult<GetUserListQuery.Response>>>
+{
+    public async Task<ApiResponse<PagedResult<GetUserListQuery.Response>>> Handle(GetUserListQuery request, CancellationToken cancellationToken)
     {
-        public async Task<ApiResponse<PagedResult>> Handle(GetUserListQuery request, CancellationToken ct)
+        ApiResponse<PagedResult<GetUserListQuery.Response>> response;
+
+        // Initialize log data
+        CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
+        logData.Parameter = new List<CoreParamModel>
+        {
+            new CoreParamModel(nameof(request.Keyword), request.Keyword),
+            new CoreParamModel(nameof(request.SearchFields), request.SearchFields),
+            new CoreParamModel(nameof(request.Status), request.Status)
+        };
+
+        using (DbContext dbContext = new DbContext())
         {
             try
             {
-                using (var dbContext = new DbContext())
+                var query = new StringBuilder();
+                query.AppendLine($@"SELECT 
+                                        Id           AS {nameof(GetUserListQuery.Response.Id)},
+                                        Username     AS {nameof(GetUserListQuery.Response.Username)},
+                                        EmployeeCode AS {nameof(GetUserListQuery.Response.EmployeeCode)},
+                                        RoleCode     AS {nameof(GetUserListQuery.Response.RoleCode)},
+                                        Email        AS {nameof(GetUserListQuery.Response.Email)},
+                                        Status       AS {nameof(GetUserListQuery.Response.Status)},
+                                        CreatedAt    AS {nameof(GetUserListQuery.Response.CreatedAt)}
+                                    FROM sy_users
+                                    WHERE 1 = 1");
+
+                if (!string.IsNullOrEmpty(request.Status))
                 {
-                    var sql = """
-                        SELECT Id, Username, EmployeeCode, RoleCode, Email, Status, CreatedAt
-                        FROM Users
-                        WHERE (@Keyword IS NULL 
-                            OR Username LIKE @Keyword + '%' 
-                            OR EmployeeCode LIKE @Keyword + '%'
-                            OR Email LIKE '%' + @Keyword + '%')
-                        AND (@Status IS NULL OR Status = @Status)
-                        ORDER BY CreatedAt DESC
-                        OFFSET (@PageIndex - 1) * @PageSize ROWS
-                        FETCH NEXT @PageSize ROWS ONLY;
-
-                        SELECT COUNT(*)
-                        FROM Users
-                        WHERE (@Keyword IS NULL 
-                            OR Username LIKE @Keyword + '%' 
-                            OR EmployeeCode LIKE @Keyword + '%'
-                            OR Email LIKE '%' + @Keyword + '%')
-                        AND (@Status IS NULL OR Status = @Status);
-                        """;
-
-                    var cmd = new CommandDefinition(
-                        sql,
-                        new
-                        {
-                            request.Keyword,
-                            request.Status,
-                            request.PageIndex,
-                            request.PageSize
-                        },
-                        dbContext.transaction,
-                        cancellationToken: ct);
-
-                    using (var multi = await dbContext.connection.QueryMultipleAsync(cmd))
-                    {
-                        var items = await multi.ReadAsync<GetUserListQuery.Result>();
-                        var total = await multi.ReadSingleAsync<int>();
-
-                        var result = new PagedResult
-                        {
-                            Items = items.Cast<object>().ToList(),
-                            Paging = new PagingInfo
-                            {
-                                PageIndex = request.PageIndex,
-                                PageSize = request.PageSize,
-                                TotalItems = total
-                            }
-                        };
-
-                        return ResponseHelper.Success(result, "Users retrieved successfully");
-                    }
+                    query.AppendLine("AND Status = @Status");
                 }
+
+                var result = await dbContext.QueryPagingAsync<GetUserListQuery.Response>(query, request);
+
+                response = ResponseHelper.Success(result, CoreResource.User_msg_ListSuccess);
+
+                logData.Result = result;
+                logData.ReturnCode = response.ReturnCode;
             }
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving users list: {ex.Message}", ex);
-                return ResponseHelper.Error<PagedResult>("Failed to retrieve users");
+                response = ResponseHelper.Error<PagedResult<GetUserListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+
+                logData.Message = ex.ToString();
+                logData.IsException = 1;
+                logData.ReturnCode = response.ReturnCode;
             }
         }
+
+        UniLogManager.WriteApiLog(logData);
+
+        return response;
     }
 }
+
+#endregion

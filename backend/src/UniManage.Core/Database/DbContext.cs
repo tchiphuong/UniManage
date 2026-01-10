@@ -100,6 +100,21 @@ namespace UniManage.Core.Database
             return await connection.ExecuteAsync(new CommandDefinition(sql, param, transaction, cancellationToken: cancellationToken));
         }
 
+        public async Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null, CancellationToken cancellationToken = default)
+        {
+            return await connection.QueryAsync<T>(new CommandDefinition(sql, param, transaction, cancellationToken: cancellationToken));
+        }
+
+        public async Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? param = null, CancellationToken cancellationToken = default)
+        {
+            return await connection.QueryFirstOrDefaultAsync<T>(new CommandDefinition(sql, param, transaction, cancellationToken: cancellationToken));
+        }
+
+        public async Task<SqlMapper.GridReader> QueryMultipleAsync(string sql, object? param = null, CancellationToken cancellationToken = default)
+        {
+            return await connection.QueryMultipleAsync(new CommandDefinition(sql, param, transaction, cancellationToken: cancellationToken));
+        }
+
         public async Task CommitAsync(CancellationToken cancellationToken = default)
         {
             if (transaction != null)

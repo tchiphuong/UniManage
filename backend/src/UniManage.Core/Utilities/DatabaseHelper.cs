@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using System.Text;
 using UniManage.Core.Database;
 using UniManage.Model.Common;
 
@@ -137,8 +138,13 @@ namespace UniManage.Core.Utilities
         /// Build WHERE clause from filter parameters
         /// </summary>
         /// <param name="filters">Dictionary of field filters</param>
+        /// <param name="keyword">Keyword for searching (optional)</param>
+        /// <param name="searchFields">Fields to search when keyword is provided (optional, comma-separated)</param>
         /// <returns>WHERE clause and parameters</returns>
-        public static (string WhereClause, DynamicParameters Parameters) BuildWhereClause(Dictionary<string, object?> filters)
+        public static (string WhereClause, DynamicParameters Parameters) BuildWhereClause(
+            Dictionary<string, object?> filters,
+            string? keyword = null,
+            string? searchFields = null)
         {
             var conditions = new List<string>();
             var parameters = new DynamicParameters();
@@ -162,24 +168,160 @@ namespace UniManage.Core.Utilities
                 }
             }
 
+            // Handle keyword search with multiple fields (OR logic)
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                var fieldsArray = string.IsNullOrEmpty(searchFields)
+                    ? new[] { "Username", "Email", "DisplayName" } // Default search fields
+                    : searchFields.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                var searchConditions = fieldsArray
+                    .Select(field => $"[{QueryHelper.EscapeSqlIdentifier(field)}] LIKE @Keyword")
+                    .ToList();
+
+                if (searchConditions.Any())
+                {
+                    conditions.Add($"({string.Join(" OR ", searchConditions)})");
+                    parameters.Add("Keyword", $"%{QueryHelper.SanitizeSearchTerm(keyword)}%");
+                }
+            }
+
             var whereClause = conditions.Any() ? "WHERE " + string.Join(" AND ", conditions) : "";
             return (whereClause, parameters);
         }
 
-        public static async Task<PagedResult> QueryPagingAsync(DbContext dbContext, string baseQuery, string whereClause, string orderByClause, object parameters, int pageIndex, int pageSize)
+        /// <summary>
+        /// Execute paginated query with automatic filtering, sorting, and pagination
+        /// </summary>
+        /// <typeparam name="TResult">Result type for auto-generating column mappings</typeparam>
+        /// <param name="dbContext">Database context</param>
+        /// <param name="baseQuery">Base SELECT query without WHERE/ORDER BY</param>
+        /// <param name="request">Query request with pagination and filtering info</param>
+        /// <param name="filters">Additional custom filters (optional)</param>
+        /// <param name="defaultSortColumn">Default sort column name (optional, auto-detect CreatedAt if not provided)</param>
+        /// <returns>Paged result with items and paging info</returns>
+        public static async Task<PagedResult<TResult>> QueryPagingAsync<TResult>(this DbContext dbContext, StringBuilder baseQuery, BaseQuery request, Dictionary<string, object?>? filters = null, string? defaultSortColumn = null) where TResult : class
         {
-            // 1. Validation cơ bản
-            if (pageIndex < 1) pageIndex = 1;
-            if (pageSize < 1) pageSize = 10;
+            // Build WHERE clause from request and custom filters
+            filters ??= new Dictionary<string, object?>();
+            var (whereClause, parameters) = BuildWhereClause(
+                filters,
+                request.Keyword,
+                request.SearchFields);
 
-            // 2. Xử lý bắt buộc có ORDER BY cho hàm OFFSET
-            if (string.IsNullOrWhiteSpace(orderByClause))
+            // Extract pagination/sorting from request
+            var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+            var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
+
+            // Auto-generate ORDER BY clause from TResult type
+            var columnMappings = typeof(TResult)
+                .GetProperties()
+                .ToDictionary(
+                    p => char.ToLowerInvariant(p.Name[0]) + p.Name.Substring(1), // camelCase
+                    p => p.Name); // PascalCase
+
+            // Set default sort column (auto-detect CreatedAt if not provided)
+            if (!string.IsNullOrEmpty(defaultSortColumn))
+            {
+                columnMappings["default"] = defaultSortColumn;
+            }
+            else if (columnMappings.ContainsKey("createdAt"))
+            {
+                columnMappings["default"] = columnMappings["createdAt"];
+            }
+            else
+            {
+                // Fallback to first property
+                columnMappings["default"] = columnMappings.Values.FirstOrDefault() ?? "Id";
+            }
+
+            var (orderByClause, _) = QueryHelper.BuildOrderByClause(
+                request.SortBy,
+                request.SortDirection ?? "DESC",
+                columnMappings);
+
+            // Get total count
+            var countQuery = $@"
+                SELECT COUNT(1)
+                FROM ({baseQuery}) AS TotalQuery
+                {whereClause}";
+
+            var totalCount = await dbContext.connection.ExecuteScalarAsync<int>(countQuery, parameters, transaction: dbContext.transaction);
+
+            // Get data (only if there's data)
+            List<TResult> items = new List<TResult>();
+            if (totalCount > 0)
+            {
+                var dataQuery = $@"
+                    SELECT *
+                    FROM ({baseQuery}) AS DataQuery
+                    {whereClause}
+                    {orderByClause}
+                    OFFSET @Skip ROWS
+                    FETCH NEXT @Take ROWS ONLY";
+
+                // Use DynamicParameters to merge pagination parameters safely
+                var dynamicParams = new DynamicParameters(parameters);
+                dynamicParams.Add("@Skip", (pageIndex - 1) * pageSize);
+                dynamicParams.Add("@Take", pageSize);
+
+                // Use Generic QueryAsync<TResult> to ensure Dapper maps to Class (enabling JSON CamelCase)
+                var results = await dbContext.connection.QueryAsync<TResult>(dataQuery, dynamicParams, transaction: dbContext.transaction);
+                items = results.ToList();
+            }
+
+            return new PagedResult<TResult>
+            {
+                Items = items,
+                Paging = new PagingInfo
+                {
+                    TotalItems = totalCount,
+                    PageSize = pageSize,
+                    PageIndex = pageIndex
+                }
+            };
+        }
+
+        /// <summary>
+        /// Execute paginated query with explicit WHERE clause and ORDER BY (Dynamic)
+        /// </summary>
+        public static async Task<PagedResult<dynamic>> QueryPagingAsync(DbContext dbContext, string baseQuery, string whereClause, object parameters, BaseQuery request, Type? resultType = null, string? defaultSortColumn = null)
+        {
+            // 1. Validation cơ bản - extract from request
+            var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+            var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
+
+            // 2. Auto-generate ORDER BY clause
+            string orderByClause;
+            if (resultType != null)
+            {
+                // Auto-generate column mappings from result type properties
+                var columnMappings = resultType
+                    .GetProperties()
+                    .ToDictionary(
+                        p => char.ToLowerInvariant(p.Name[0]) + p.Name.Substring(1), // camelCase
+                        p => p.Name); // PascalCase
+
+                // Set default sort column
+                if (!string.IsNullOrEmpty(defaultSortColumn))
+                {
+                    columnMappings["default"] = defaultSortColumn;
+                }
+                else if (columnMappings.ContainsKey("createdAt"))
+                {
+                    columnMappings["default"] = columnMappings["createdAt"];
+                }
+
+                var (generatedOrderBy, _) = QueryHelper.BuildOrderByClause(
+                    request.SortBy,
+                    request.SortDirection ?? "DESC",
+                    columnMappings);
+                orderByClause = generatedOrderBy;
+            }
+            else
             {
                 // Fallback: Nếu không có sort, SQL Server cần một cái gì đó để order trước khi offset
-                // Lưu ý: Cách này có thể không ổn định thứ tự, tốt nhất nên bắt buộc truyền order by
                 orderByClause = "ORDER BY (SELECT NULL)";
-                // Hoặc throw exception yêu cầu dev phải truyền vào
-                // throw new ArgumentException("ORDER BY clause is required for pagination.");
             }
 
             // 3. Get total count
@@ -213,7 +355,7 @@ namespace UniManage.Core.Utilities
                 items = results.ToList();
             }
 
-            return new PagedResult
+            return new PagedResult<dynamic>
             {
                 Items = items,
                 Paging = new PagingInfo
@@ -221,6 +363,81 @@ namespace UniManage.Core.Utilities
                     TotalItems = totalCount,
                     PageSize = pageSize,
                     PageIndex = pageIndex // Nên trả về cả trang hiện tại
+                }
+            };
+        }
+        /// <summary>
+        /// Execute paginated query with explicit WHERE clause and ORDER BY (Generic)
+        /// </summary>
+        public static async Task<PagedResult<TResult>> QueryPagingAsync<TResult>(
+            this DbContext dbContext, 
+            string baseQuery, 
+            string whereClause, 
+            object parameters, 
+            BaseQuery request, 
+            string? defaultSortColumn = null) where TResult : class
+        {
+            var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+            var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
+
+            var columnMappings = typeof(TResult)
+                .GetProperties()
+                .ToDictionary(
+                    p => char.ToLowerInvariant(p.Name[0]) + p.Name.Substring(1), 
+                    p => p.Name);
+
+            if (!string.IsNullOrEmpty(defaultSortColumn))
+            {
+                columnMappings["default"] = defaultSortColumn;
+            }
+            else if (columnMappings.ContainsKey("createdAt"))
+            {
+                columnMappings["default"] = columnMappings["createdAt"];
+            }
+            else
+            {
+                columnMappings["default"] = columnMappings.Values.FirstOrDefault() ?? "Id";
+            }
+
+            var (orderByClause, _) = QueryHelper.BuildOrderByClause(
+                request.SortBy,
+                request.SortDirection ?? "DESC",
+                columnMappings);
+
+            var countQuery = $@"
+                SELECT COUNT(1)
+                FROM ({baseQuery}) AS TotalQuery
+                {whereClause}";
+
+            var totalCount = await dbContext.connection.ExecuteScalarAsync<int>(countQuery, parameters, transaction: dbContext.transaction);
+
+            List<TResult> items = new List<TResult>();
+            if (totalCount > 0)
+            {
+                var dataQuery = $@"
+                    SELECT *
+                    FROM ({baseQuery}) AS DataQuery
+                    {whereClause}
+                    {orderByClause} 
+                    OFFSET @Skip ROWS 
+                    FETCH NEXT @Take ROWS ONLY";
+
+                var dynamicParams = new DynamicParameters(parameters);
+                dynamicParams.Add("@Skip", (pageIndex - 1) * pageSize);
+                dynamicParams.Add("@Take", pageSize);
+
+                var results = await dbContext.connection.QueryAsync<TResult>(dataQuery, dynamicParams, transaction: dbContext.transaction);
+                items = results.ToList();
+            }
+
+            return new PagedResult<TResult>
+            {
+                Items = items,
+                Paging = new PagingInfo
+                {
+                    TotalItems = totalCount,
+                    PageSize = pageSize,
+                    PageIndex = pageIndex
                 }
             };
         }

@@ -1,0 +1,132 @@
+{
+    "common": {
+        "appName": "UniManage",
+        "appDescription": "Comprehensive University Management System",
+        "loading": "Loading...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "search": "Search",
+        "filter": "Filter",
+        "export": "Export",
+        "import": "Import",
+        "confirm": "Confirm",
+        "back": "Back",
+        "next": "Next",
+        "previous": "Previous",
+        "submit": "Submit",
+        "reset": "Reset",
+        "dashboard": "Dashboard",
+        "users": "Users",
+        "settings": "Settings",
+        "logout": "Logout",
+        "close": "Close",
+        "yes": "Yes",
+        "no": "No",
+        "language": "Language",
+        "languageVietnamese": "Vietnamese",
+        "languageEnglish": "English",
+        "languageSelect": "Select language"
+    },
+    "auth": {
+        "login": "Login",
+        "logout": "Logout",
+        "register": "Register",
+        "forgotPassword": "Forgot Password?",
+        "resetPassword": "Reset Password",
+        "changePassword": "Change Password",
+        "username": "Username",
+        "password": "Password",
+        "email": "Email",
+        "rememberMe": "Remember me",
+        "loginSuccess": "Login successful",
+        "loginFailed": "Login failed",
+        "logoutSuccess": "Logout successful",
+        "loginTitle": "Welcome back",
+        "loginSubtitle": "Sign in to your account",
+        "usernamePlaceholder": "Enter your username",
+        "passwordPlaceholder": "Enter your password",
+        "loggingIn": "Logging in...",
+        "noAccount": "Don't have an account?",
+        "createAccount": "Create account",
+        "invalidCredentials": "Invalid username or password",
+        "requiredField": "This field is required",
+        "orContinueWith": "Or continue with",
+        "signInWithGoogle": "Sign in with Google"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "students": "Students",
+        "teachers": "Teachers",
+        "courses": "Courses",
+        "classes": "Classes",
+        "schedules": "Schedules",
+        "grades": "Grades",
+        "finance": "Finance",
+        "reports": "Reports",
+        "settings": "Settings",
+        "profile": "Profile"
+    },
+    "home": {
+        "title": "UniManage - University Management System",
+        "learnMore": "Learn More",
+        "students": {
+            "title": "Student Management",
+            "description": "Manage student information, grades and activities"
+        },
+        "teachers": {
+            "title": "Teacher Management",
+            "description": "Manage profiles, teaching schedules and research"
+        },
+        "courses": {
+            "title": "Course Management",
+            "description": "Manage curriculum and course schedules"
+        }
+    },
+    "validation": {
+        "required": "{field} is required",
+        "email": "Invalid email address",
+        "phone": "Invalid phone number",
+        "minLength": "{field} must be at least {min} characters",
+        "maxLength": "{field} must not exceed {max} characters",
+        "min": "{field} must be greater than or equal to {min}",
+        "max": "{field} must be less than or equal to {max}"
+    },
+    "error": {
+        "general": "An error occurred",
+        "network": "Network connection error",
+        "unauthorized": "You don't have permission to access",
+        "notFound": "Data not found",
+        "serverError": "Server error",
+        "tryAgain": "Please try again"
+    },
+    "success": {
+        "saved": "Saved successfully",
+        "deleted": "Deleted successfully",
+        "updated": "Updated successfully",
+        "created": "Created successfully"
+    },
+    "pagination": {
+        "showing": "Showing",
+        "of": "of",
+        "results": "results",
+        "page": "Page",
+        "rowsPerPage": "Rows per page"
+    },
+    "dashboard": {
+        "title": "Overview",
+        "welcome": "Welcome back! Here's what's happening today.",
+        "totalUsers": "Total Users",
+        "revenue": "Revenue",
+        "activeSessions": "Active Sessions",
+        "pendingTasks": "Pending Tasks",
+        "recentActivity": "Recent Activity",
+        "quickActions": "Quick Actions",
+        "refresh": "Refresh",
+        "addUser": "Add User",
+        "newReport": "New Report",
+        "support": "Support"
+    }
+}

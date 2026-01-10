@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace UniManage.Model.Common
 {
     public class CoreLogModel
@@ -10,6 +8,8 @@ namespace UniManage.Model.Common
         public string? Message { get; set; }
         public int IsException { get; set; }
         public int ReturnCode { get; set; }
+        public string? Method { get; set; }
+        public string? Path { get; set; }
 
         public CoreLogModel() { }
 

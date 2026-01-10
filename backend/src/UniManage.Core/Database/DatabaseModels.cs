@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace UniManage.Core.Database
+namespace UniManage.Model.Entities
 {
     #region ad_countries
     /// <summary>
@@ -58,6 +58,11 @@ namespace UniManage.Core.Database
         public string InternetCountryCode { get; set; }
         [StringLength(100)]
         public string Flags { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for ad_provinces
+        /// </summary>
+        public virtual ICollection<ad_provinces>? ad_provincesCollection { get; set; }
     }
     #endregion
 
@@ -86,6 +91,7 @@ namespace UniManage.Core.Database
         public string CodeName { get; set; }
         public int? AdministrativeUnitId { get; set; }
         public int? AdministrativeRegionId { get; set; }
+        [ForeignKey(nameof(ad_countries))]
         [Required]
         [StringLength(20)]
         [Column(TypeName = "nvarchar(20)")]
@@ -104,6 +110,16 @@ namespace UniManage.Core.Database
         [Column(TypeName = "datetime2")]
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for ad_countries (CountryCode)
+        /// </summary>
+        public virtual ad_countries? ad_countries { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for ad_wards
+        /// </summary>
+        public virtual ICollection<ad_wards>? ad_wardsCollection { get; set; }
     }
     #endregion
 
@@ -131,6 +147,7 @@ namespace UniManage.Core.Database
         [StringLength(100)]
         public string CodeName { get; set; }
         public int? AdministrativeUnitId { get; set; }
+        [ForeignKey(nameof(ad_provinces))]
         [Required]
         [StringLength(20)]
         public string ProvinceCode { get; set; }
@@ -148,6 +165,11 @@ namespace UniManage.Core.Database
         [Column(TypeName = "datetime2")]
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for ad_provinces (ProvinceCode)
+        /// </summary>
+        public virtual ad_provinces? ad_provinces { get; set; }
     }
     #endregion
 
@@ -161,6 +183,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(hr_employees))]
         [Required]
         [StringLength(50)]
         public string EmployeeCode { get; set; }
@@ -171,7 +194,6 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(20)]
         public string Status { get; set; }
-        [Required]
         [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
@@ -182,6 +204,11 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (EmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
     }
     #endregion
 
@@ -206,7 +233,6 @@ namespace UniManage.Core.Database
         public string NameEn { get; set; }
         [StringLength(255)]
         public string Description { get; set; }
-        [Required]
         [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
@@ -217,6 +243,11 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for hr_employees
+        /// </summary>
+        public virtual ICollection<hr_employees>? hr_employeesCollection { get; set; }
     }
     #endregion
 
@@ -230,9 +261,11 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(hr_employees))]
         [Required]
         [StringLength(50)]
         public string EmployeeCode { get; set; }
+        [ForeignKey(nameof(hr_work_shifts))]
         [Required]
         [StringLength(20)]
         public string WorkShiftCode { get; set; }
@@ -241,6 +274,16 @@ namespace UniManage.Core.Database
         [Column(TypeName = "datetime2")]
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (EmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_work_shifts (WorkShiftCode)
+        /// </summary>
+        public virtual hr_work_shifts? hr_work_shifts { get; set; }
     }
     #endregion
 
@@ -267,8 +310,10 @@ namespace UniManage.Core.Database
         public string Email { get; set; }
         [StringLength(20)]
         public string PhoneNumber { get; set; }
+        [ForeignKey(nameof(hr_departments))]
         [StringLength(50)]
         public string DepartmentCode { get; set; }
+        [ForeignKey(nameof(hr_positions))]
         [StringLength(50)]
         public string PositionCode { get; set; }
         [StringLength(250)]
@@ -283,6 +328,56 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_departments (DepartmentCode)
+        /// </summary>
+        public virtual hr_departments? hr_departments { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_positions (PositionCode)
+        /// </summary>
+        public virtual hr_positions? hr_positions { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for hr_attendance
+        /// </summary>
+        public virtual ICollection<hr_attendance>? hr_attendanceCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for hr_employee_shifts
+        /// </summary>
+        public virtual ICollection<hr_employee_shifts>? hr_employee_shiftsCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for hr_salaries
+        /// </summary>
+        public virtual ICollection<hr_salaries>? hr_salariesCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sa_orders
+        /// </summary>
+        public virtual ICollection<sa_orders>? sa_ordersCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_users
+        /// </summary>
+        public virtual ICollection<sy_users>? sy_usersCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_approval_route_approver
+        /// </summary>
+        public virtual ICollection<wf_approval_route_approver>? wf_approval_route_approverCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_request
+        /// </summary>
+        public virtual ICollection<wf_request>? wf_requestCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_request_approval
+        /// </summary>
+        public virtual ICollection<wf_request_approval>? wf_request_approvalCollection { get; set; }
     }
     #endregion
 
@@ -298,7 +393,7 @@ namespace UniManage.Core.Database
         public int Id { get; set; }
         [Required]
         [StringLength(50)]
-        public string PositionCode { get; set; }
+        public string Code { get; set; }
         [Required]
         [StringLength(150)]
         public string NameVi { get; set; }
@@ -307,7 +402,6 @@ namespace UniManage.Core.Database
         public string NameEn { get; set; }
         [StringLength(500)]
         public string Description { get; set; }
-        [Required]
         [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
@@ -318,6 +412,11 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for hr_employees
+        /// </summary>
+        public virtual ICollection<hr_employees>? hr_employeesCollection { get; set; }
     }
     #endregion
 
@@ -331,12 +430,12 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(hr_employees))]
         [Required]
         [StringLength(50)]
         public string EmployeeCode { get; set; }
         [Required]
         public decimal SalaryAmount { get; set; }
-        [Required]
         [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
@@ -347,6 +446,16 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (EmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for hr_salary_history
+        /// </summary>
+        public virtual ICollection<hr_salary_history>? hr_salary_historyCollection { get; set; }
     }
     #endregion
 
@@ -360,6 +469,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(hr_salaries))]
         [Required]
         public int SalaryId { get; set; }
         [Required]
@@ -367,7 +477,6 @@ namespace UniManage.Core.Database
         [Required]
         public DateTime FromDate { get; set; }
         public DateTime? ToDate { get; set; }
-        [Required]
         [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
@@ -378,6 +487,11 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_salaries (SalaryId)
+        /// </summary>
+        public virtual hr_salaries? hr_salaries { get; set; }
     }
     #endregion
 
@@ -406,6 +520,11 @@ namespace UniManage.Core.Database
         [Column(TypeName = "datetime2")]
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for hr_employee_shifts
+        /// </summary>
+        public virtual ICollection<hr_employee_shifts>? hr_employee_shiftsCollection { get; set; }
     }
     #endregion
 
@@ -686,6 +805,11 @@ namespace UniManage.Core.Database
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_items
+        /// </summary>
+        public virtual ICollection<it_items>? it_itemsCollection { get; set; }
     }
     #endregion
 
@@ -705,7 +829,23 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
+        [ForeignKey(nameof(it_item_category))]
         public int? ParentId { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_item_category (ParentId)
+        /// </summary>
+        public virtual it_item_category? it_item_categoryNavigation { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_category
+        /// </summary>
+        public virtual ICollection<it_item_category>? it_item_categoryCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_items
+        /// </summary>
+        public virtual ICollection<it_items>? it_itemsCollection { get; set; }
     }
     #endregion
 
@@ -725,6 +865,11 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_items
+        /// </summary>
+        public virtual ICollection<it_items>? it_itemsCollection { get; set; }
     }
     #endregion
 
@@ -738,6 +883,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public long Id { get; set; }
+        [ForeignKey(nameof(it_items))]
         [StringLength(50)]
         [Column(TypeName = "varchar(50)")]
         public string ItemCode { get; set; }
@@ -762,6 +908,11 @@ namespace UniManage.Core.Database
         public string UpdateBy { get; set; }
         [Column(TypeName = "datetime2")]
         public DateTime? UpdateOn { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_items (ItemCode)
+        /// </summary>
+        public virtual it_items? it_items { get; set; }
     }
     #endregion
 
@@ -775,6 +926,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(it_items))]
         [Required]
         [StringLength(50)]
         public string ItemCode { get; set; }
@@ -790,6 +942,11 @@ namespace UniManage.Core.Database
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_items (ItemCode)
+        /// </summary>
+        public virtual it_items? it_items { get; set; }
     }
     #endregion
 
@@ -803,6 +960,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(it_items))]
         [Required]
         [StringLength(50)]
         public string ItemCode { get; set; }
@@ -814,6 +972,11 @@ namespace UniManage.Core.Database
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_items (ItemCode)
+        /// </summary>
+        public virtual it_items? it_items { get; set; }
     }
     #endregion
 
@@ -827,6 +990,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(it_items))]
         [Required]
         [StringLength(50)]
         public string ItemCode { get; set; }
@@ -838,6 +1002,11 @@ namespace UniManage.Core.Database
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_items (ItemCode)
+        /// </summary>
+        public virtual it_items? it_items { get; set; }
     }
     #endregion
 
@@ -851,18 +1020,23 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(it_items))]
         [Required]
         [StringLength(50)]
         public string ItemCode { get; set; }
         [Required]
         public int Rating { get; set; }
         public string Comment { get; set; }
-        [Required]
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_items (ItemCode)
+        /// </summary>
+        public virtual it_items? it_items { get; set; }
     }
     #endregion
 
@@ -882,7 +1056,23 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
+        [ForeignKey(nameof(it_item_size))]
         public int? ParentId { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_item_size (ParentId)
+        /// </summary>
+        public virtual it_item_size? it_item_sizeNavigation { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_size
+        /// </summary>
+        public virtual ICollection<it_item_size>? it_item_sizeCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_items
+        /// </summary>
+        public virtual ICollection<it_items>? it_itemsCollection { get; set; }
     }
     #endregion
 
@@ -899,6 +1089,11 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(100)]
         public string Tag { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_tag_map
+        /// </summary>
+        public virtual ICollection<it_item_tag_map>? it_item_tag_mapCollection { get; set; }
     }
     #endregion
 
@@ -912,11 +1107,23 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(it_items))]
         [Required]
         [StringLength(50)]
         public string ItemCode { get; set; }
+        [ForeignKey(nameof(it_item_tag))]
         [Required]
         public int TagId { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_items (ItemCode)
+        /// </summary>
+        public virtual it_items? it_items { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_item_tag (TagId)
+        /// </summary>
+        public virtual it_item_tag? it_item_tag { get; set; }
     }
     #endregion
 
@@ -937,17 +1144,76 @@ namespace UniManage.Core.Database
         [StringLength(255)]
         public string Name { get; set; }
         public string Description { get; set; }
+        [ForeignKey(nameof(it_item_brand))]
         [StringLength(20)]
         public string BrandCode { get; set; }
+        [ForeignKey(nameof(it_item_category))]
         [StringLength(20)]
         public string CategoryCode { get; set; }
+        [ForeignKey(nameof(it_item_color))]
         [StringLength(20)]
         public string ColorCode { get; set; }
+        [ForeignKey(nameof(it_item_size))]
         [StringLength(20)]
         public string SizeCode { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_item_brand (BrandCode)
+        /// </summary>
+        public virtual it_item_brand? it_item_brand { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_item_category (CategoryCode)
+        /// </summary>
+        public virtual it_item_category? it_item_category { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_item_color (ColorCode)
+        /// </summary>
+        public virtual it_item_color? it_item_color { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_item_size (SizeCode)
+        /// </summary>
+        public virtual it_item_size? it_item_size { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_details
+        /// </summary>
+        public virtual ICollection<it_item_details>? it_item_detailsCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_image
+        /// </summary>
+        public virtual ICollection<it_item_image>? it_item_imageCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_inventory
+        /// </summary>
+        public virtual ICollection<it_item_inventory>? it_item_inventoryCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_price
+        /// </summary>
+        public virtual ICollection<it_item_price>? it_item_priceCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_review
+        /// </summary>
+        public virtual ICollection<it_item_review>? it_item_reviewCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for it_item_tag_map
+        /// </summary>
+        public virtual ICollection<it_item_tag_map>? it_item_tag_mapCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sa_order_items
+        /// </summary>
+        public virtual ICollection<sa_order_items>? sa_order_itemsCollection { get; set; }
     }
     #endregion
 
@@ -975,7 +1241,6 @@ namespace UniManage.Core.Database
         [Required]
         [Column(TypeName = "bit")]
         public bool IsActive { get; set; }
-        [Required]
         [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
@@ -1003,12 +1268,12 @@ namespace UniManage.Core.Database
         public string NameVi { get; set; }
         [StringLength(100)]
         public string NameEn { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         [Required]
@@ -1045,6 +1310,11 @@ namespace UniManage.Core.Database
         [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sa_orders
+        /// </summary>
+        public virtual ICollection<sa_orders>? sa_ordersCollection { get; set; }
     }
     #endregion
 
@@ -1058,9 +1328,11 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(sa_orders))]
         [Required]
         [StringLength(50)]
         public string OrderCode { get; set; }
+        [ForeignKey(nameof(it_items))]
         [Required]
         [StringLength(50)]
         public string ItemCode { get; set; }
@@ -1070,6 +1342,16 @@ namespace UniManage.Core.Database
         [Required]
         public decimal UnitPrice { get; set; }
         public decimal? TotalPrice { get; set; }
+
+        /// <summary>
+        /// Navigation property for it_items (ItemCode)
+        /// </summary>
+        public virtual it_items? it_items { get; set; }
+
+        /// <summary>
+        /// Navigation property for sa_orders (OrderCode)
+        /// </summary>
+        public virtual sa_orders? sa_orders { get; set; }
     }
     #endregion
 
@@ -1086,6 +1368,7 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(50)]
         public string OrderCode { get; set; }
+        [ForeignKey(nameof(sa_customers))]
         [Required]
         [StringLength(50)]
         public string CustomerCode { get; set; }
@@ -1103,9 +1386,30 @@ namespace UniManage.Core.Database
         [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        [ForeignKey(nameof(hr_employees))]
         [Required]
         [StringLength(50)]
         public string EmployeeCode { get; set; }
+
+        /// <summary>
+        /// Navigation property for sa_customers (CustomerCode)
+        /// </summary>
+        public virtual sa_customers? sa_customers { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (EmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sa_order_items
+        /// </summary>
+        public virtual ICollection<sa_order_items>? sa_order_itemsCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sa_payments
+        /// </summary>
+        public virtual ICollection<sa_payments>? sa_paymentsCollection { get; set; }
     }
     #endregion
 
@@ -1122,6 +1426,7 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(50)]
         public string PaymentCode { get; set; }
+        [ForeignKey(nameof(sa_orders))]
         [Required]
         [StringLength(50)]
         public string OrderCode { get; set; }
@@ -1138,6 +1443,11 @@ namespace UniManage.Core.Database
         [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for sa_orders (OrderCode)
+        /// </summary>
+        public virtual sa_orders? sa_orders { get; set; }
     }
     #endregion
 
@@ -1172,6 +1482,51 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_function_mapping
+        /// </summary>
+        public virtual ICollection<sy_function_mapping>? sy_function_mappingCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_role_permissions
+        /// </summary>
+        public virtual ICollection<sy_role_permissions>? sy_role_permissionsCollection { get; set; }
+    }
+    #endregion
+
+    #region sy_background_jobs
+    /// <summary>
+    /// Entity class for table sy_background_jobs
+    /// </summary>
+    [Table("sy_background_jobs")]
+    public class sy_background_jobs
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string JobCode { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string JobName { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string CronExpression { get; set; }
+        [Column(TypeName = "bit")]
+        public bool? IsDisabled { get; set; }
+        [StringLength(500)]
+        public string Description { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
     }
     #endregion
 
@@ -1218,6 +1573,42 @@ namespace UniManage.Core.Database
     }
     #endregion
 
+    #region sy_configs
+    /// <summary>
+    /// Entity class for table sy_configs
+    /// </summary>
+    [Table("sy_configs")]
+    public class sy_configs
+    {
+        [Key]
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string ConfigCode { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string ConfigName { get; set; }
+        public string ConfigValue { get; set; }
+        [StringLength(20)]
+        [Column(TypeName = "varchar(20)")]
+        public string DataType { get; set; }
+        [StringLength(500)]
+        public string Description { get; set; }
+        [Column(TypeName = "bit")]
+        public bool? IsSystem { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Column(TypeName = "datetime2")]
+        public DateTime? CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
+    }
+    #endregion
+
     #region sy_function_mapping
     /// <summary>
     /// Entity class for table sy_function_mapping
@@ -1228,20 +1619,32 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public long Id { get; set; }
+        [ForeignKey(nameof(sy_actions))]
         [Required]
         [StringLength(50)]
         public string ActionCode { get; set; }
+        [ForeignKey(nameof(sy_functions))]
         [StringLength(50)]
         public string FunctionCode { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_actions (ActionCode)
+        /// </summary>
+        public virtual sy_actions? sy_actions { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_functions (FunctionCode)
+        /// </summary>
+        public virtual sy_functions? sy_functions { get; set; }
     }
     #endregion
 
@@ -1261,6 +1664,7 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(50)]
         public string ResourceKey { get; set; }
+        [ForeignKey(nameof(sy_functions))]
         [Required]
         [StringLength(50)]
         public string GroupCode { get; set; }
@@ -1275,6 +1679,31 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_functions (GroupCode)
+        /// </summary>
+        public virtual sy_functions? sy_functionsNavigation { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_function_mapping
+        /// </summary>
+        public virtual ICollection<sy_function_mapping>? sy_function_mappingCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_functions
+        /// </summary>
+        public virtual ICollection<sy_functions>? sy_functionsCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_menus
+        /// </summary>
+        public virtual ICollection<sy_menus>? sy_menusCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_role_permissions
+        /// </summary>
+        public virtual ICollection<sy_role_permissions>? sy_role_permissionsCollection { get; set; }
     }
     #endregion
 
@@ -1297,12 +1726,10 @@ namespace UniManage.Core.Database
         [Column(TypeName = "varbinary")]
         public byte[] Images { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
         public string CreatedBy { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? CreatedAt { get; set; }
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
         public string UpdatedBy { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? UpdatedAt { get; set; }
@@ -1352,7 +1779,7 @@ namespace UniManage.Core.Database
         /// <summary>
         /// Người tạo bản ghi
         /// </summary>
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         /// <summary>
         /// Ngày tạo bản ghi
@@ -1363,7 +1790,7 @@ namespace UniManage.Core.Database
         /// <summary>
         /// Người cập nhật bản ghi
         /// </summary>
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         /// <summary>
         /// Ngày cập nhật bản ghi
@@ -1374,6 +1801,11 @@ namespace UniManage.Core.Database
         /// </summary>
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_resources
+        /// </summary>
+        public virtual ICollection<sy_resources>? sy_resourcesCollection { get; set; }
     }
     #endregion
 
@@ -1390,8 +1822,10 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(50)]
         public string Code { get; set; }
+        [ForeignKey(nameof(sy_functions))]
         [StringLength(50)]
         public string FunctionCode { get; set; }
+        [ForeignKey(nameof(sy_menus))]
         [StringLength(50)]
         public string ParentCode { get; set; }
         [Required]
@@ -1410,6 +1844,52 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_functions (FunctionCode)
+        /// </summary>
+        public virtual sy_functions? sy_functions { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_menus (ParentCode)
+        /// </summary>
+        public virtual sy_menus? sy_menusNavigation { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_menus
+        /// </summary>
+        public virtual ICollection<sy_menus>? sy_menusCollection { get; set; }
+    }
+    #endregion
+
+    #region sy_password_reset_tokens
+    /// <summary>
+    /// Entity class for table sy_password_reset_tokens
+    /// </summary>
+    [Table("sy_password_reset_tokens")]
+    public class sy_password_reset_tokens
+    {
+        [Key]
+        [Required]
+        public long Id { get; set; }
+        [ForeignKey(nameof(sy_users))]
+        [Required]
+        [StringLength(50)]
+        public string Username { get; set; }
+        [Required]
+        [StringLength(100)]
+        public string Token { get; set; }
+        [Required]
+        public DateTime ExpiresAt { get; set; }
+        public DateTime? UsedAt { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_users (Username)
+        /// </summary>
+        public virtual sy_users? sy_users { get; set; }
     }
     #endregion
 
@@ -1423,11 +1903,13 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(sy_users))]
         [Required]
         [StringLength(50)]
         public string UserName { get; set; }
         [Required]
         public string Token { get; set; }
+        [ForeignKey(nameof(sy_users))]
         [Required]
         public long UserId { get; set; }
         [Required]
@@ -1443,6 +1925,16 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_users (UserId)
+        /// </summary>
+        public virtual sy_users? Usersy_users { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_users (UserName)
+        /// </summary>
+        public virtual sy_users? UserNamesy_users { get; set; }
     }
     #endregion
 
@@ -1461,24 +1953,36 @@ namespace UniManage.Core.Database
         public string ResourceKey { get; set; }
         [Required]
         public string ResourceValue { get; set; }
+        [ForeignKey(nameof(sy_languages))]
         [Required]
         [StringLength(10)]
         [Column(TypeName = "nvarchar(10)")]
         public string SourceLanguage { get; set; }
+        [ForeignKey(nameof(sy_languages))]
         [Required]
         [StringLength(10)]
         [Column(TypeName = "nvarchar(10)")]
         public string LanguageCode { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_languages (LanguageCode)
+        /// </summary>
+        public virtual sy_languages? Languagesy_languages { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_languages (SourceLanguage)
+        /// </summary>
+        public virtual sy_languages? SourceLanguagesy_languages { get; set; }
     }
     #endregion
 
@@ -1492,12 +1996,15 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(sy_roles))]
         [Required]
         [StringLength(50)]
         public string RoleCode { get; set; }
+        [ForeignKey(nameof(sy_functions))]
         [Required]
         [StringLength(50)]
         public string FunctionCode { get; set; }
+        [ForeignKey(nameof(sy_actions))]
         [Required]
         [StringLength(50)]
         public string ActionCode { get; set; }
@@ -1510,6 +2017,21 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_actions (ActionCode)
+        /// </summary>
+        public virtual sy_actions? sy_actions { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_functions (FunctionCode)
+        /// </summary>
+        public virtual sy_functions? sy_functions { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_roles (RoleCode)
+        /// </summary>
+        public virtual sy_roles? sy_roles { get; set; }
     }
     #endregion
 
@@ -1539,6 +2061,21 @@ namespace UniManage.Core.Database
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public byte[] DataRowVersion { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_role_permissions
+        /// </summary>
+        public virtual ICollection<sy_role_permissions>? sy_role_permissionsCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_user_roles
+        /// </summary>
+        public virtual ICollection<sy_user_roles>? sy_user_rolesCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_users
+        /// </summary>
+        public virtual ICollection<sy_users>? sy_usersCollection { get; set; }
     }
     #endregion
 
@@ -1552,6 +2089,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(sy_users))]
         [StringLength(50)]
         public string Username { get; set; }
         public string Token { get; set; }
@@ -1565,6 +2103,11 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_users (Username)
+        /// </summary>
+        public virtual sy_users? sy_users { get; set; }
     }
     #endregion
 
@@ -1578,6 +2121,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public long Id { get; set; }
+        [ForeignKey(nameof(sy_users))]
         [Required]
         [StringLength(50)]
         public string UserName { get; set; }
@@ -1595,6 +2139,46 @@ namespace UniManage.Core.Database
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_users (UserName)
+        /// </summary>
+        public virtual sy_users? sy_users { get; set; }
+    }
+    #endregion
+
+    #region sy_user_roles
+    /// <summary>
+    /// Entity class for table sy_user_roles
+    /// </summary>
+    [Table("sy_user_roles")]
+    public class sy_user_roles
+    {
+        [Key]
+        [ForeignKey(nameof(sy_users))]
+        [Required]
+        [StringLength(50)]
+        public string Username { get; set; }
+        [Key]
+        [ForeignKey(nameof(sy_roles))]
+        [Required]
+        [StringLength(50)]
+        public string RoleCode { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_roles (RoleCode)
+        /// </summary>
+        public virtual sy_roles? sy_roles { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_users (Username)
+        /// </summary>
+        public virtual sy_users? sy_users { get; set; }
     }
     #endregion
 
@@ -1612,8 +2196,10 @@ namespace UniManage.Core.Database
         public string Username { get; set; }
         [StringLength(150)]
         public string Password { get; set; }
+        [ForeignKey(nameof(hr_employees))]
         [StringLength(50)]
         public string EmployeeCode { get; set; }
+        [ForeignKey(nameof(sy_roles))]
         [StringLength(50)]
         public string RoleCode { get; set; }
         [StringLength(50)]
@@ -1629,6 +2215,41 @@ namespace UniManage.Core.Database
         public byte[] RowVersion { get; set; }
         [StringLength(100)]
         public string Email { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (EmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
+
+        /// <summary>
+        /// Navigation property for sy_roles (RoleCode)
+        /// </summary>
+        public virtual sy_roles? sy_roles { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_password_reset_tokens
+        /// </summary>
+        public virtual ICollection<sy_password_reset_tokens>? sy_password_reset_tokensCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_refresh_tokens
+        /// </summary>
+        public virtual ICollection<sy_refresh_tokens>? sy_refresh_tokensCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_token_revoked
+        /// </summary>
+        public virtual ICollection<sy_token_revoked>? sy_token_revokedCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_tokens_management
+        /// </summary>
+        public virtual ICollection<sy_tokens_management>? sy_tokens_managementCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for sy_user_roles
+        /// </summary>
+        public virtual ICollection<sy_user_roles>? sy_user_rolesCollection { get; set; }
     }
     #endregion
 
@@ -1670,15 +2291,24 @@ namespace UniManage.Core.Database
         public string RouteName { get; set; }
         [StringLength(500)]
         public string Description { get; set; }
-        [Required]
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_approval_route_level
+        /// </summary>
+        public virtual ICollection<wf_approval_route_level>? wf_approval_route_levelCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_request
+        /// </summary>
+        public virtual ICollection<wf_request>? wf_requestCollection { get; set; }
     }
     #endregion
 
@@ -1692,23 +2322,33 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(wf_approval_route_level))]
         [Required]
         public int ApprovalRouteLevelId { get; set; }
-        [Required]
+        [ForeignKey(nameof(hr_employees))]
         [StringLength(50)]
         public string ApproverEmployeeCode { get; set; }
         [Required]
         [StringLength(100)]
         public string ApproverUsername { get; set; }
-        [Required]
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for wf_approval_route_level (ApprovalRouteLevelId)
+        /// </summary>
+        public virtual wf_approval_route_level? wf_approval_route_level { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (ApproverEmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
     }
     #endregion
 
@@ -1722,6 +2362,7 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(wf_approval_route))]
         [Required]
         public int ApprovalRouteId { get; set; }
         [Required]
@@ -1729,15 +2370,29 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(255)]
         public string LevelName { get; set; }
-        [Required]
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for wf_approval_route (ApprovalRouteId)
+        /// </summary>
+        public virtual wf_approval_route? wf_approval_route { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_approval_route_approver
+        /// </summary>
+        public virtual ICollection<wf_approval_route_approver>? wf_approval_route_approverCollection { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_request_approval
+        /// </summary>
+        public virtual ICollection<wf_request_approval>? wf_request_approvalCollection { get; set; }
     }
     #endregion
 
@@ -1754,27 +2409,42 @@ namespace UniManage.Core.Database
         [Required]
         [StringLength(50)]
         public string RequestTypeKey { get; set; }
-        [Required]
+        [ForeignKey(nameof(hr_employees))]
         [StringLength(50)]
         public string ApplicantEmployeeCode { get; set; }
         [Required]
         [StringLength(100)]
         public string ApplicantUsername { get; set; }
+        [ForeignKey(nameof(wf_approval_route))]
         public int? ApprovalRouteId { get; set; }
         [Required]
         [StringLength(50)]
         [Column(TypeName = "varchar(50)")]
         public string Status { get; set; }
         public string RequestData { get; set; }
-        [Required]
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (ApplicantEmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
+
+        /// <summary>
+        /// Navigation property for wf_approval_route (ApprovalRouteId)
+        /// </summary>
+        public virtual wf_approval_route? wf_approval_route { get; set; }
+
+        /// <summary>
+        /// Collection navigation property for wf_request_approval
+        /// </summary>
+        public virtual ICollection<wf_request_approval>? wf_request_approvalCollection { get; set; }
     }
     #endregion
 
@@ -1788,11 +2458,13 @@ namespace UniManage.Core.Database
         [Key]
         [Required]
         public int Id { get; set; }
+        [ForeignKey(nameof(wf_request))]
         [Required]
         public int RequestId { get; set; }
+        [ForeignKey(nameof(wf_approval_route_level))]
         [Required]
         public int ApprovalRouteLevelId { get; set; }
-        [Required]
+        [ForeignKey(nameof(hr_employees))]
         [StringLength(50)]
         public string ApproverEmployeeCode { get; set; }
         [Required]
@@ -1804,15 +2476,29 @@ namespace UniManage.Core.Database
         [StringLength(1000)]
         public string ApprovalComment { get; set; }
         public DateTime? ApprovedAt { get; set; }
-        [Required]
-        [StringLength(100)]
+        [StringLength(50)]
         public string CreatedBy { get; set; }
         [Required]
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; }
-        [StringLength(100)]
+        [StringLength(50)]
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Navigation property for wf_approval_route_level (ApprovalRouteLevelId)
+        /// </summary>
+        public virtual wf_approval_route_level? wf_approval_route_level { get; set; }
+
+        /// <summary>
+        /// Navigation property for hr_employees (ApproverEmployeeCode)
+        /// </summary>
+        public virtual hr_employees? hr_employees { get; set; }
+
+        /// <summary>
+        /// Navigation property for wf_request (RequestId)
+        /// </summary>
+        public virtual wf_request? wf_request { get; set; }
     }
     #endregion
 

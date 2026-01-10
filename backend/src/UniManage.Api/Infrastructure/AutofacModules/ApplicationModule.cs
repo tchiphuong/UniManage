@@ -1,4 +1,5 @@
 using Autofac;
+using FluentValidation;
 using MediatR;
 using UniManage.Application.Commands.System.Auth;
 
@@ -19,6 +20,15 @@ namespace UniManage.Api.Infrastructure.AutofacModules
             builder.RegisterAssemblyTypes(assembly)
                 .AsClosedTypesOf(typeof(INotificationHandler<>))
                 .AsImplementedInterfaces();
+
+            // Register FluentValidation Validators
+            builder.RegisterAssemblyTypes(assembly)
+                .AsClosedTypesOf(typeof(IValidator<>))
+                .AsImplementedInterfaces();
+
+            // Register MediatR Pipeline Behaviors
+            builder.RegisterGeneric(typeof(UniManage.Application.Pipelines.ValidationBehavior<,>))
+                .As(typeof(IPipelineBehavior<,>));
         }
     }
 }

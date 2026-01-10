@@ -35,6 +35,13 @@
         string DefaultValue,
         string Description)>>();
 
+    // Dictionary lưu thông tin foreign keys
+    var foreignKeys = new Dictionary<string, List<(
+        string ColumnName,
+        string ReferencedTable,
+        string ReferencedColumn,
+        string ConstraintName)>>();
+
     // Lấy danh sách tất cả các bảng từ database
     var tables = new List<string>();
     using (var connection = new SqlConnection(connectionString))
@@ -61,6 +68,44 @@
     using (var connection = new SqlConnection(connectionString))
     {
         connection.Open();
+        
+        // Lấy thông tin foreign keys cho tất cả bảng
+        var fkSql = @"
+            SELECT 
+                fk.name AS ConstraintName,
+                tp.name AS TableName,
+                cp.name AS ColumnName,
+                tr.name AS ReferencedTable,
+                cr.name AS ReferencedColumn
+            FROM sys.foreign_keys AS fk
+            INNER JOIN sys.tables AS tp ON fk.parent_object_id = tp.object_id
+            INNER JOIN sys.tables AS tr ON fk.referenced_object_id = tr.object_id
+            INNER JOIN sys.foreign_key_columns AS fkc ON fk.object_id = fkc.constraint_object_id
+            INNER JOIN sys.columns AS cp ON fkc.parent_column_id = cp.column_id AND fkc.parent_object_id = cp.object_id
+            INNER JOIN sys.columns AS cr ON fkc.referenced_column_id = cr.column_id AND fkc.referenced_object_id = cr.object_id
+            ORDER BY tp.name, cp.name";
+
+        using (var fkCommand = new SqlCommand(fkSql, connection))
+        {
+            using (var reader = fkCommand.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string tableName = reader["TableName"].ToString();
+                    string columnName = reader["ColumnName"].ToString();
+                    string referencedTable = reader["ReferencedTable"].ToString();
+                    string referencedColumn = reader["ReferencedColumn"].ToString();
+                    string constraintName = reader["ConstraintName"].ToString();
+
+                    if (!foreignKeys.ContainsKey(tableName))
+                    {
+                        foreignKeys[tableName] = new List<(string, string, string, string)>();
+                    }
+                    foreignKeys[tableName].Add((columnName, referencedTable, referencedColumn, constraintName));
+                }
+            }
+        }
+
         foreach (var table in tables)
         {
             var schema = new List<(
@@ -154,6 +199,9 @@ namespace UniManage.Model.Entities
 <#
     foreach (var table in tableSchemas)
     {
+        var tableForeignKeys = foreignKeys.ContainsKey(table.Key) 
+            ? foreignKeys[table.Key] 
+            : new List<(string ColumnName, string ReferencedTable, string ReferencedColumn, string ConstraintName)>();
 #>
     #region <#= table.Key #>
     /// <summary>
@@ -166,6 +214,8 @@ namespace UniManage.Model.Entities
         foreach (var column in table.Value)
         {
             var propertyType = GetCSharpType(column.DataType, column.IsNullable);
+            var fk = tableForeignKeys.FirstOrDefault(f => f.ColumnName == column.ColumnName);
+            
             if (!string.IsNullOrEmpty(column.Description))
             {
 #>
@@ -178,6 +228,12 @@ namespace UniManage.Model.Entities
             {
 #>
         [Key]
+<#
+            }
+            if (fk != default && !string.IsNullOrEmpty(fk.ReferencedTable))
+            {
+#>
+        [ForeignKey(nameof(<#= fk.ReferencedTable #>))]
 <#
             }
             if (!column.IsNullable)
@@ -200,6 +256,62 @@ namespace UniManage.Model.Entities
             }
 #>
         public <#= propertyType #> <#= column.ColumnName #> { get; set; }
+<#
+        }
+
+        // Thêm navigation properties (distinct để tránh duplicate)
+        var addedNavigationProps = new HashSet<string>();
+        foreach (var fk in tableForeignKeys)
+        {
+            // Nếu FK column name giống referenced table, dùng tên FK column
+            // Nếu trùng với class name, thêm "Navigation" suffix
+            string navPropName = fk.ReferencedTable;
+            
+            // Nếu có nhiều FK đến cùng 1 bảng, prefix bằng column name
+            var fksToSameTable = tableForeignKeys.Where(f => f.ReferencedTable == fk.ReferencedTable).ToList();
+            if (fksToSameTable.Count > 1)
+            {
+                navPropName = fk.ColumnName.Replace("_id", "").Replace("_code", "").Replace("Id", "").Replace("Code", "") + fk.ReferencedTable;
+            }
+            
+            // Tránh trùng tên với class
+            if (navPropName == table.Key)
+            {
+                navPropName += "Navigation";
+            }
+            
+            // Kiểm tra đã thêm chưa
+            if (addedNavigationProps.Contains(navPropName))
+            {
+                continue;
+            }
+            
+            addedNavigationProps.Add(navPropName);
+#>
+
+        /// <summary>
+        /// Navigation property for <#= fk.ReferencedTable #> (<#= fk.ColumnName #>)
+        /// </summary>
+        public virtual <#= fk.ReferencedTable #>? <#= navPropName #> { get; set; }
+<#
+        }
+
+        // Thêm reverse navigation properties (collection) - group và distinct
+        var reverseRelationships = foreignKeys
+            .Where(kvp => kvp.Value.Any(fk => fk.ReferencedTable == table.Key))
+            .Select(kvp => kvp.Key)
+            .Distinct()
+            .ToList();
+
+        foreach (var reverseTable in reverseRelationships)
+        {
+            string collectionName = reverseTable + "Collection";
+#>
+
+        /// <summary>
+        /// Collection navigation property for <#= reverseTable #>
+        /// </summary>
+        public virtual ICollection<<#= reverseTable #>>? <#= collectionName #> { get; set; }
 <#
         }
 #>

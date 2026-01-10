@@ -6,6 +6,7 @@ using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Resource;
 
 namespace UniManage.Application.Commands.System.Auth
 {
@@ -94,9 +95,7 @@ namespace UniManage.Application.Commands.System.Auth
     /// </summary>
     public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<LoginCommand.Response>>
     {
-        public async Task<ApiResponse<LoginCommand.Response>> Handle(
-            LoginCommand request,
-            CancellationToken ct)
+        public async Task<ApiResponse<LoginCommand.Response>> Handle(LoginCommand request, CancellationToken ct)
         {
             try
             {
@@ -204,7 +203,7 @@ namespace UniManage.Application.Commands.System.Auth
                     };
 
                     UniLogger.Info($"[Login] User {request.Username} logged in successfully via IdentityServer");
-                    return ResponseHelper.Success(response, "Login successful");
+                    return ResponseHelper.Success(response, CoreResource.Auth_msg_LoginSuccess);
                 }
             }
             catch (Exception ex)

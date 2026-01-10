@@ -200,5 +200,25 @@ namespace UniManage.Core.Utilities
                 .Replace("%", "[%]")
                 .Replace("_", "[_]");
         }
+
+        /// <summary>
+        /// Escapes SQL identifier (column/table name) to prevent SQL injection
+        /// </summary>
+        /// <param name="identifier">SQL identifier to escape</param>
+        /// <returns>Escaped identifier safe for SQL queries</returns>
+        public static string EscapeSqlIdentifier(string? identifier)
+        {
+            if (string.IsNullOrWhiteSpace(identifier))
+                return string.Empty;
+
+            // Remove any characters that are not alphanumeric or underscore
+            // This prevents SQL injection through column names
+            var sanitized = System.Text.RegularExpressions.Regex.Replace(
+                identifier,
+                @"[^a-zA-Z0-9_]",
+                string.Empty);
+
+            return sanitized;
+        }
     }
 }

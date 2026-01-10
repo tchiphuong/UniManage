@@ -86,3 +86,5 @@ Thumbs.db
 /src/Core/UniManage.Resource/ResourcesGenerator.cs
 /src/Core/UniManage.Core/Database/Generator/CoreLanguage.cs
 /src/Core/UniManage.Core/Database/Generator/DatabaseModels.cs
+
+.fake

@@ -1,7 +1,8 @@
-using log4net;
-using log4net.Config;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Threading.RateLimiting;
+using Hangfire;
+using Asp.Versioning;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using UniManage.Api.Middleware;
 using UniManage.Api.Filters;
 using Autofac;
@@ -16,6 +17,10 @@ builder.Configuration.SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
+// Build connection string from configuration
+var dbSettings = builder.Configuration.GetSection("Database");
+var connectionString = $"Server={dbSettings["Server"]};Database={dbSettings["DefaultDatabase"]};User Id={dbSettings["UserId"]};Password={dbSettings["Password"]};TrustServerCertificate={dbSettings["TrustServerCertificate"]};MultipleActiveResultSets={dbSettings["MultipleActiveResultSets"]};Connection Timeout={dbSettings["ConnectionTimeout"]}";
+
 // Use Autofac as the service provider factory
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
@@ -28,42 +33,93 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 // ============================================================================
 
 // Controllers with JSON camelCase
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+{
+    // Add ApiResponseFilter globally to all controllers
+    options.Filters.Add<ApiResponseFilter>();
+})
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
-// MediatR for CQRS (Core services only, handlers registered via Autofac)
+// MediatR for CQRS (handlers, validators, pipeline behaviors registered via Autofac)
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 
-// log4net configuration
-var logRepository = LogManager.GetRepository(System.Reflection.Assembly.GetEntryAssembly());
-var logConfigFile = Path.Combine(AppContext.BaseDirectory, "log4net.config");
+// Health Checks
+builder.Services.AddHealthChecks()
+    .AddSqlServer(connectionString, name: "Database", failureStatus: HealthStatus.Unhealthy);
 
-// Set LogPath from configuration
-var logPath = builder.Configuration["AppSettings:LogPath"] ?? "logs";
-if (!Path.IsPathRooted(logPath))
-{
-    logPath = Path.Combine(AppContext.BaseDirectory, logPath);
-}
-// Ensure directory exists
-if (!Directory.Exists(logPath))
-{
-    Directory.CreateDirectory(logPath);
-}
-log4net.GlobalContext.Properties["LogPath"] = logPath;
+// Hangfire (Background Jobs)
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(connectionString));
 
-XmlConfigurator.Configure(logRepository, new FileInfo(logConfigFile));
+// API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Api-Version")
+    );
+})
+.AddMvc()
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// Serilog configuration via UniLogManager
+UniManage.Core.Logging.UniLogManager.Initialize(builder.Configuration["AppSettings:LogPath"] ?? "logs");
 
 // Test log to verify configuration
-var startupLogger = LogManager.GetLogger(typeof(Program));
-startupLogger.Info($"Application Starting Up. LogPath: {logPath}");
+Serilog.Log.Information($"Application Starting Up.");
 
 // Swagger/OpenAPI
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<SwaggerIgnoreFilter>();
+
+    // Custom SchemaId to handle generic types and nested types properly
+    options.CustomSchemaIds(type =>
+    {
+        if (type.IsGenericType)
+        {
+            // For generic types like ApiResponse<T>, build schema id with type args
+            var genericName = type.Name.Substring(0, type.Name.IndexOf('`'));
+            var genericArgs = string.Join("_", type.GetGenericArguments().Select(arg =>
+            {
+                var argName = arg.FullName ?? arg.Name;
+                // Replace special characters in nested types
+                return argName
+                    .Replace("+", "_")
+                    .Replace(".", "_")
+                    .Replace("[", "")
+                    .Replace("]", "")
+                    .Replace(",", "")
+                    .Replace(" ", "")
+                    .Replace("`", "");
+            }));
+            return $"{genericName}Of{genericArgs}";
+        }
+
+        var fullName = type.FullName ?? type.Name;
+        // Handle nested types (e.g., CreateUserCommand+Response)
+        return fullName
+            .Replace("+", "_")
+            .Replace(".", "_")
+            .Replace("[", "")
+            .Replace("]", "")
+            .Replace(",", "")
+            .Replace(" ", "")
+            .Replace("`", "");
+    });
 
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
@@ -131,6 +187,24 @@ builder.Services.AddCors(options =>
 // Response Compression
 builder.Services.AddResponseCompression();
 
+// Authentication & Authorization (JWT Bearer)
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = builder.Configuration["IdentityServer:Authority"];
+        options.RequireHttpsMetadata = builder.Configuration.GetValue<bool>("IdentityServer:RequireHttpsMetadata");
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["IdentityServer:ApiName"],
+            ValidateIssuer = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
@@ -187,7 +261,12 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "UniManage API v1");
         options.DocumentTitle = "UniManage API Documentation";
-        options.RoutePrefix = string.Empty; // Swagger UI at root
+        options.RoutePrefix = "swagger"; // Swagger UI at /swagger
+        options.DisplayRequestDuration();
+        options.EnableDeepLinking();
+        options.EnableFilter();
+        options.ShowExtensions();
+        options.EnableValidator();
     });
 }
 
@@ -212,11 +291,14 @@ app.UseMiddleware<ApiLoggingMiddleware>();
 // 12. CORS
 app.UseCors("AllowAll");
 
-// 13. Authentication & Authorization (will be enabled with IdentityServer)
-// app.UseAuthentication();
-// app.UseAuthorization();
+// 13. Authentication & Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 // 14. Map Controllers
 app.MapControllers();
+
+// 15. Health Check Endpoint
+app.MapHealthChecks("/health");
 
 app.Run();

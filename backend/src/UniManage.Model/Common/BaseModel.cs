@@ -34,6 +34,12 @@ namespace UniManage.Model.Common
         public string? Keyword { get; set; }
 
         /// <summary>
+        /// Fields to search in when using Keyword (comma-separated, e.g., "Username,Email,DisplayName")
+        /// If null/empty, query handler will use default search fields
+        /// </summary>
+        public string? SearchFields { get; set; }
+
+        /// <summary>
         /// Page number, starting from 1
         /// </summary>
         public int PageIndex { get; set; } = 1;

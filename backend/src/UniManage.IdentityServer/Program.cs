@@ -1,5 +1,3 @@
-using log4net;
-using log4net.Config;
 using System.Reflection;
 using UniManage.IdentityServer;
 using UniManage.IdentityServer.Services;
@@ -12,10 +10,8 @@ builder.Configuration.SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-// Configure log4net
-var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
-var logConfigFile = Path.Combine(AppContext.BaseDirectory, "log4net.config");
-XmlConfigurator.Configure(logRepository, new FileInfo(logConfigFile));
+// Configure Logging (Serilog)
+UniManage.Core.Logging.UniLogManager.Initialize(builder.Configuration["AppSettings:LogPath"] ?? "logs");
 
 // Configure services
 builder.Services.AddControllers();
