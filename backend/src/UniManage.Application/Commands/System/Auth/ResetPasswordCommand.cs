@@ -1,4 +1,3 @@
-using Dapper;
 using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
@@ -74,10 +73,10 @@ namespace UniManage.Application.Commands.System.Auth
                             FROM [dbo].[sy_password_reset_tokens]
                             WHERE [Token] = @Token";
 
-                        var tokenData = await dbContext.connection.QueryFirstOrDefaultAsync<TokenDto>(
+                        var tokenData = await dbContext.QueryFirstOrDefaultAsync<TokenDto>(
                             tokenSql,
                             new { request.Token },
-                            dbContext.transaction);
+                            ct);
 
                         if (tokenData == null)
                         {
@@ -108,14 +107,14 @@ namespace UniManage.Application.Commands.System.Auth
                                 [UpdatedBy] = 'system'
                             WHERE [Username] = @Username";
 
-                        await dbContext.connection.ExecuteAsync(
+                        await dbContext.ExecuteAsync(
                             updatePasswordSql,
                             new
                             {
                                 Password = hashedPassword,
                                 Username = tokenData.Username
                             },
-                            dbContext.transaction);
+                            ct);
 
                         // Đánh dấu token đã sử dụng
                         var markTokenUsedSql = @"
@@ -123,10 +122,10 @@ namespace UniManage.Application.Commands.System.Auth
                             SET [UsedAt] = GETDATE()
                             WHERE [Token] = @Token";
 
-                        await dbContext.connection.ExecuteAsync(
+                        await dbContext.ExecuteAsync(
                             markTokenUsedSql,
                             new { request.Token },
-                            dbContext.transaction);
+                            ct);
 
                         await dbContext.CommitAsync();
 

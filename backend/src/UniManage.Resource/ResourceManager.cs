@@ -106,7 +106,7 @@ namespace UniManage.Resource
 
             using (DbContext dbContext = new DbContext())
             {
-                var languageDefault = GetDefaultLanguage(dbContext);
+                var languageDefault = GetDefaultLanguage();
                 if (!string.IsNullOrEmpty(languageDefault))
                 {
                     // 2. Lấy toàn bộ resource
@@ -120,7 +120,7 @@ namespace UniManage.Resource
                                 ORDER BY resource.ResourceKey
                             ";
 
-                    lstDataResource = dbContext.connection.Query<ResourceModel>(sql, new { defaultLang = languageDefault }).ToList();
+                    lstDataResource = dbContext.QueryAsync<ResourceModel>(sql, new { defaultLang = languageDefault }).GetAwaiter().GetResult().ToList();
                 }
             }
 
@@ -144,11 +144,11 @@ namespace UniManage.Resource
             }
         }
 
-        public static string GetDefaultLanguage(DbContext _dbContext = null)
+        public static string GetDefaultLanguage()
         {
-            using (DbContext dbContext = new DbContext(_dbContext))
+            using (DbContext dbContext = new DbContext())
             {
-                return dbContext.connection.QueryFirstOrDefault<string>("SELECT LanguageCode FROM sy_languages WHERE IsDefault = 1") ?? string.Empty;
+                return dbContext.QueryFirstOrDefaultAsync<string>("SELECT LanguageCode FROM sy_languages WHERE IsDefault = 1").GetAwaiter().GetResult() ?? string.Empty;
             }
         }
 
@@ -172,11 +172,11 @@ namespace UniManage.Resource
                                     FROM sy_resources 
                                     WHERE LanguageCode = @LanguageCode AND ResourceKey = @ResourceKey";
 
-                        var exists = dbContext.connection.ExecuteScalar<int>(checkSql, new
+                        var exists = dbContext.ExecuteScalarAsync<int>(checkSql, new
                         {
                             LanguageCode = langShortName,
                             ResourceKey = resourceName
-                        });
+                        }).GetAwaiter().GetResult();
 
                         if (exists == 0)
                         {
@@ -205,7 +205,7 @@ namespace UniManage.Resource
 
                             var now = DateTime.Now;
 
-                            dbContext.connection.Execute(insertSql, new
+                            dbContext.ExecuteAsync(insertSql, new
                             {
                                 Uuid = Guid.NewGuid(),
                                 ResourceKey = resourceName,
@@ -216,7 +216,7 @@ namespace UniManage.Resource
                                 CreatedAt = now,
                                 UpdatedBy = ApplicationConstants.Defaults.SystemUser,
                                 UpdatedAt = now
-                            });
+                            }).GetAwaiter().GetResult();
                         }
                     }
                 }

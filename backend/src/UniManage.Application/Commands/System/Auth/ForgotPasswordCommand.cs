@@ -1,4 +1,3 @@
-using Dapper;
 using FluentValidation;
 using MediatR;
 using UniManage.Core.Database;
@@ -56,10 +55,10 @@ namespace UniManage.Application.Commands.System.Auth
                             WHERE [Username] = @EmailOrUsername 
                                 OR [Email] = @EmailOrUsername";
 
-                        var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
+                        var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
                             sql,
                             new { request.EmailOrUsername },
-                            dbContext.transaction);
+                            ct);
 
                         // Không báo lỗi nếu không tìm thấy user (security best practice)
                         if (user == null)
@@ -84,7 +83,7 @@ namespace UniManage.Application.Commands.System.Auth
                             ([Username], [Token], [ExpiresAt], [CreatedAt])
                             VALUES (@Username, @Token, @ExpiresAt, GETDATE())";
 
-                        await dbContext.connection.ExecuteAsync(
+                        await dbContext.ExecuteAsync(
                             insertSql,
                             new
                             {
@@ -92,7 +91,7 @@ namespace UniManage.Application.Commands.System.Auth
                                 Token = resetToken,
                                 ExpiresAt = expiresAt
                             },
-                            dbContext.transaction);
+                            ct);
 
                         await dbContext.CommitAsync();
 

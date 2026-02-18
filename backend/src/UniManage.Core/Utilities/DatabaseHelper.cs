@@ -32,7 +32,7 @@ namespace UniManage.Core.Utilities
                 parameters.Add("ExcludeId", excludeId.Value);
             }
 
-            var count = await dbContext.connection.ExecuteScalarAsync<int>(sql, parameters);
+            var count = await dbContext.ExecuteScalarAsync<int>(sql, parameters);
             return count > 0;
         }
 
@@ -80,7 +80,7 @@ namespace UniManage.Core.Utilities
             using var dbContext = new DbContext();
 
             var sql = $"SELECT ISNULL(MAX([{sequenceField}]), 0) + 1 FROM [{tableName}]";
-            return await dbContext.connection.ExecuteScalarAsync<int>(sql);
+            return await dbContext.ExecuteScalarAsync<int>(sql);
         }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace UniManage.Core.Utilities
 
             try
             {
-                var result = await dbContext.connection.ExecuteAsync(sql, parameters, dbContext.transaction);
+                var result = await dbContext.ExecuteAsync(sql, parameters);
                 await dbContext.CommitAsync();
                 return result;
             }
@@ -121,7 +121,7 @@ namespace UniManage.Core.Utilities
 
                 foreach (var (sql, parameters) in queries)
                 {
-                    totalRows += await dbContext.connection.ExecuteAsync(sql, parameters, dbContext.transaction);
+                    totalRows += await dbContext.ExecuteAsync(sql, parameters);
                 }
 
                 await dbContext.CommitAsync();
@@ -246,7 +246,7 @@ namespace UniManage.Core.Utilities
                 FROM ({baseQuery}) AS TotalQuery
                 {whereClause}";
 
-            var totalCount = await dbContext.connection.ExecuteScalarAsync<int>(countQuery, parameters, transaction: dbContext.transaction);
+            var totalCount = await dbContext.ExecuteScalarAsync<int>(countQuery, parameters);
 
             // Get data (only if there's data)
             List<TResult> items = new List<TResult>();
@@ -266,7 +266,7 @@ namespace UniManage.Core.Utilities
                 dynamicParams.Add("@Take", pageSize);
 
                 // Use Generic QueryAsync<TResult> to ensure Dapper maps to Class (enabling JSON CamelCase)
-                var results = await dbContext.connection.QueryAsync<TResult>(dataQuery, dynamicParams, transaction: dbContext.transaction);
+                var results = await dbContext.QueryAsync<TResult>(dataQuery, dynamicParams);
                 items = results.ToList();
             }
 
@@ -332,7 +332,7 @@ namespace UniManage.Core.Utilities
                                 FROM ({baseQuery}) AS TotalQuery
                                 {whereClause}";
 
-            var totalCount = await dbContext.connection.ExecuteScalarAsync<int>(countQuery, parameters, transaction: dbContext.transaction);
+            var totalCount = await dbContext.ExecuteScalarAsync<int>(countQuery, parameters);
 
             // 4. Get data (chỉ chạy nếu có dữ liệu)
             List<dynamic> items = new List<dynamic>();
@@ -351,7 +351,7 @@ namespace UniManage.Core.Utilities
                 dynamicParams.Add("@Skip", (pageIndex - 1) * pageSize);
                 dynamicParams.Add("@Take", pageSize);
 
-                var results = await dbContext.connection.QueryAsync(dataQuery, dynamicParams, transaction: dbContext.transaction);
+                var results = await dbContext.QueryAsync<dynamic>(dataQuery, dynamicParams);
                 items = results.ToList();
             }
 
@@ -409,7 +409,7 @@ namespace UniManage.Core.Utilities
                 FROM ({baseQuery}) AS TotalQuery
                 {whereClause}";
 
-            var totalCount = await dbContext.connection.ExecuteScalarAsync<int>(countQuery, parameters, transaction: dbContext.transaction);
+            var totalCount = await dbContext.ExecuteScalarAsync<int>(countQuery, parameters);
 
             List<TResult> items = new List<TResult>();
             if (totalCount > 0)
@@ -426,7 +426,7 @@ namespace UniManage.Core.Utilities
                 dynamicParams.Add("@Skip", (pageIndex - 1) * pageSize);
                 dynamicParams.Add("@Take", pageSize);
 
-                var results = await dbContext.connection.QueryAsync<TResult>(dataQuery, dynamicParams, transaction: dbContext.transaction);
+                var results = await dbContext.QueryAsync<TResult>(dataQuery, dynamicParams);
                 items = results.ToList();
             }
 

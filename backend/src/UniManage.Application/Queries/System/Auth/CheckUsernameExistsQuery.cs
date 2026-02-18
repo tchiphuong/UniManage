@@ -57,7 +57,7 @@ namespace UniManage.Application.Queries.System.Auth
                         FROM [dbo].[sy_users]
                         WHERE [UserName] = @Username";
 
-                    var exists = await dbContext.connection.ExecuteScalarAsync<bool>(
+                    var exists = await dbContext.ExecuteScalarAsync<bool>(
                         sql,
                         new { request.Username });
 

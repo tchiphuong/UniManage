@@ -65,7 +65,7 @@ namespace UniManage.Application.Queries.System.Auth
                         INNER JOIN [dbo].[sy_roles] r ON ur.[RoleCode] = r.[Code]
                         WHERE u.[Username] = @Username";
 
-                    var roles = (await dbContext.connection.QueryAsync<string>(
+                    var roles = (await dbContext.QueryAsync<string>(
                         rolesSql,
                         new { request.Username })).ToList();
 
@@ -79,7 +79,7 @@ namespace UniManage.Application.Queries.System.Auth
                             AND rp.[FunctionCode] IS NOT NULL
                             AND rp.[ActionCode] IS NOT NULL";
 
-                    var permissions = (await dbContext.connection.QueryAsync<string>(
+                    var permissions = (await dbContext.QueryAsync<string>(
                         permissionsSql,
                         new { request.Username })).ToList();
 

@@ -33,7 +33,7 @@ namespace UniManage.IdentityServer.Services
                     WHERE [UserName] = @UserName
                         AND [Status] = @ActiveStatus"; // Status = 1 = ACTIVE
 
-                var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
+                var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
                     sql,
                     new
                     {

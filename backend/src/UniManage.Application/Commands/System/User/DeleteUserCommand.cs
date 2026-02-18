@@ -1,11 +1,13 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.System.User;
 
@@ -16,12 +18,10 @@ public sealed class DeleteUserCommand : BaseCommand, IRequest<ApiResponse<Delete
 {
     public List<long> Ids { get; init; } = new();
 
-    // Internal - set by controller from token
-    internal string DeletedBy { get; init; } = default!;
-
     public sealed class Response
     {
-        public List<long> Ids { get; init; } = new();
+        public List<long> DeletedIds { get; init; } = new();
+        public int Count { get; init; }
     }
 }
 
@@ -45,59 +45,64 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
 {
     public async Task<ApiResponse<DeleteUserCommand.Response>> Handle(DeleteUserCommand request, CancellationToken ct)
     {
-        var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
+        var log = new CoreLogModel(request.HeaderInfo)
         {
             Parameter = new List<CoreParamModel>
             {
-                new() { Name = nameof(request.Ids), Value = JsonConvert.SerializeObject(request.Ids) },
-                new() { Name = nameof(request.DeletedBy), Value = request.DeletedBy }
+                new CoreParamModel(nameof(request.Ids), JsonConvert.SerializeObject(request.Ids))
             }
         };
 
-        using (var db = new DbContext(openTransaction: true))
+        using (var dbContext = new DbContext(openTransaction: true))
         {
             try
             {
-                // Soft delete by setting Status = 0
-                // Dapper handles List<long> for IN clause automatically
-                var rowsAffected = await db.ExecuteAsync(
-                    """
-                    UPDATE sy_users
-                    SET Status = 0,
-                        UpdatedBy = @DeletedBy,
-                        UpdatedAt = GETDATE()
-                    WHERE Id IN @Ids
-                    """,
-                    new
-                    {
-                        Ids = request.Ids,
-                        request.DeletedBy
-                    },
-                    ct);
+                // Find users by Ids using EF Core
+                var users = await dbContext.Set<sy_users>()
+                    .Where(u => request.Ids.Contains(u.Id))
+                    .ToListAsync(ct);
 
-                if (rowsAffected == 0)
+                if (users.Count == 0)
                 {
-                    await db.RollbackAsync(ct);
+                    await dbContext.RollbackAsync(ct);
                     return ResponseHelper.NotFound<DeleteUserCommand.Response>("No users found to delete");
                 }
 
-                await db.CommitAsync(ct);
+                // Soft delete: Set Status to "Inactive" (or use CoreCommon.Value.Commonstatus.Inactive if available)
+                foreach (var user in users)
+                {
+                    user.Status = "Inactive"; // Soft delete
+                    user.UpdatedBy = request.HeaderInfo?.Username ?? "SYSTEM";
+                    user.UpdatedAt = DateTime.Now;
+                }
 
-                var response = ResponseHelper.Success(new DeleteUserCommand.Response { Ids = request.Ids }, $"{rowsAffected} user(s) deleted successfully");
+                // Save changes
+                await dbContext.SaveChangesAsync(ct);
+                await dbContext.CommitAsync(ct);
+
+                var response = ResponseHelper.Success(
+                    new DeleteUserCommand.Response 
+                    { 
+                        DeletedIds = users.Select(u => u.Id).ToList(),
+                        Count = users.Count 
+                    }, 
+                    $"{users.Count} user(s) deleted successfully");
+
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;
-                UniLogger.Info(JsonConvert.SerializeObject(log));
+                log.Result = response;
+                UniLogManager.WriteApiLog(log);
 
                 return response;
             }
             catch (Exception ex)
             {
-                await db.RollbackAsync(ct);
+                await dbContext.RollbackAsync(ct);
 
                 log.IsException = 1;
                 log.Message = ex.Message;
-                log.ReturnCode = 500;
-                UniLogger.Error(JsonConvert.SerializeObject(log));
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                UniLogManager.WriteApiLog(log);
 
                 return ResponseHelper.Error<DeleteUserCommand.Response>(
                     $"Failed to delete users: {ex.Message}");

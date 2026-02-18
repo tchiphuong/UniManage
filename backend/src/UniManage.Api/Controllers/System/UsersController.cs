@@ -76,7 +76,6 @@ public class UsersController : BaseController
     /// Create new user
     /// </summary>
     [HttpPost]
-    [Route("")]
     public async Task<ActionResult<ApiResponse<CreateUserCommand.Response>>> CreateUser([FromBody] CreateUserCommand command, CancellationToken ct)
     {
         command.HeaderInfo = HeaderInfo;
@@ -129,7 +128,7 @@ public class UsersController : BaseController
     [HttpPost("{id}/roles")]
     public async Task<ActionResult<ApiResponse<AssignUserRoleCommand.Response>>> AssignRole([FromRoute] long id, [FromBody] AssignUserRoleCommand command, CancellationToken ct)
     {
-        var currentUser = this.GetCurrentUsername();
+        command.HeaderInfo = HeaderInfo;
         var result = await _mediator.Send(command, ct);
         return Ok(result);
     }
@@ -144,11 +143,11 @@ public class UsersController : BaseController
     [HttpDelete("{id}/roles/{roleCode}")]
     public async Task<ActionResult<ApiResponse<RemoveUserRoleCommand.Response>>> RemoveRole(long id, string roleCode, CancellationToken ct)
     {
-        var currentUser = this.GetCurrentUsername();
         var command = new RemoveUserRoleCommand
         {
             UserId = id,
             RoleCode = roleCode,
+            HeaderInfo = HeaderInfo
         };
 
         var result = await _mediator.Send(command, ct);

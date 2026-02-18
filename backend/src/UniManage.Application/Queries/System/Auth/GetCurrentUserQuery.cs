@@ -89,7 +89,7 @@ namespace UniManage.Application.Queries.System.Auth
                         FROM [dbo].[sy_users]
                         WHERE [UserName] = @Username";
 
-                    var user = await dbContext.connection.QueryFirstOrDefaultAsync<GetCurrentUserQuery.Result>(
+                    var user = await dbContext.QueryFirstOrDefaultAsync<GetCurrentUserQuery.Result>(
                         sql,
                         new { request.Username });
 

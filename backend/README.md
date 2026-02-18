@@ -21,7 +21,9 @@ src/
 
 -   **Framework**: .NET 9
 -   **Database**: SQL Server
--   **ORM**: Dapper (No EF Core)
+-   **ORM**: Entity Framework Core 9.0 + Dapper (Hybrid approach)
+    - **EF Core**: CRUD operations (Create, Read, Update, Delete)
+    - **Dapper**: Complex queries, joins, aggregations, high-performance scenarios
 -   **Auth**: Duende IdentityServer (Custom Stores)
 -   **CQRS**: MediatR
 -   **Validation**: FluentValidation
@@ -58,20 +60,72 @@ public class ListUsersQuery : BaseQuery, IRequest<PagedResponse<UserDto>> { ... 
 
 ### Database Access
 
-All database interaction goes through `UniManageDbContext` using Dapper.
+We use a **hybrid approach** with Entity Framework Core and Dapper:
+
+#### EF Core (for CRUD operations)
 
 ```csharp
-// In Command Handler (Transaction is managed by structure)
+// In Command Handler - Create
 using (var db = new DbContext(openTransaction: true)) {
-    await db.ExecuteAsync(...);
-    await db.CommitAsync();
+    var entity = new sy_users { Username = ..., Email = ... };
+    db.Set<sy_users>().Add(entity);
+    await db.SaveChangesAsync(ct);
+    await db.CommitAsync(ct);
+    return entity.Id; // Auto-populated
 }
 
-// In Query Handler (Read-only)
+// In Command Handler - Update with Optimistic Concurrency
+using (var db = new DbContext(openTransaction: true)) {
+    var entity = await db.Set<sy_users>()
+        .FirstOrDefaultAsync(u => u.Id == id, ct);
+    
+    if (entity == null) return NotFound();
+    
+    // Modify properties
+    entity.Email = newEmail;
+    entity.UpdatedBy = currentUser;
+    entity.UpdatedAt = DateTime.UtcNow;
+    
+    await db.SaveChangesAsync(ct); // Auto-checks RowVersion
+    await db.CommitAsync(ct);
+}
+
+// In Query Handler - Read with projection
 using (var db = new DbContext()) {
-    return await db.QueryAsync(...);
+    var users = await db.Set<sy_users>()
+        .Where(u => u.Status == "active")
+        .OrderBy(u => u.Username)
+        .Skip((pageIndex - 1) * pageSize)
+        .Take(pageSize)
+        .Select(u => new UserDto { 
+            Id = u.Id, 
+            Username = u.Username 
+        })
+        .ToListAsync(ct);
+    
+    return users;
 }
 ```
+
+#### Dapper (for complex queries)
+
+```csharp
+// Complex joins and aggregations
+using (var db = new DbContext()) {
+    var sql = @"
+        SELECT u.*, r.RoleName, d.DepartmentName
+        FROM sy_users u
+        LEFT JOIN sy_roles r ON u.RoleCode = r.RoleCode
+        LEFT JOIN hr_departments d ON u.DepartmentCode = d.DepartmentCode
+        WHERE u.Status = @Status";
+    
+    return await db.QueryAsync<UserDetailDto>(sql, new { Status = "active" });
+}
+```
+
+**Rule of Thumb:**
+- ✅ Use **EF Core** for: Single entity operations, CRUD, basic filters
+- ✅ Use **Dapper** for: Complex joins, aggregations, performance-critical queries
 
 ## 🔐 Security & Encryption
 

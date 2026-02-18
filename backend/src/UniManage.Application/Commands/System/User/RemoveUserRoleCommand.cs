@@ -1,7 +1,6 @@
 using FluentValidation;
 using MediatR;
 using Newtonsoft.Json;
-using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;

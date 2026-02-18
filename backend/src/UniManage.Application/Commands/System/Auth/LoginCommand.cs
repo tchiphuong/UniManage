@@ -176,7 +176,7 @@ namespace UniManage.Application.Commands.System.Auth
                         FROM [dbo].[sy_users]
                         WHERE [UserName] = @Username";
 
-                    var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
+                    var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
                         sql,
                         new { request.Username });
 

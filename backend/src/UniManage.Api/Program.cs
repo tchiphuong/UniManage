@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Threading.RateLimiting;
-using Hangfire;
 using Asp.Versioning;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using UniManage.Api.Middleware;
@@ -49,13 +48,6 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Pr
 // Health Checks
 builder.Services.AddHealthChecks()
     .AddSqlServer(connectionString, name: "Database", failureStatus: HealthStatus.Unhealthy);
-
-// Hangfire (Background Jobs)
-builder.Services.AddHangfire(config => config
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(connectionString));
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>

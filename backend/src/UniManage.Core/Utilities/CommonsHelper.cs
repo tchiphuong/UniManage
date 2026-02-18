@@ -29,7 +29,7 @@ namespace UniManage.Core.Utilities
                     AND [ValueKey] = @ValueKey 
                     AND [Status] = 1";
 
-            return await dbContext.connection.QueryFirstOrDefaultAsync<string?>(
+            return await dbContext.QueryFirstOrDefaultAsync<string?>(
                 sql,
                 new
                 {
@@ -54,7 +54,7 @@ namespace UniManage.Core.Utilities
                     AND [Status] = 1
                 ORDER BY [Sort]";
 
-            var results = await dbContext.connection.QueryAsync<(string ValueKey, string ValueNameVi)>(
+            var results = await dbContext.QueryAsync<(string ValueKey, string ValueNameVi)>(
                 sql,
                 new { TypeKey = typeKey.ToUpper() });
 
@@ -91,7 +91,7 @@ namespace UniManage.Core.Utilities
                     AND [ValueKey] = @ValueKey 
                     AND [Status] = 1";
 
-            var count = await dbContext.connection.ExecuteScalarAsync<int>(
+            var count = await dbContext.ExecuteScalarAsync<int>(
                 sql,
                 new
                 {

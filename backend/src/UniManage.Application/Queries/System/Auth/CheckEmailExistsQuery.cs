@@ -58,7 +58,7 @@ namespace UniManage.Application.Queries.System.Auth
                         FROM [dbo].[sy_users]
                         WHERE [Email] = @Email";
 
-                    var exists = await dbContext.connection.ExecuteScalarAsync<bool>(
+                    var exists = await dbContext.ExecuteScalarAsync<bool>(
                         sql,
                         new { request.Email });
 

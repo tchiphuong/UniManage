@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <specFlow>
+    <!-- Generator Configuration -->
+    <generator allowDebugGeneratedFiles="false" allowRowTests="true" />
+    
+    <!-- Runtime Configuration -->
+    <runtime stopAtFirstError="false" missingOrPendingStepsOutcome="Inconclusive" />
+    
+    <!-- Trace Configuration -->
+    <trace traceSuccessfulSteps="true" traceTimings="false" minTracedDuration="0:0:0.1" />
+    
+    <!-- Step Assembly -->
+    <stepAssemblies>
+      <stepAssembly assembly="UniManage.Tests" />
+    </stepAssemblies>
+    
+    <!-- Plugins -->
+    <plugins>
+      <add name="xUnit" type="Generator" />
+    </plugins>
+  </specFlow>
+</configuration>

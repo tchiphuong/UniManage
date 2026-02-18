@@ -38,7 +38,7 @@ namespace UniManage.IdentityServer.Services
                     WHERE [Id] = @UserId
                         AND [Status] = @ActiveStatus";
 
-                var user = await dbContext.connection.QueryFirstOrDefaultAsync<UserDto>(
+                var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
                     sql,
                     new
                     {
@@ -100,7 +100,7 @@ namespace UniManage.IdentityServer.Services
                     WHERE [Id] = @UserId
                         AND [Status] = @ActiveStatus";
 
-                var count = await dbContext.connection.ExecuteScalarAsync<int>(
+                var count = await dbContext.ExecuteScalarAsync<int>(
                     sql,
                     new
                     {

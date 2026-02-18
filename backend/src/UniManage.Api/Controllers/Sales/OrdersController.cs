@@ -2,7 +2,6 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using UniManage.Application.Commands.Sales.Orders;
 using UniManage.Application.Queries.Sales.Orders;
-using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.Sales
@@ -65,12 +64,13 @@ namespace UniManage.Api.Controllers.Sales
         [HttpPatch("{orderCode}/status")]
         public async Task<ActionResult<ApiResponse<UpdateOrderStatusCommand.Response>>> UpdateStatus([FromRoute] string orderCode, [FromBody] UpdateOrderStatusCommand command, CancellationToken ct)
         {
-            if (orderCode != command.OrderCode)
+            var cmd = new UpdateOrderStatusCommand
             {
-                return BadRequest(ResponseHelper.Error<UpdateOrderStatusCommand.Response>("Order code mismatch"));
-            }
-            command.HeaderInfo = HeaderInfo;
-            var result = await _mediator.Send(command, ct);
+                OrderCode = orderCode,
+                Status = command.Status,
+                HeaderInfo = HeaderInfo
+            };
+            var result = await _mediator.Send(cmd, ct);
             return Ok(result);
         }
 

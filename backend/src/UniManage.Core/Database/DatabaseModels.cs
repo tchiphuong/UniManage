@@ -2198,18 +2198,18 @@ namespace UniManage.Model.Entities
         public string Password { get; set; }
         [ForeignKey(nameof(hr_employees))]
         [StringLength(50)]
-        public string EmployeeCode { get; set; }
+        public string? EmployeeCode { get; set; }
         [ForeignKey(nameof(sy_roles))]
         [StringLength(50)]
-        public string RoleCode { get; set; }
+        public string? RoleCode { get; set; }
         [StringLength(50)]
         public string Status { get; set; }
         [StringLength(50)]
-        public string CreatedBy { get; set; }
+        public string? CreatedBy { get; set; }
         [Required]
         public DateTime CreatedAt { get; set; }
         [StringLength(50)]
-        public string UpdatedBy { get; set; }
+        public string? UpdatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }

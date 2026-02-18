@@ -1,10 +1,12 @@
 using FluentValidation;
 using MediatR;
-using UniManage.Core.Database;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Queries.System.User;
 
@@ -19,14 +21,14 @@ public sealed class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<GetUserBy
 
     public sealed record Response
     {
-        public string Username { get; set; }
-        public string DisplayName { get; set; }
-        public string Email { get; set; }
-        public string? PhoneNumber { get; set; }
+        public string Username { get; set; } = default!;
+        public string Email { get; set; } = default!;
         public string? EmployeeCode { get; set; }
-        public byte Status { get; set; }
+        public string? RoleCode { get; set; }
+        public string Status { get; set; } = default!;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public byte[] RowVersion { get; set; } = default!;
     }
 }
 
@@ -57,63 +59,63 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
 {
     public async Task<ApiResponse<GetUserByIdQuery.Response>> Handle(GetUserByIdQuery request, CancellationToken ct)
     {
-        ApiResponse<GetUserByIdQuery.Response> response;
-
         // Initialize log data
-        CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
-        logData.Parameter = new List<CoreParamModel>
+        var logData = new CoreLogModel(request.HeaderInfo)
         {
-            new CoreParamModel(nameof(request.Id), request.Id.ToString())
+            Parameter = new List<CoreParamModel>
+            {
+                new CoreParamModel(nameof(request.Id), request.Id.ToString())
+            }
         };
 
-        using (DbContext dbContext = new DbContext())
+        using (var dbContext = new DbContext())
         {
             try
             {
-                var query = $@"
-                    SELECT 
-                        Username        AS {nameof(GetUserByIdQuery.Response.Username)},
-                        DisplayName     AS {nameof(GetUserByIdQuery.Response.DisplayName)},
-                        Email           AS {nameof(GetUserByIdQuery.Response.Email)},
-                        PhoneNumber     AS {nameof(GetUserByIdQuery.Response.PhoneNumber)},
-                        EmployeeCode    AS {nameof(GetUserByIdQuery.Response.EmployeeCode)},
-                        Status          AS {nameof(GetUserByIdQuery.Response.Status)},
-                        CreatedAt       AS {nameof(GetUserByIdQuery.Response.CreatedAt)},
-                        UpdatedAt       AS {nameof(GetUserByIdQuery.Response.UpdatedAt)}
-                    FROM sy_users
-                    WHERE Id = @Id";
-
-                var user = await dbContext.QueryFirstOrDefaultAsync<GetUserByIdQuery.Response>(
-                    query,
-                    new { request.Id },
-                    ct);
+                // Use EF Core LINQ to find user
+                var user = await dbContext.Set<sy_users>()
+                    .Where(u => u.Id == request.Id)
+                    .Select(u => new GetUserByIdQuery.Response
+                    {
+                        Username = u.Username,
+                        Email = u.Email,
+                        EmployeeCode = u.EmployeeCode,
+                        RoleCode = u.RoleCode,
+                        Status = u.Status,
+                        CreatedAt = u.CreatedAt,
+                        UpdatedAt = u.UpdatedAt,
+                        RowVersion = u.RowVersion
+                    })
+                    .FirstOrDefaultAsync(ct);
 
                 if (user == null)
                 {
-                    response = ResponseHelper.NotFound<GetUserByIdQuery.Response>("User not found");
-                    logData.ReturnCode = response.ReturnCode;
+                    var notFoundResponse = ResponseHelper.NotFound<GetUserByIdQuery.Response>("User not found");
+                    logData.ReturnCode = notFoundResponse.ReturnCode;
+                    UniLogManager.WriteApiLog(logData);
+                    return notFoundResponse;
                 }
-                else
-                {
-                    response = ResponseHelper.Success(user, CoreResource.User_msg_GetSuccess);
-                    logData.Result = new { user.Username };
-                    logData.ReturnCode = response.ReturnCode;
-                }
+
+                var response = ResponseHelper.Success(user, CoreResource.User_msg_GetSuccess);
+                logData.Result = new { user.Username };
+                logData.ReturnCode = response.ReturnCode;
+                UniLogManager.WriteApiLog(logData);
+
+                return response;
             }
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving user by id {request.Id}: {ex.Message}", ex);
-                response = ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
-
-                logData.Message = ex.ToString();
+                
+                var response = ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                logData.Message = ex.Message;
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;
+                UniLogManager.WriteApiLog(logData);
+
+                return response;
             }
         }
-
-        UniLogManager.WriteApiLog(logData);
-
-        return response;
     }
 }
 

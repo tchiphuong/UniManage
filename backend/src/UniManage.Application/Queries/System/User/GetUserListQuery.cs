@@ -1,11 +1,12 @@
 using FluentValidation;
 using MediatR;
-using System.Text;
-using UniManage.Core.Database;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Queries.System.User;
 
@@ -51,59 +52,95 @@ public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, 
 {
     public async Task<ApiResponse<PagedResult<GetUserListQuery.Response>>> Handle(GetUserListQuery request, CancellationToken cancellationToken)
     {
-        ApiResponse<PagedResult<GetUserListQuery.Response>> response;
-
         // Initialize log data
-        CoreLogModel logData = new CoreLogModel(request.HeaderInfo);
-        logData.Parameter = new List<CoreParamModel>
+        var logData = new CoreLogModel(request.HeaderInfo)
         {
-            new CoreParamModel(nameof(request.Keyword), request.Keyword),
-            new CoreParamModel(nameof(request.SearchFields), request.SearchFields),
-            new CoreParamModel(nameof(request.Status), request.Status)
+            Parameter = new List<CoreParamModel>
+            {
+                new CoreParamModel(nameof(request.Keyword), request.Keyword),
+                new CoreParamModel(nameof(request.Status), request.Status),
+                new CoreParamModel(nameof(request.PageIndex), request.PageIndex),
+                new CoreParamModel(nameof(request.PageSize), request.PageSize)
+            }
         };
 
-        using (DbContext dbContext = new DbContext())
+        using (var dbContext = new DbContext())
         {
             try
             {
-                var query = new StringBuilder();
-                query.AppendLine($@"SELECT 
-                                        Id           AS {nameof(GetUserListQuery.Response.Id)},
-                                        Username     AS {nameof(GetUserListQuery.Response.Username)},
-                                        EmployeeCode AS {nameof(GetUserListQuery.Response.EmployeeCode)},
-                                        RoleCode     AS {nameof(GetUserListQuery.Response.RoleCode)},
-                                        Email        AS {nameof(GetUserListQuery.Response.Email)},
-                                        Status       AS {nameof(GetUserListQuery.Response.Status)},
-                                        CreatedAt    AS {nameof(GetUserListQuery.Response.CreatedAt)}
-                                    FROM sy_users
-                                    WHERE 1 = 1");
+                // Build query with EF Core LINQ
+                var query = dbContext.Set<sy_users>().AsQueryable();
 
+                // Apply filters
                 if (!string.IsNullOrEmpty(request.Status))
                 {
-                    query.AppendLine("AND Status = @Status");
+                    query = query.Where(u => u.Status == request.Status);
                 }
 
-                var result = await dbContext.QueryPagingAsync<GetUserListQuery.Response>(query, request);
+                if (!string.IsNullOrEmpty(request.Keyword))
+                {
+                    var keyword = request.Keyword.Trim().ToLower();
+                    query = query.Where(u => 
+                        u.Username.ToLower().Contains(keyword) ||
+                        u.Email.ToLower().Contains(keyword) ||
+                        (u.EmployeeCode != null && u.EmployeeCode.ToLower().Contains(keyword)));
+                }
 
-                response = ResponseHelper.Success(result, CoreResource.User_msg_ListSuccess);
+                // Get total count before pagination
+                var totalItems = await query.CountAsync(cancellationToken);
+
+                // Apply sorting (default: CreatedAt DESC)
+                query = query.OrderByDescending(u => u.CreatedAt);
+
+                // Apply pagination
+                var items = await query
+                    .Skip((request.PageIndex - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(u => new GetUserListQuery.Response
+                    {
+                        Id = u.Id,
+                        Username = u.Username,
+                        EmployeeCode = u.EmployeeCode ?? string.Empty,
+                        RoleCode = u.RoleCode ?? string.Empty,
+                        Email = u.Email,
+                        Status = u.Status,
+                        CreatedAt = u.CreatedAt
+                    })
+                    .ToListAsync(cancellationToken);
+
+                // Build paged result
+                var result = new PagedResult<GetUserListQuery.Response>
+                {
+                    Items = items,
+                    Paging = new PagingInfo
+                    {
+                        PageIndex = request.PageIndex,
+                        PageSize = request.PageSize,
+                        TotalItems = totalItems
+                    }
+                };
+
+                var response = ResponseHelper.Success(result, CoreResource.User_msg_ListSuccess);
 
                 logData.Result = result;
                 logData.ReturnCode = response.ReturnCode;
+                UniLogManager.WriteApiLog(logData);
+
+                return response;
             }
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving users list: {ex.Message}", ex);
-                response = ResponseHelper.Error<PagedResult<GetUserListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
-
-                logData.Message = ex.ToString();
+                
+                var response = ResponseHelper.Error<PagedResult<GetUserListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                logData.Message = ex.Message;
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;
+                UniLogManager.WriteApiLog(logData);
+
+                return response;
             }
         }
-
-        UniLogManager.WriteApiLog(logData);
-
-        return response;
     }
 }
 
