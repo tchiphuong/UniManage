@@ -96,7 +96,7 @@ namespace UniManage.Application.Queries.System.Auth
             catch (Exception ex)
             {
                 UniLogger.Error($"[GetUserPermissions] Error getting permissions for user: {request.Username}", ex);
-                return ResponseHelper.Error<GetUserPermissionsQuery.Result>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<GetUserPermissionsQuery.Result>(CoreResource.common_exceptionOccurred);
             }
         }
     }

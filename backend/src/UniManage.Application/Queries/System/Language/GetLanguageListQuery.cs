@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.System.Language;
 
 #region Query
 
-public sealed class GetLanguageListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetLanguageListQuery.Response>>>
+public sealed class GetLanguageListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetLanguageListQuery.Response>>>
 {
     public string? StatusCode { get; set; }
 
@@ -81,7 +81,7 @@ public sealed class GetLanguageListQueryHandler : IRequestHandler<GetLanguageLis
 
                 var result = await dbContext.QueryPagingAsync<GetLanguageListQuery.Response>(query, request);
 
-                response = ResponseHelper.Success(result, CoreResource.Language_msg_ListSuccess);
+                response = ResponseHelper.Success(result, CoreResource.common_success);
 
                 logData.Result = result;
                 logData.ReturnCode = response.ReturnCode;
@@ -89,7 +89,7 @@ public sealed class GetLanguageListQueryHandler : IRequestHandler<GetLanguageLis
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving languages list: {ex.Message}", ex);
-                response = ResponseHelper.Error<PagedResult<GetLanguageListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                response = ResponseHelper.Error<PagedResult<GetLanguageListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                 logData.Message = ex.ToString();
                 logData.IsException = 1;

@@ -84,14 +84,14 @@ namespace UniManage.Application.Queries.Master.Countries
 
                     if (country == null)
                     {
-                        var notFoundResponse = ResponseHelper.NotFound<GetCountryByCodeQuery.Response>(CoreResource.Country_msg_NotFound);
+                        var notFoundResponse = ResponseHelper.NotFound<GetCountryByCodeQuery.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_country));
                         logData.ReturnCode = notFoundResponse.ReturnCode;
                         logData.Message = notFoundResponse.Message;
                         UniLogManager.WriteApiLog(logData);
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(country, CoreResource.Country_msg_GetSuccess);
+                    var response = ResponseHelper.Success(country, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_country));
                     logData.Result = country;
                     logData.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(logData);
@@ -100,7 +100,7 @@ namespace UniManage.Application.Queries.Master.Countries
                 catch (Exception ex)
                 {
                     UniLogger.Error($"Error retrieving country: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<GetCountryByCodeQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<GetCountryByCodeQuery.Response>(CoreResource.common_exceptionOccurred);
                     logData.Message = ex.ToString();
                     logData.IsException = 1;
                     logData.ReturnCode = response.ReturnCode;

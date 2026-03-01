@@ -30,7 +30,7 @@ namespace UniManage.Application.Commands.HR.Salaries
         public DeleteSalaryCommandValidator()
         {
             RuleFor(x => x.Ids)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
+                .NotEmpty().WithMessage(CoreResource.validation_required)
                 .Must(ids => ids.All(id => id > 0))
                 .WithMessage("All IDs must be greater than 0");
         }
@@ -69,7 +69,7 @@ namespace UniManage.Application.Commands.HR.Salaries
                     await dbContext.CommitAsync();
 
                     var responseData = new DeleteSalaryCommand.Response { Success = true, DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.Common_msg_DeleteSuccess, deletedCount));
+                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_deleteSuccess, deletedCount));
 
                     log.Result = response.Data;
                     log.ReturnCode = response.ReturnCode;
@@ -82,7 +82,7 @@ namespace UniManage.Application.Commands.HR.Salaries
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error deleting salaries: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<DeleteSalaryCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<DeleteSalaryCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

@@ -1,126 +1,236 @@
-/* eslint-disable @next/next/no-img-element */
-"use client";
+import { useRef, useState, useEffect } from 'react';
+import { useRouter } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
+import {
+    MoonIcon,
+    SunIcon,
+    BellIcon,
+    ChevronDownIcon,
+    UserIcon,
+    Cog6ToothIcon,
+    ArrowRightOnRectangleIcon,
+} from '@heroicons/react/24/outline';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { useClickOutside } from '@/hooks';
+import { Notification, User } from '@/types';
 
-import { useState } from "react";
-import { useTheme } from "next-themes";
-import { LanguageSwitcher } from "@/components";
+export function Header() {
+    const t = useTranslations();
+    const { darkMode, toggleDarkMode } = useTheme();
+    const { sidebarOpen, toggleSidebar } = useSidebar();
+    const router = useRouter();
 
-interface HeaderProps {
-    sidebarOpen: boolean;
-    setSidebarOpen: (open: boolean) => void;
-}
+    // Notifications state
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const notificationRef = useRef<HTMLDivElement>(null);
+    useClickOutside(notificationRef as React.RefObject<HTMLElement>, () => setNotificationOpen(false));
 
-export function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
-    const { theme, setTheme } = useTheme();
-    const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+    // User state
+    const [user, setUser] = useState<User | null>(null);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    useClickOutside(userMenuRef as React.RefObject<HTMLElement>, () => setUserMenuOpen(false));
+
+    // Fetch notifications
+    useEffect(() => {
+        const randomLimit = Math.floor(Math.random() * 50) + 1;
+        fetch(`https://jsonplaceholder.typicode.com/comments?_limit=${randomLimit}`)
+            .then((res) => res.json())
+            .then((data: Notification[]) => setNotifications(data))
+            .catch(console.error);
+    }, []);
+
+    // Fetch user
+    useEffect(() => {
+        fetch('https://randomuser.me/api/')
+            .then((res) => res.json())
+            .then((data) => setUser(data.results[0]))
+            .catch(console.error);
+    }, []);
+
+    const markAllAsRead = () => {
+        setNotifications([]);
+        setNotificationOpen(false);
+    };
+
+    // User menu handlers
+    const handleProfile = () => {
+        setUserMenuOpen(false);
+        router.push('/dashboard/profile');
+    };
+
+    const handleSettings = () => {
+        setUserMenuOpen(false);
+        router.push('/dashboard/settings');
+    };
+
+    const handleSignOut = () => {
+        setUserMenuOpen(false);
+        // TODO: Clear auth state/tokens here if needed
+        router.push('/auth/login');
+    };
 
     return (
-        <header className="sticky top-0 z-50 flex h-18 w-full items-center justify-between bg-white px-6 shadow-md dark:bg-gray-800 transition-colors duration-300">
-            <div className="flex items-center gap-x-4">
-                <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="text-gray-600 hover:text-gray-800 dark:text-gray-200 dark:hover:text-white focus:outline-none lg:text-gray-600"
-                >
-                    <span className="sr-only">Toggle sidebar</span>
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+        <header className="z-50 h-16 bg-white shadow-md transition-colors duration-300 dark:bg-zinc-800">
+            <div className="mx-auto h-full px-4">
+                <div className="flex h-full items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                        {/* Hamburger/X button */}
+                        <button
+                            onClick={toggleSidebar}
+                            className="relative h-8 w-8 cursor-pointer text-gray-600 transition-colors hover:text-gray-800 focus:outline-none dark:text-gray-300 dark:hover:text-gray-100"
+                        >
+                            <span
+                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${sidebarOpen ? 'top-3.5 rotate-45' : 'top-2'
+                                    }`}
+                            />
+                            <span
+                                className={`absolute block h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-in-out ${sidebarOpen ? 'opacity-0' : 'top-4'
+                                    }`}
+                            />
+                            <span
+                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${sidebarOpen ? 'top-3.5 -rotate-45' : 'top-6'
+                                    }`}
+                            />
+                        </button>
+
+                        <img
+                            src="https://images.freeimages.com/vhq/images/previews/214/generic-logo-140952.png"
+                            alt="Company Logo"
+                            className="h-8 max-w-20 object-contain"
                         />
-                    </svg>
-                </button>
-                <div className="flex items-center space-x-2">
-                    <img src="https://pub-e63b17b4d990438a83af58c15949f8a2.r2.dev/type/circle.png" alt="Company Logo" className="h-8 w-auto object-contain" />
-                </div>
-            </div>
+                    </div>
 
-            <div className="flex items-center space-x-4">
-                {/* Theme Toggle */}
-                <button
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="p-1 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
-                >
-                    {theme === "dark" ? (
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                    ) : (
-                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                    )}
-                </button>
+                    <div className="flex items-center space-x-4">
+                        {/* Dark mode toggle */}
+                        <button
+                            onClick={toggleDarkMode}
+                            className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500 focus:outline-none dark:text-white dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                        >
+                            {darkMode ? (
+                                <SunIcon className="h-5 w-5 text-yellow-500" />
+                            ) : (
+                                <MoonIcon className="h-5 w-5 text-blue-500" />
+                            )}
+                        </button>
 
-                {/* Notifications */}
-                <div className="relative">
-                    <button
-                        onClick={() => setNotificationsOpen(!notificationsOpen)}
-                        className="p-1 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
-                    >
-                        <span className="sr-only">View notifications</span>
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-600 ring-2 ring-white"></span>
-                    </button>
-                    {notificationsOpen && (
-                        <>
-                            <div className="fixed inset-0 z-10 w-full h-full" onClick={() => setNotificationsOpen(false)}></div>
-                            <div className="absolute right-0 mt-2 w-80 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-20 overflow-hidden dark:bg-gray-800">
-                                <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Notifications
+                        {/* Notification Bell */}
+                        <div ref={notificationRef} className="relative">
+                            <button
+                                onClick={() => setNotificationOpen(!notificationOpen)}
+                                className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500 focus:outline-none dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                            >
+                                <BellIcon className="h-5 w-5" />
+                            </button>
+                            {notifications.length > 0 && (
+                                <span className="absolute top-0 right-0 inline-flex translate-x-1/4 -translate-y-1/4 transform items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs leading-none font-bold text-white">
+                                    {notifications.length > 99 ? '99+' : notifications.length}
+                                </span>
+                            )}
+                            {notificationOpen && (
+                                <div className="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-xl border border-zinc-100 bg-white shadow-xl shadow-gray-200/50 transition-all duration-200 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:shadow-zinc-900/50">
+                                    <div className="border-b border-zinc-100 px-4 py-3 text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:text-zinc-200">
+                                        {t('common.notifications')}
+                                    </div>
+                                    <div className="max-h-60 overflow-y-auto">
+                                        {notifications.slice(0, 10).map((notification) => (
+                                            <a
+                                                key={notification.id}
+                                                href="#"
+                                                className="block border-b border-zinc-50 px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            >
+                                                <p
+                                                    className="line-clamp-1 font-medium"
+                                                    title={notification.name}
+                                                >
+                                                    {notification.name}
+                                                </p>
+                                                <p className="mt-0.5 line-clamp-1 text-xs text-gray-500 italic">
+                                                    {notification.email}
+                                                </p>
+                                                <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+                                                    {notification.body}
+                                                </p>
+                                            </a>
+                                        ))}
+                                    </div>
+                                    <div className="border-t border-zinc-100 px-4 py-2 text-center text-sm text-gray-500 dark:border-zinc-700 dark:text-gray-400">
+                                        {t('common.unreadNotifications', {
+                                            count: notifications.length,
+                                        })}
+                                    </div>
+                                    <button
+                                        onClick={markAllAsRead}
+                                        className="block w-full rounded-b-xl px-4 py-2.5 text-center text-sm font-medium text-blue-600 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    >
+                                        {t('common.markAllAsRead')}
+                                    </button>
                                 </div>
-                                <div className="max-h-60 overflow-y-auto">
-                                    <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 -mx-2">
-                                        <figure className="w-8 h-8 rounded-full bg-blue-500"></figure>
-                                        <p className="mx-2 text-sm">
-                                            <span className="font-bold">New user registered</span>
-                                            <span className="block text-xs text-gray-500 dark:text-gray-400">2 min ago</span>
-                                        </p>
-                                    </a>
-                                    <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 -mx-2">
-                                        <figure className="w-8 h-8 rounded-full bg-green-500"></figure>
-                                        <p className="mx-2 text-sm">
-                                            <span className="font-bold">New order received</span>
-                                            <span className="block text-xs text-gray-500 dark:text-gray-400">1 hour ago</span>
-                                        </p>
-                                    </a>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
+                            )}
+                        </div>
 
-                {/* User Dropdown */}
-                <div className="relative">
-                    <button
-                        onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                        className="flex items-center focus:outline-none space-x-2"
-                    >
-                         <img className="h-8 w-8 rounded-full border-2 border-gray-300" src="https://via.placeholder.com/150" alt="User avatar" />
-                         <span className="hidden lg:block text-sm font-medium text-gray-700 dark:text-gray-200">Admin User</span>
-                         <svg className="hidden lg:block h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                         </svg>
-                    </button>
-                    {userDropdownOpen && (
-                         <>
-                            <div className="fixed inset-0 z-10 w-full h-full" onClick={() => setUserDropdownOpen(false)}></div>
-                            <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-20 py-1 dark:bg-gray-800">
-                                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Your Profile</a>
-                                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Settings</a>
-                                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Sign out</a>
-                            </div>
-                        </>
-                    )}
-                </div>
-                 
-                {/* Language Switcher */}
-                <div className="items-center">
-                    <LanguageSwitcher />
+                        {/* User Info */}
+                        <div ref={userMenuRef} className="relative">
+                            <button
+                                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                className="flex items-center rounded-lg p-1 transition-colors hover:bg-gray-100 focus:outline-none lg:space-x-2 dark:hover:bg-gray-700"
+                            >
+                                <img
+                                    src={user?.picture?.medium || 'https://via.placeholder.com/150'}
+                                    alt="User avatar"
+                                    className="h-9 w-9 rounded-full border-2 border-zinc-200 object-cover dark:border-zinc-600"
+                                />
+                                <div className="hidden flex-col items-start lg:flex">
+                                    <span className="line-clamp-1 text-left text-sm font-medium text-gray-900 dark:text-zinc-100">
+                                        {user
+                                            ? `${user.name.first} ${user.name.last}`
+                                            : t('common.loading')}
+                                    </span>
+                                    <span className="line-clamp-1 text-left text-xs text-gray-500 dark:text-zinc-400">
+                                        {user?.email || t('common.loading')}
+                                    </span>
+                                </div>
+                                <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-400" />
+                            </button>
+                            {userMenuOpen && (
+                                <div className="absolute right-0 z-50 mt-2 w-48 rounded-xl border border-zinc-100 bg-white py-1 shadow-xl shadow-gray-200/50 transition-all duration-200 dark:border-zinc-700 dark:bg-zinc-800 dark:shadow-zinc-900/50">
+                                    <div className="flex flex-col items-start border-b border-zinc-100 px-4 py-2 text-sm text-gray-700 lg:hidden dark:border-zinc-700 dark:text-zinc-300">
+                                        <span className="line-clamp-1 text-sm font-medium text-gray-900 dark:text-zinc-100">
+                                            {user
+                                                ? `${user.name.first} ${user.name.last}`
+                                                : t('common.loading')}
+                                        </span>
+                                        <span className="line-clamp-1 text-xs text-gray-500 dark:text-zinc-400">
+                                            {user?.email || t('common.loading')}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={handleProfile}
+                                        className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                    >
+                                        <UserIcon className="mr-3 h-5 w-5 text-gray-400" />
+                                        {t('common.profile')}
+                                    </button>
+                                    <button
+                                        onClick={handleSettings}
+                                        className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                    >
+                                        <Cog6ToothIcon className="mr-3 h-5 w-5 text-gray-400" />
+                                        {t('common.settings')}
+                                    </button>
+                                    <button
+                                        onClick={handleSignOut}
+                                        className="flex w-full items-center rounded-b-xl px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                    >
+                                        <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
+                                        {t('common.signOut')}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>

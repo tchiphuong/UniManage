@@ -43,25 +43,25 @@ namespace UniManage.Application.Commands.Master.Countries
         public UpdateCountryCommandValidator()
         {
             RuleFor(x => x.Code)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(20).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 20));
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(20).WithMessage(string.Format(CoreResource.validation_maxLength, 20));
 
             RuleFor(x => x.NameVi)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(100).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 100));
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(100).WithMessage(string.Format(CoreResource.validation_maxLength, 100));
 
             RuleFor(x => x.NameEn)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(100).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 100));
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(100).WithMessage(string.Format(CoreResource.validation_maxLength, 100));
 
             RuleFor(x => x.FullNameVi)
-                .MaximumLength(200).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 200));
+                .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
 
             RuleFor(x => x.FullNameEn)
-                .MaximumLength(200).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 200));
+                .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
 
             RuleFor(x => x.PhoneCode)
-                .MaximumLength(20).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 20));
+                .MaximumLength(20).WithMessage(string.Format(CoreResource.validation_maxLength, 20));
         }
     }
 
@@ -121,7 +121,7 @@ namespace UniManage.Application.Commands.Master.Countries
                     if (rowsAffected == 0)
                     {
                         await dbContext.RollbackAsync();
-                        var notFoundResponse = ResponseHelper.NotFound<UpdateCountryCommand.Response>(CoreResource.Country_msg_NotFound);
+                        var notFoundResponse = ResponseHelper.NotFound<UpdateCountryCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_country));
                         logData.ReturnCode = notFoundResponse.ReturnCode;
                         logData.Message = notFoundResponse.Message;
                         UniLogManager.WriteApiLog(logData);
@@ -131,7 +131,7 @@ namespace UniManage.Application.Commands.Master.Countries
                     await dbContext.CommitAsync();
 
                     var responseData = new UpdateCountryCommand.Response { Success = true, Code = request.Code };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Country_msg_UpdateSuccess);
+                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_country));
                     logData.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(logData);
 
@@ -142,7 +142,7 @@ namespace UniManage.Application.Commands.Master.Countries
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error updating country: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<UpdateCountryCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<UpdateCountryCommand.Response>(CoreResource.common_exceptionOccurred);
                     logData.Message = ex.ToString();
                     logData.IsException = 1;
                     logData.ReturnCode = response.ReturnCode;

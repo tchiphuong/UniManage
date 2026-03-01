@@ -13,7 +13,7 @@ namespace UniManage.Application.Queries.Master.Units;
 
 #region Query
 
-public sealed class GetUnitListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetUnitListQuery.Response>>>
+public sealed class GetUnitListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetUnitListQuery.Response>>>
 {
     public sealed class Response
     {
@@ -75,7 +75,7 @@ public sealed class GetUnitListQueryHandler : IRequestHandler<GetUnitListQuery, 
 
                 var result = await dbContext.QueryPagingAsync<GetUnitListQuery.Response>(baseQuery, request, filters);
 
-                var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
                 log.Result = result;
                 log.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(log);
@@ -86,7 +86,7 @@ public sealed class GetUnitListQueryHandler : IRequestHandler<GetUnitListQuery, 
             {
                 UniLogger.Error($"Error retrieving units: {ex.Message}", ex);
 
-                var response = ResponseHelper.Error<PagedResult<GetUnitListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<PagedResult<GetUnitListQuery.Response>>(CoreResource.common_exceptionOccurred);
                 log.IsException = 1;
                 log.Message = ex.Message;
                 log.ReturnCode = response.ReturnCode;

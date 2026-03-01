@@ -10,7 +10,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.System.Roles
 {
-    public sealed class GetRoleListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetRoleListQuery.Result>>>
+    public sealed class GetRoleListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetRoleListQuery.Result>>>
     {
         public byte? IsActive { get; set; }
 
@@ -126,7 +126,7 @@ namespace UniManage.Application.Queries.System.Roles
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

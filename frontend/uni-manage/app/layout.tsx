@@ -4,7 +4,6 @@ import { getLocale, getMessages } from "next-intl/server";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { DashboardLayout } from "@/components/dashboard-layout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,11 +28,10 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning className={inter.variable}>
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
-          <Providers>
-            <DashboardLayout>{children}</DashboardLayout>
-          </Providers>
+          <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>
     </html>
   );
 }
+

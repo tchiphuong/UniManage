@@ -9,7 +9,7 @@ import {
     getAccessToken,
 } from "@/lib";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
-import type { LoginRequest, LoginResponse, UserProfile } from "@/types";
+import type { LoginRequest, LoginResponse, UserProfile, FieldErrorModel } from "@/types";
 
 /**
  * Hook để xử lý authentication
@@ -27,7 +27,10 @@ export function useAuth() {
         setError(null);
 
         try {
-            const response = await apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials);
+            const response = await apiClient.post<LoginResponse>(
+                API_ENDPOINTS.AUTH.LOGIN,
+                credentials,
+            );
 
             if (response.returnCode === 0 && response.data) {
                 // Save tokens to cookies
@@ -38,8 +41,22 @@ export function useAuth() {
 
                 return { success: true, data: response.data };
             } else {
-                setError(response.errors[0] || "Login failed");
-                return { success: false, error: response.errors[0] };
+                const firstError = response.errors[0];
+                let errorMessage = "Login failed";
+
+                if (typeof firstError === "string") {
+                    errorMessage = firstError;
+                } else if (
+                    firstError &&
+                    typeof firstError === "object" &&
+                    "messages" in firstError
+                ) {
+                    const model = firstError as FieldErrorModel;
+                    errorMessage = model.messages[0] || "Login failed";
+                }
+
+                setError(errorMessage);
+                return { success: false, error: errorMessage };
             }
         } catch (err: any) {
             const errorMsg = err.response?.data?.message || "An error occurred";

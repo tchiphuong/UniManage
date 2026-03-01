@@ -170,7 +170,7 @@ namespace UniManage.Application.Commands.Sales.Orders
                         Id = orderId,
                         OrderCode = request.OrderCode
                     };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_CreateSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
 
                     log.Result = response;
                     log.ReturnCode = response.ReturnCode;

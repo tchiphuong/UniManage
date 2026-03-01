@@ -1,56 +1,44 @@
-"use client";
+import { Button as HeroButton, ButtonProps as HeroButtonProps } from '@heroui/react';
 
-import { Button } from "@heroui/react";
+export interface ButtonProps extends HeroButtonProps {
+    isIconOnlyMobile?: boolean;
+}
 
-export { Button };
-export default Button;
+export function Button({
+    children,
+    radius = 'full',
+    className = '',
+    isIconOnlyMobile,
+    startContent,
+    ...props
+}: ButtonProps) {
+    if (isIconOnlyMobile) {
+        return (
+            <HeroButton
+                radius={radius}
+                className={`h-10 w-10 min-w-0 p-0 font-medium sm:h-10 sm:w-auto sm:min-w-20 sm:px-4 ${className}`}
+                {...props}
+            >
+                <div className="flex items-center gap-2">
+                    {/* Show icon always, but size might need adjustment if passed manually */}
+                    {startContent ? (
+                        <span className="flex items-center justify-center">{startContent}</span>
+                    ) : null}
+                    {/* Hide text on mobile */}
+                    <span className="hidden sm:inline">{children}</span>
+                </div>
+            </HeroButton>
+        );
+    }
 
-/**
- * Button Component - Re-export from HeroUI
- * 
- * Available variants:
- * - primary (default)
- * - secondary
- * - tertiary
- * - ghost
- * - danger
- * - danger-soft
- * 
- * Available sizes:
- * - sm
- * - md (default)
- * - lg
- * 
- * Features:
- * - isIconOnly: For icon-only buttons
- * - isPending: Loading state with render props
- * - isDisabled: Disabled state
- * - fullWidth: Full width button
- * 
- * @example Basic
- * <Button>Click me</Button>
- * 
- * @example With variant
- * <Button variant="danger">Delete</Button>
- * 
- * @example With icon
- * <Button>
- *   <Icon />
- *   Click me
- * </Button>
- * 
- * @example Icon only
- * <Button isIconOnly>
- *   <Icon />
- * </Button>
- * 
- * @example Loading state
- * <Button isPending={isLoading}>
- *   {({ isPending }) => (
- *     <>
- *       {isPending ? <Spinner size="sm" /> : <Icon />}
- *       {isPending ? "Loading..." : "Submit"}
- *     </>
- *   )}
- * </Button>
- */
+    return (
+        <HeroButton
+            radius={radius}
+            className={`font-medium ${className}`}
+            startContent={startContent}
+            {...props}
+        >
+            {children}
+        </HeroButton>
+    );
+}

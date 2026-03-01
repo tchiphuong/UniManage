@@ -99,9 +99,16 @@ public class DbContext : Microsoft.EntityFrameworkCore.DbContext
                 sqlOptions.CommandTimeout(30);
             });
 
-            // Enable sensitive data logging in development
-            optionsBuilder.EnableSensitiveDataLogging();
-            optionsBuilder.EnableDetailedErrors();
+            // ===========================================
+            // [SECURITY] C5 — Sensitive data logging ONLY in Development
+            // In production, this would log passwords, connection strings, PII
+            // ===========================================
+            var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+            if (isDev)
+            {
+                optionsBuilder.EnableSensitiveDataLogging();
+                optionsBuilder.EnableDetailedErrors();
+            }
         }
     }
 
@@ -130,7 +137,9 @@ public class DbContext : Microsoft.EntityFrameworkCore.DbContext
                     InitialCatalog = database,
                     UserID = userId,
                     Password = decryptedPassword,
-                    TrustServerCertificate = bool.Parse(config["Database:TrustServerCertificate"] ?? "true"),
+                    // [SECURITY] H8 — Default to false to enforce certificate validation
+                    // Only set to true if you have a self-signed cert AND understand the risk
+                    TrustServerCertificate = bool.Parse(config["Database:TrustServerCertificate"] ?? "false"),
                     MultipleActiveResultSets = bool.Parse(config["Database:MultipleActiveResultSets"] ?? "true"),
                     ConnectTimeout = int.Parse(config["Database:ConnectionTimeout"] ?? "30")
                 };
@@ -154,33 +163,102 @@ public class DbContext : Microsoft.EntityFrameworkCore.DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Auto-discover and register all entities from UniManage.Model.Entities namespace
-        RegisterEntitiesFromAssembly(modelBuilder);
-
-        // Apply all entity configurations from the assembly
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(DbContext).Assembly);
-
         // Configure common conventions
         ConfigureCommonConventions(modelBuilder);
 
-        // Configure relationships and constraints
-        ConfigureRelationships(modelBuilder);
+        // Dynamic configuration for all entities
+        ConfigureDynamicEntities(modelBuilder);
     }
 
     /// <summary>
-    /// Automatically discovers and registers all entity types from UniManage.Model.Entities namespace
+    /// Dynamically registers entities and applies configurations based on attributes
     /// </summary>
-    private void RegisterEntitiesFromAssembly(ModelBuilder modelBuilder)
+    private void ConfigureDynamicEntities(ModelBuilder modelBuilder)
     {
         var entityTypes = typeof(ad_countries).Assembly.GetTypes()
-            .Where(t => t.Namespace == "UniManage.Model.Entities" 
-                && t.IsClass 
+            .Where(t => t.Namespace == "UniManage.Model.Entities"
+                && t.IsClass
                 && !t.IsAbstract
-                && t.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.Schema.TableAttribute), false).Any());
+                && t.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.Schema.TableAttribute), false).Any())
+            .ToList();
 
-        foreach (var entityType in entityTypes)
+        foreach (var type in entityTypes)
         {
-            modelBuilder.Entity(entityType);
+            var entityBuilder = modelBuilder.Entity(type);
+
+            // Configure relationships based on ReferencedKeyAttribute
+            // This handles cases where FK points to a non-PK column (e.g. Code vs Id)
+            foreach (var prop in type.GetProperties())
+            {
+                var refKeyAttr = prop.GetCustomAttribute<UniManage.Model.Attributes.ReferencedKeyAttribute>();
+                if (refKeyAttr != null)
+                {
+                    // Found a property with [ReferencedKey] -> configure HasPrincipalKey
+                    // Convention: Navigation property name is usually the Referenced Table Name
+                    
+                    // We need to find the navigation property associated with this FK
+                    // Usually properties like "ac_accounts" for "GLAccountCode"
+                    // But T4 generates navigation properties based on table name
+                    
+                    // Let's inspect the T4 generated navigation properties
+                    // It generates: public virtual ReferencedTable? ReferencedTable { get; set; }
+                    // OR public virtual ReferencedTable? fkColumnRefTable { get; set; }
+                    
+                    // Since this is complex to guess via reflection generic invocation,
+                    // we will use the string-based API which is much easier for dynamic code
+                    
+                    // 1. Find the target entity type (from the attribute logic if we had it, but here we can infer from navigation props)
+                    // Actually, simpler: loop over Navigation Properties instead of FK properties?
+                    // No, attribute is on the FK property (GLAccountCode).
+                    
+                    // Let's find the navigation prop that matches this FK
+                    // This is hard without metadata.
+                    
+                    // ALTERNATIVE: Just use the string-based configuration safely
+                    // entityBuilder.HasOne(targetType).WithMany(collectionName).HasForeignKey(propName).HasPrincipalKey(targetKey)
+                    // We need: TargetType, CollectionName, PrincipalKeyName.
+                    // The attribute only has "TargetEntity.KeyName".
+                    
+                    // Actually, T4 generated: [ReferencedKey("ac_accounts.AccountCode")]
+                    // KeyName = "ac_accounts.AccountCode"
+                    
+                    var parts = refKeyAttr.KeyName.Split('.');
+                    if (parts.Length == 2)
+                    {
+                        var targetTableName = parts[0]; // e.g. "ac_accounts"
+                        var targetKeyName = parts[1];   // e.g. "AccountCode"
+                        
+                        var targetType = entityTypes.FirstOrDefault(t => t.Name == targetTableName);
+                        if (targetType != null)
+                        {
+                            // Try to find the navigation property on THIS entity that points to TargetType
+                            var navProp = type.GetProperties()
+                                .FirstOrDefault(p => p.PropertyType == targetType);
+                                
+                            // Try to find the collection property on TARGET entity that points to THIS entity
+                            // Convention from T4: TableName + "Collection" -> "ac_bank_accountsCollection"
+                            var collectionName = type.Name + "Collection";
+                            
+                            if (navProp != null)
+                            {
+                                // Dynamic configuration using string-based API
+                                entityBuilder.HasOne(targetType, navProp.Name)
+                                    .WithMany(collectionName)
+                                    .HasForeignKey(prop.Name)
+                                    .HasPrincipalKey(targetKeyName)
+                                    .OnDelete(DeleteBehavior.Restrict);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Configure cascade delete behavior globally
+        foreach (var relationship in modelBuilder.Model.GetEntityTypes()
+            .SelectMany(e => e.GetForeignKeys()))
+        {
+            relationship.DeleteBehavior = DeleteBehavior.Restrict;
         }
     }
 
@@ -211,96 +289,6 @@ public class DbContext : Microsoft.EntityFrameworkCore.DbContext
         }
     }
 
-    private void ConfigureRelationships(ModelBuilder modelBuilder)
-    {
-        // Configure cascade delete behavior to restrict to prevent accidental data loss
-        foreach (var relationship in modelBuilder.Model.GetEntityTypes()
-            .SelectMany(e => e.GetForeignKeys()))
-        {
-            relationship.DeleteBehavior = DeleteBehavior.Restrict;
-        }
-
-        // Specific relationship configurations
-        ConfigureAddressRelationships(modelBuilder);
-        ConfigureHRRelationships(modelBuilder);
-        ConfigureInventoryRelationships(modelBuilder);
-        ConfigureSalesRelationships(modelBuilder);
-        ConfigureSystemRelationships(modelBuilder);
-        ConfigureWorkflowRelationships(modelBuilder);
-    }
-
-    private void ConfigureAddressRelationships(ModelBuilder modelBuilder)
-    {
-        // ad_provinces -> ad_countries
-        modelBuilder.Entity<ad_provinces>()
-            .HasOne(p => p.ad_countries)
-            .WithMany(c => c.ad_provincesCollection)
-            .HasForeignKey(p => p.CountryCode)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // ad_wards -> ad_provinces  
-        modelBuilder.Entity<ad_wards>()
-            .HasOne(w => w.ad_provinces)
-            .WithMany(p => p.ad_wardsCollection)
-            .HasForeignKey(w => w.ProvinceCode)
-            .OnDelete(DeleteBehavior.Restrict);
-    }
-
-    private void ConfigureHRRelationships(ModelBuilder modelBuilder)
-    {
-        // hr_employees -> hr_departments
-        modelBuilder.Entity<hr_employees>()
-            .HasOne(e => e.hr_departments)
-            .WithMany(d => d.hr_employeesCollection)
-            .HasForeignKey(e => e.DepartmentCode)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // hr_employees -> hr_positions
-        modelBuilder.Entity<hr_employees>()
-            .HasOne(e => e.hr_positions)
-            .WithMany(p => p.hr_employeesCollection)
-            .HasForeignKey(e => e.PositionCode)
-            .OnDelete(DeleteBehavior.Restrict);
-    }
-
-    private void ConfigureInventoryRelationships(ModelBuilder modelBuilder)
-    {
-        // Skip - entities not found in DatabaseModels.cs
-        // Add configurations when entities are available
-    }
-
-    private void ConfigureSalesRelationships(ModelBuilder modelBuilder)
-    {
-        // Skip - entities not found in DatabaseModels.cs
-        // Add configurations when entities are available
-    }
-
-    private void ConfigureSystemRelationships(ModelBuilder modelBuilder)
-    {
-        // sy_users -> hr_employees
-        modelBuilder.Entity<sy_users>()
-            .HasOne(u => u.hr_employees)
-            .WithMany(e => e.sy_usersCollection)
-            .HasForeignKey(u => u.EmployeeCode)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // sy_users -> sy_roles
-        modelBuilder.Entity<sy_users>()
-            .HasOne(u => u.sy_roles)
-            .WithMany(r => r.sy_usersCollection)
-            .HasForeignKey(u => u.RoleCode)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // sy_user_roles composite key (Username + RoleCode)
-        modelBuilder.Entity<sy_user_roles>()
-            .HasKey(ur => new { ur.Username, ur.RoleCode });
-    }
-
-    private void ConfigureWorkflowRelationships(ModelBuilder modelBuilder)
-    {
-        // Skip - entities not found in DatabaseModels.cs
-        // Add configurations when entities are available
-    }
 
     #endregion
 

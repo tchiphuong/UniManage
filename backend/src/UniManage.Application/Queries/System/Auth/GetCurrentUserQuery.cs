@@ -100,13 +100,13 @@ namespace UniManage.Application.Queries.System.Auth
                     }
 
                     UniLogger.Info($"[GetCurrentUser] Retrieved user info successfully for: {request.Username}");
-                    return ResponseHelper.Success(user, CoreResource.User_msg_InfoRetrieved);
+                    return ResponseHelper.Success(user, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_user));
                 }
             }
             catch (Exception ex)
             {
                 UniLogger.Error($"[GetCurrentUser] Error getting user info for: {request.Username}", ex);
-                return ResponseHelper.Error<GetCurrentUserQuery.Result>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<GetCurrentUserQuery.Result>(CoreResource.common_exceptionOccurred);
             }
         }
     }

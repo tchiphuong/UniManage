@@ -28,7 +28,8 @@
         "language": "Ngôn ngữ",
         "languageVietnamese": "Tiếng Việt",
         "languageEnglish": "Tiếng Anh",
-        "languageSelect": "Chọn ngôn ngữ"
+        "languageSelect": "Chọn ngôn ngữ",
+        "noResults": "Không tìm thấy kết quả"
     },
     "auth": {
         "login": "Đăng nhập",
@@ -128,5 +129,38 @@
         "addUser": "Thêm người dùng",
         "newReport": "Báo cáo mới",
         "support": "Hỗ trợ"
+    },
+    "menu": {
+        "group": {
+            "main": "Tổng quan",
+            "hr": "Nhân sự",
+            "sales": "Bán hàng",
+            "inventory": "Kho hàng",
+            "system": "Hệ thống"
+        },
+        "dashboard": "Trang chủ",
+        "employees": "Nhân viên",
+        "departments": "Phòng ban",
+        "positions": "Chức vụ",
+        "attendance": "Chấm công",
+        "salaries": "Bảng lương",
+        "customers": "Khách hàng",
+        "orders": "Đơn hàng",
+        "items": "Sản phẩm",
+        "users": "Người dùng",
+        "roles": "Phân quyền",
+        "settings": "Cài đặt"
+    },
+    "confirmDialog": {
+        "title": "Xác nhận hành động",
+        "message": "Bạn có chắc chắn muốn thực hiện hành động này không?",
+        "confirm": "Đồng ý",
+        "cancel": "Hủy bỏ",
+        "deleteTitle": "Xác nhận xóa",
+        "deleteMessage": "Dữ liệu này sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?",
+        "saveTitle": "Lưu thay đổi",
+        "saveMessage": "Bạn có muốn lưu các thay đổi không?",
+        "discardTitle": "Hủy thay đổi",
+        "discardMessage": "Bạn có chắc chắn muốn hủy các thay đổi? Hành động này không thể hoàn tác."
     }
 }

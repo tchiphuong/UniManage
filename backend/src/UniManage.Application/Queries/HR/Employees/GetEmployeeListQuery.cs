@@ -19,7 +19,7 @@ namespace UniManage.Application.Queries.HR.Employees;
 /// <summary>
 /// Query to get paginated list of employees
 /// </summary>
-public sealed class GetEmployeeListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetEmployeeListQuery.Response>>>
+public sealed class GetEmployeeListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetEmployeeListQuery.Response>>>
 {
     public string? DepartmentCode { get; init; }
     public string? PositionCode { get; init; }
@@ -119,7 +119,7 @@ public sealed class GetEmployeeListQueryHandler : IRequestHandler<GetEmployeeLis
 
                 var result = await dbContext.QueryPagingAsync<GetEmployeeListQuery.Response>(query, request);
 
-                response = ResponseHelper.Success(result, CoreResource.Employee_msg_ListSuccess);
+                response = ResponseHelper.Success(result, string.Format(CoreResource.crud_listSuccess, CoreResource.entity_employee));
 
                 logData.Result = result;
                 logData.ReturnCode = response.ReturnCode;
@@ -127,7 +127,7 @@ public sealed class GetEmployeeListQueryHandler : IRequestHandler<GetEmployeeLis
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving employees list: {ex.Message}", ex);
-                response = ResponseHelper.Error<PagedResult<GetEmployeeListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                response = ResponseHelper.Error<PagedResult<GetEmployeeListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                 logData.Message = ex.ToString();
                 logData.IsException = 1;

@@ -7,10 +7,11 @@ import { Column, DataTable } from "@/components/common/data-table";
 import { UserService, User } from "@/services/user.service";
 import { PageHeader } from "@/components/page-header-i18n";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Input, Surface, Chip } from '@heroui/react';
+import { Input, Chip } from '@heroui/react';
 import { Icon } from "@iconify/react";
 import { UserModal } from "./components/user-modal";
 import { ConfirmModal } from "@/components/common/confirm-modal";
+import { addToast } from "@heroui/toast";
 
 // Icon components
 const EditIcon = (props: any) => <Icon icon="solar:pen-bold" {...props} />;
@@ -51,14 +52,23 @@ export default function UsersPage() {
 
     const deleteMutation = useMutation({
         mutationFn: UserService.delete,
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ["users"] });
+            addToast({
+                title: "Success",
+                description: data?.message,
+                color: "success",
+            });
             setDeleteId(null);
             setIsDeleteOpen(false);
         },
         onError: (error) => {
             console.error("Delete failed", error);
-            alert("Delete failed");
+            addToast({
+                title: "Error",
+                description: "Failed to delete user",
+                color: "danger",
+            });
         }
     });
 
@@ -79,7 +89,7 @@ export default function UsersPage() {
 
     const confirmDelete = () => {
         if (deleteId) {
-            deleteMutation.mutate(deleteId);
+            deleteMutation.mutate([deleteId]);
         }
     };
 
@@ -93,20 +103,21 @@ export default function UsersPage() {
             name: "Display Name",
         },
         {
-            uid: "email",
-            name: "Email",
+            uid: "displayName",
+            name: "Display Name",
         },
+        // Email column removed
         {
             uid: "status",
             name: "Status",
             render: (user: User) => (
                 <Chip
                     className="capitalize"
-                    color={user.status === 1 ? "success" : "danger"}
+                    color={user.status === "Active" ? "success" : "danger"}
                     size="sm"
                     variant="soft"
                 >
-                    {user.status === 1 ? "Active" : "Inactive"}
+                    {user.status === "Active" ? "Active" : "Inactive"}
                 </Chip>
             ),
         },
@@ -143,25 +154,23 @@ export default function UsersPage() {
             />
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-                <Surface>
-                    <div className="mb-4 flex flex-col sm:flex-row justify-between gap-4">
-                        <Input
-                            className="w-full sm:max-w-[44%]"
-                            placeholder="Search users..."
-                            value={keyword}
-                            onChange={(e) => setKeyword(e.target.value)}
-                        />
-                    </div>
-
-                    <DataTable
-                        columns={columns}
-                        data={data?.data?.items || []}
-                        totalPages={data?.data?.paging?.totalPages || 1}
-                        page={pageIndex}
-                        onPageChange={setPageIndex}
-                        isLoading={isLoading}
+                <div className="mb-4 flex flex-col sm:flex-row justify-between gap-4">
+                    <Input
+                        className="w-full sm:max-w-[44%]"
+                        placeholder="Search users..."
+                        value={keyword}
+                        onChange={(e) => setKeyword(e.target.value)}
                     />
-                </Surface>
+                </div>
+
+                <DataTable
+                    columns={columns}
+                    data={data?.data?.items || []}
+                    totalPages={data?.data?.paging?.totalPages || 1}
+                    page={pageIndex}
+                    onPageChange={setPageIndex}
+                    isLoading={isLoading}
+                />
             </div>
 
             <UserModal

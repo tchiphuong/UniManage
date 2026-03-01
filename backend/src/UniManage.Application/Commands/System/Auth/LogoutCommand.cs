@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
-using Microsoft.Extensions.Configuration;
+using UniManage.Application.Services;
+using UniManage.Core.Constant;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
@@ -8,6 +9,8 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Commands.System.Auth
 {
+    #region Command
+
     /// <summary>
     /// Logout Command - Đăng xuất và revoke token
     /// </summary>
@@ -18,6 +21,10 @@ namespace UniManage.Application.Commands.System.Auth
         /// </summary>
         public string? RefreshToken { get; set; }
     }
+
+    #endregion
+
+    #region Validator
 
     /// <summary>
     /// Logout Command Validator
@@ -30,77 +37,74 @@ namespace UniManage.Application.Commands.System.Auth
         }
     }
 
+    #endregion
+
+    #region Handler
+
     /// <summary>
-    /// Logout Command Handler
+    /// Logout Command Handler — uses shared IIdentityServerClient + CoreLogModel
     /// </summary>
     public sealed class LogoutCommandHandler : IRequestHandler<LogoutCommand, ApiResponse<bool>>
     {
+        private readonly IIdentityServerClient _identityClient;
+
+        public LogoutCommandHandler(IIdentityServerClient identityClient)
+        {
+            _identityClient = identityClient;
+        }
+
         public async Task<ApiResponse<bool>> Handle(LogoutCommand request, CancellationToken ct)
         {
+            // Khởi tạo log với HeaderInfo từ BaseCommand
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new CoreParamModel("HasRefreshToken", !string.IsNullOrEmpty(request.RefreshToken))
+                }
+            };
+
             try
             {
-                UniLogger.Info("[Logout] Start processing logout request");
-
                 // Nếu không có refresh token, chỉ return success (client-side logout)
                 if (string.IsNullOrEmpty(request.RefreshToken))
                 {
-                    UniLogger.Info("[Logout] No refresh token provided, client-side logout only");
-                    return ResponseHelper.Success(true, CoreResource.Auth_msg_LogoutSuccess);
+                    var clientLogoutResponse = ResponseHelper.Success(true, CoreResource.auth_logoutSuccess);
+                    log.Result = clientLogoutResponse;
+                    log.ReturnCode = clientLogoutResponse.ReturnCode;
+                    log.Message = "Client-side logout only (no refresh token)";
+                    return clientLogoutResponse;
                 }
 
-                // Build configuration
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                    .AddJsonFile("appsettings.json", optional: true)
-                    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
-                    .Build();
+                var (success, error) = await _identityClient.RevokeTokenAsync(
+                    request.RefreshToken, ct);
 
-                var authority = configuration["IdentityServer:Authority"] ?? "http://localhost:5001";
-                var clientId = configuration["IdentityServer:ClientId"];
-                var clientSecret = configuration["IdentityServer:ClientSecret"];
-
-                if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+                if (!success)
                 {
-                    UniLogger.Error("[Logout] Missing IdentityServer configuration");
-                    return ResponseHelper.Error<bool>("System configuration error");
+                    log.Message = $"Token revocation failed: {error}";
+                    // Still return success — token might already be expired/revoked
                 }
 
-                var revocationEndpoint = $"{authority}/connect/revocation";
-
-                // Bypass SSL validation in Development
-                var handler = new HttpClientHandler();
-                var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-                if (env == "Development")
-                {
-                    handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                }
-
-                using var client = new HttpClient(handler);
-
-                var revocationResponse = await client.PostAsync(revocationEndpoint, new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("token", request.RefreshToken),
-                    new KeyValuePair<string, string>("token_type_hint", "refresh_token"),
-                    new KeyValuePair<string, string>("client_id", clientId),
-                    new KeyValuePair<string, string>("client_secret", clientSecret)
-                }), ct);
-
-                if (!revocationResponse.IsSuccessStatusCode)
-                {
-                    var errorContent = await revocationResponse.Content.ReadAsStringAsync(ct);
-                    UniLogger.Warn($"[Logout] Token revocation failed: {errorContent}");
-                    // Still return success as token might already be expired/revoked
-                }
-
-                UniLogger.Info("[Logout] Logout successful");
-                return ResponseHelper.Success(true, CoreResource.Auth_msg_LogoutSuccess);
+                var response = ResponseHelper.Success(true, CoreResource.auth_logoutSuccess);
+                log.Result = response;
+                log.ReturnCode = response.ReturnCode;
+                log.Message ??= response.Message;
+                return response;
             }
             catch (Exception ex)
             {
-                UniLogger.Error("[Logout] Error during logout", ex);
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 // Return success anyway to allow client to clear tokens
-                return ResponseHelper.Success(true, CoreResource.Auth_msg_LogoutSuccess);
+                return ResponseHelper.Success(true, CoreResource.auth_logoutSuccess);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }
+
+    #endregion
 }

@@ -3,7 +3,7 @@
 
 import { LanguageSwitcher } from "./language-switcher";
 
-import Button from "@/components/common/button";
+import { Button } from "@heroui/react";
 
 interface PageHeaderProps {
     title: string;
@@ -39,7 +39,7 @@ export function PageHeaderI18n({
                         color="primary"
                         onPress={action.onClick}
                         // HeroUI Button uses onPress, but we can pass onClick to standard button props
-                        onClick={action.onClick} 
+                        onClick={action.onClick}
                     >
                         {action.label}
                     </Button>

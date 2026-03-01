@@ -3,384 +3,264 @@ namespace UniManage.Resource
     /// <summary>
     /// Core resource strings for UniManage application
     /// Auto-generated from database by T4 template
-    /// Last generated: 2026-01-11 01:54:31
+    /// Last generated: 2026-03-02 01:24:30
     /// </summary>
     public static class CoreResource
     {
         /// <summary>
-        /// Action_lbl_Create: Create
+        /// auth.loginSuccess: Login successful
         /// </summary>
-        public static string Action_lbl_Create => "Create";
+        public static string auth_loginSuccess => "Login successful";
         
         /// <summary>
-        /// Action_lbl_Delete: Delete
+        /// auth.logoutSuccess: Logged out successfully
         /// </summary>
-        public static string Action_lbl_Delete => "Delete";
+        public static string auth_logoutSuccess => "Logged out successfully";
         
         /// <summary>
-        /// Action_lbl_Update: Update
+        /// auth.passwordChanged: Password changed successfully
         /// </summary>
-        public static string Action_lbl_Update => "Update";
+        public static string auth_passwordChanged => "Password changed successfully";
         
         /// <summary>
-        /// Action_lbl_View: View
+        /// auth.passwordReset: Password reset successfully
         /// </summary>
-        public static string Action_lbl_View => "View";
+        public static string auth_passwordReset => "Password reset successfully";
         
         /// <summary>
-        /// Auth_msg_LoginSuccess: Login successful
+        /// auth.resetLinkSent: If the email exists, a reset link has been sent
         /// </summary>
-        public static string Auth_msg_LoginSuccess => "Login successful";
+        public static string auth_resetLinkSent => "If the email exists, a reset link has been sent";
         
         /// <summary>
-        /// Auth_msg_LogoutSuccess: Logged out successfully
+        /// auth.tokenRefreshed: Token refreshed successfully
         /// </summary>
-        public static string Auth_msg_LogoutSuccess => "Logged out successfully";
+        public static string auth_tokenRefreshed => "Token refreshed successfully";
         
         /// <summary>
-        /// Auth_msg_PasswordChanged: Password changed successfully
+        /// common.error: An error occurred
         /// </summary>
-        public static string Auth_msg_PasswordChanged => "Password changed successfully";
+        public static string common_error => "An error occurred";
         
         /// <summary>
-        /// Auth_msg_PasswordReset: Password reset successfully
+        /// common.exceptionOccurred: System exception occurred
         /// </summary>
-        public static string Auth_msg_PasswordReset => "Password reset successfully";
+        public static string common_exceptionOccurred => "System exception occurred";
         
         /// <summary>
-        /// Auth_msg_ResetLinkSent: If the email exists, a reset link has been sent
+        /// common.forbidden: Access forbidden
         /// </summary>
-        public static string Auth_msg_ResetLinkSent => "If the email exists, a reset link has been sent";
+        public static string common_forbidden => "Access forbidden";
         
         /// <summary>
-        /// Auth_msg_TokenRefreshed: Token refreshed successfully
+        /// common.invalidData: Invalid data provided
         /// </summary>
-        public static string Auth_msg_TokenRefreshed => "Token refreshed successfully";
+        public static string common_invalidData => "Invalid data provided";
         
         /// <summary>
-        /// Common_msg_CreateSuccess: Created successfully
+        /// common.notFound: Data not found
         /// </summary>
-        public static string Common_msg_CreateSuccess => "Created successfully";
+        public static string common_notFound => "Data not found";
         
         /// <summary>
-        /// Common_msg_DeleteSuccess: Deleted successfully
+        /// common.success: Operation successful
         /// </summary>
-        public static string Common_msg_DeleteSuccess => "Deleted successfully";
+        public static string common_success => "Operation successful";
         
         /// <summary>
-        /// Common_msg_Error: An error has occurred.
+        /// common.unauthorized: Unauthorized access
         /// </summary>
-        public static string Common_msg_Error => "An error has occurred.";
+        public static string common_unauthorized => "Unauthorized access";
         
         /// <summary>
-        /// Common_msg_ExceptionOccurred: An unexpected error has occurred.
+        /// crud.codeExists: {0} code already exists
         /// </summary>
-        public static string Common_msg_ExceptionOccurred => "An unexpected error has occurred.";
+        public static string crud_codeExists => "{0} code already exists";
         
         /// <summary>
-        /// Common_msg_GetSuccess: Retrieved successfully
+        /// crud.createSuccess: {0} created successfully
         /// </summary>
-        public static string Common_msg_GetSuccess => "Retrieved successfully";
+        public static string crud_createSuccess => "{0} created successfully";
         
         /// <summary>
-        /// Common_msg_InvalidData: Invalid data.
+        /// crud.deleteSuccess: {0} deleted successfully
         /// </summary>
-        public static string Common_msg_InvalidData => "Invalid data.";
+        public static string crud_deleteSuccess => "{0} deleted successfully";
         
         /// <summary>
-        /// Common_msg_NotFound: Requested resource not found.
+        /// crud.getSuccess: {0} retrieved successfully
         /// </summary>
-        public static string Common_msg_NotFound => "Requested resource not found.";
+        public static string crud_getSuccess => "{0} retrieved successfully";
         
         /// <summary>
-        /// Common_msg_Success: Success.
+        /// crud.listSuccess: {0} retrieved successfully
         /// </summary>
-        public static string Common_msg_Success => "Success.";
+        public static string crud_listSuccess => "{0} retrieved successfully";
         
         /// <summary>
-        /// Common_msg_Unauthorized: You do not have permission.
+        /// crud.notFound: {0} not found
         /// </summary>
-        public static string Common_msg_Unauthorized => "You do not have permission.";
+        public static string crud_notFound => "{0} not found";
         
         /// <summary>
-        /// Common_msg_UpdateSuccess: Updated successfully
+        /// crud.updateSuccess: {0} updated successfully
         /// </summary>
-        public static string Common_msg_UpdateSuccess => "Updated successfully";
+        public static string crud_updateSuccess => "{0} updated successfully";
         
         /// <summary>
-        /// Country_msg_CreateSuccess: Country created successfully
+        /// entity.country: Country
         /// </summary>
-        public static string Country_msg_CreateSuccess => "Country created successfully";
+        public static string entity_country => "Country";
         
         /// <summary>
-        /// Country_msg_DeleteSuccess: Deleted {0} country(s) successfully
+        /// entity.currency: Currency
         /// </summary>
-        public static string Country_msg_DeleteSuccess => "Deleted {0} country(s) successfully";
+        public static string entity_currency => "Currency";
         
         /// <summary>
-        /// Country_msg_GetSuccess: Country retrieved successfully
+        /// entity.department: Department
         /// </summary>
-        public static string Country_msg_GetSuccess => "Country retrieved successfully";
+        public static string entity_department => "Department";
         
         /// <summary>
-        /// Country_msg_ListSuccess: Countries retrieved successfully
+        /// entity.employee: Employee
         /// </summary>
-        public static string Country_msg_ListSuccess => "Countries retrieved successfully";
+        public static string entity_employee => "Employee";
         
         /// <summary>
-        /// Country_msg_NotFound: Country not found
+        /// entity.position: Position
         /// </summary>
-        public static string Country_msg_NotFound => "Country not found";
+        public static string entity_position => "Position";
         
         /// <summary>
-        /// Country_msg_UpdateSuccess: Country updated successfully
+        /// entity.province: Province
         /// </summary>
-        public static string Country_msg_UpdateSuccess => "Country updated successfully";
+        public static string entity_province => "Province";
         
         /// <summary>
-        /// Department_msg_CodeExists: Department code already exists
+        /// entity.role: Role
         /// </summary>
-        public static string Department_msg_CodeExists => "Department code already exists";
+        public static string entity_role => "Role";
         
         /// <summary>
-        /// Department_msg_CreateSuccess: Department created successfully
+        /// entity.unit: Unit
         /// </summary>
-        public static string Department_msg_CreateSuccess => "Department created successfully";
+        public static string entity_unit => "Unit";
         
         /// <summary>
-        /// Department_msg_DeleteSuccess: Deleted {0} department(s) successfully
+        /// entity.user: User
         /// </summary>
-        public static string Department_msg_DeleteSuccess => "Deleted {0} department(s) successfully";
+        public static string entity_user => "User";
         
         /// <summary>
-        /// Department_msg_GetSuccess: Department retrieved successfully
+        /// validation.alphanumericOnly: {0} allows only alphanumeric characters
         /// </summary>
-        public static string Department_msg_GetSuccess => "Department retrieved successfully";
+        public static string validation_alphanumericOnly => "{0} allows only alphanumeric characters";
         
         /// <summary>
-        /// Department_msg_ListSuccess: Departments retrieved successfully
+        /// validation.alreadyExists: {0} already exists
         /// </summary>
-        public static string Department_msg_ListSuccess => "Departments retrieved successfully";
+        public static string validation_alreadyExists => "{0} already exists";
         
         /// <summary>
-        /// Department_msg_NotFound: Department not found
+        /// validation.between: {0} must be between {1} and {2}
         /// </summary>
-        public static string Department_msg_NotFound => "Department not found";
+        public static string validation_between => "{0} must be between {1} and {2}";
         
         /// <summary>
-        /// Department_msg_UpdateSuccess: Department updated successfully
+        /// validation.codeAlreadyExists: {0} code already exists
         /// </summary>
-        public static string Department_msg_UpdateSuccess => "Department updated successfully";
+        public static string validation_codeAlreadyExists => "{0} code already exists";
         
         /// <summary>
-        /// Employee_msg_CreateSuccess: Employee created successfully
+        /// validation.emailAlreadyRegistered: Email is already registered
         /// </summary>
-        public static string Employee_msg_CreateSuccess => "Employee created successfully";
+        public static string validation_emailAlreadyRegistered => "Email is already registered";
         
         /// <summary>
-        /// Employee_msg_DeleteSuccess: Deleted {0} employee(s) successfully
+        /// validation.emailAlreadyRegisteredByOther: Email is already registered by another user
         /// </summary>
-        public static string Employee_msg_DeleteSuccess => "Deleted {0} employee(s) successfully";
+        public static string validation_emailAlreadyRegisteredByOther => "Email is already registered by another user";
         
         /// <summary>
-        /// Employee_msg_GetSuccess: Employee retrieved successfully
+        /// validation.greaterThan: {0} must be greater than {1}
         /// </summary>
-        public static string Employee_msg_GetSuccess => "Employee retrieved successfully";
+        public static string validation_greaterThan => "{0} must be greater than {1}";
         
         /// <summary>
-        /// Employee_msg_ListSuccess: Employees retrieved successfully
+        /// validation.invalidEmail: Invalid email format
         /// </summary>
-        public static string Employee_msg_ListSuccess => "Employees retrieved successfully";
+        public static string validation_invalidEmail => "Invalid email format";
         
         /// <summary>
-        /// Employee_msg_UpdateSuccess: Employee updated successfully
+        /// validation.invalidFormat: Invalid format for {0}
         /// </summary>
-        public static string Employee_msg_UpdateSuccess => "Employee updated successfully";
+        public static string validation_invalidFormat => "Invalid format for {0}";
         
         /// <summary>
-        /// Language_msg_ListSuccess: Languages retrieved successfully
+        /// validation.invalidPhone: Invalid phone number format
         /// </summary>
-        public static string Language_msg_ListSuccess => "Languages retrieved successfully";
+        public static string validation_invalidPhone => "Invalid phone number format";
         
         /// <summary>
-        /// Position_msg_CodeExists: Position code already exists
+        /// validation.length: {0} must be between {1} and {2} characters
         /// </summary>
-        public static string Position_msg_CodeExists => "Position code already exists";
+        public static string validation_length => "{0} must be between {1} and {2} characters";
         
         /// <summary>
-        /// Position_msg_CreateSuccess: Position created successfully
+        /// validation.maxLength: {0} cannot exceed {1} characters
         /// </summary>
-        public static string Position_msg_CreateSuccess => "Position created successfully";
+        public static string validation_maxLength => "{0} cannot exceed {1} characters";
         
         /// <summary>
-        /// Position_msg_DeleteSuccess: Deleted {0} position(s) successfully
+        /// validation.minLength: {0} must be at least {1} characters
         /// </summary>
-        public static string Position_msg_DeleteSuccess => "Deleted {0} position(s) successfully";
+        public static string validation_minLength => "{0} must be at least {1} characters";
         
         /// <summary>
-        /// Position_msg_GetSuccess: Position retrieved successfully
+        /// validation.mustContainLowercase: {0} must contain at least one lowercase letter
         /// </summary>
-        public static string Position_msg_GetSuccess => "Position retrieved successfully";
+        public static string validation_mustContainLowercase => "{0} must contain at least one lowercase letter";
         
         /// <summary>
-        /// Position_msg_ListSuccess: Positions retrieved successfully
+        /// validation.mustContainNumber: {0} must contain at least one number
         /// </summary>
-        public static string Position_msg_ListSuccess => "Positions retrieved successfully";
+        public static string validation_mustContainNumber => "{0} must contain at least one number";
         
         /// <summary>
-        /// Position_msg_NotFound: Position not found
+        /// validation.mustContainUppercase: {0} must contain at least one uppercase letter
         /// </summary>
-        public static string Position_msg_NotFound => "Position not found";
+        public static string validation_mustContainUppercase => "{0} must contain at least one uppercase letter";
         
         /// <summary>
-        /// Position_msg_UpdateSuccess: Position updated successfully
+        /// validation.onlyLetters: {0} allows only letters
         /// </summary>
-        public static string Position_msg_UpdateSuccess => "Position updated successfully";
+        public static string validation_onlyLetters => "{0} allows only letters";
         
         /// <summary>
-        /// User_msg_CreateSuccess: User created successfully
+        /// validation.onlyNumbers: {0} allows only numbers
         /// </summary>
-        public static string User_msg_CreateSuccess => "User created successfully";
+        public static string validation_onlyNumbers => "{0} allows only numbers";
         
         /// <summary>
-        /// User_msg_DeleteSuccess: Deleted {0} user(s) successfully
+        /// validation.range: {0} must be between {1} and {2}
         /// </summary>
-        public static string User_msg_DeleteSuccess => "Deleted {0} user(s) successfully";
+        public static string validation_range => "{0} must be between {1} and {2}";
         
         /// <summary>
-        /// User_msg_GetSuccess: User retrieved successfully
+        /// validation.required: {0} is required
         /// </summary>
-        public static string User_msg_GetSuccess => "User retrieved successfully";
+        public static string validation_required => "{0} is required";
         
         /// <summary>
-        /// User_msg_InfoRetrieved: User information retrieved successfully
+        /// validation.uppercaseAlphanumericOnly: {0} must contain only uppercase letters and numbers
         /// </summary>
-        public static string User_msg_InfoRetrieved => "User information retrieved successfully";
+        public static string validation_uppercaseAlphanumericOnly => "{0} must contain only uppercase letters and numbers";
         
         /// <summary>
-        /// User_msg_ListSuccess: Users retrieved successfully
+        /// validation.usernameAlreadyTaken: Username is already taken
         /// </summary>
-        public static string User_msg_ListSuccess => "Users retrieved successfully";
-        
-        /// <summary>
-        /// User_msg_UpdateSuccess: User updated successfully
-        /// </summary>
-        public static string User_msg_UpdateSuccess => "User updated successfully";
-        
-        /// <summary>
-        /// Validation_msg_AlphanumericOnly: {0} allows only alphanumeric characters
-        /// </summary>
-        public static string Validation_msg_AlphanumericOnly => "{0} allows only alphanumeric characters";
-        
-        /// <summary>
-        /// Validation_msg_AlreadyExists: This information already exists.
-        /// </summary>
-        public static string Validation_msg_AlreadyExists => "This information already exists.";
-        
-        /// <summary>
-        /// Validation_msg_Between: {0} must be between {1} and {2}
-        /// </summary>
-        public static string Validation_msg_Between => "{0} must be between {1} and {2}";
-        
-        /// <summary>
-        /// Validation_msg_CodeAlreadyExists: {0} code already exists
-        /// </summary>
-        public static string Validation_msg_CodeAlreadyExists => "{0} code already exists";
-        
-        /// <summary>
-        /// Validation_msg_EmailAlreadyRegistered: Email is already registered
-        /// </summary>
-        public static string Validation_msg_EmailAlreadyRegistered => "Email is already registered";
-        
-        /// <summary>
-        /// Validation_msg_EmailAlreadyRegisteredByOther: Email is already registered by another user
-        /// </summary>
-        public static string Validation_msg_EmailAlreadyRegisteredByOther => "Email is already registered by another user";
-        
-        /// <summary>
-        /// Validation_msg_GreaterThan: {0} must be greater than {1}
-        /// </summary>
-        public static string Validation_msg_GreaterThan => "{0} must be greater than {1}";
-        
-        /// <summary>
-        /// Validation_msg_InvalidDate: Invalid date format. Expected: {0}
-        /// </summary>
-        public static string Validation_msg_InvalidDate => "Invalid date format. Expected: {0}";
-        
-        /// <summary>
-        /// Validation_msg_InvalidEmail: Invalid email format. E.g., abc@xyz.com
-        /// </summary>
-        public static string Validation_msg_InvalidEmail => "Invalid email format. E.g., abc@xyz.com";
-        
-        /// <summary>
-        /// Validation_msg_InvalidFormat: Invalid format.
-        /// </summary>
-        public static string Validation_msg_InvalidFormat => "Invalid format.";
-        
-        /// <summary>
-        /// Validation_msg_InvalidPhone: Invalid phone number. E.g., 0988123456
-        /// </summary>
-        public static string Validation_msg_InvalidPhone => "Invalid phone number. E.g., 0988123456";
-        
-        /// <summary>
-        /// Validation_msg_Length: {0} must be between {1} and {2} characters
-        /// </summary>
-        public static string Validation_msg_Length => "{0} must be between {1} and {2} characters";
-        
-        /// <summary>
-        /// Validation_msg_MaxLength: Please enter no more than {0} characters.
-        /// </summary>
-        public static string Validation_msg_MaxLength => "Please enter no more than {0} characters.";
-        
-        /// <summary>
-        /// Validation_msg_MinLength: Please enter at least {0} characters.
-        /// </summary>
-        public static string Validation_msg_MinLength => "Please enter at least {0} characters.";
-        
-        /// <summary>
-        /// Validation_msg_MustContainLowercase: {0} must contain at least one lowercase letter
-        /// </summary>
-        public static string Validation_msg_MustContainLowercase => "{0} must contain at least one lowercase letter";
-        
-        /// <summary>
-        /// Validation_msg_MustContainNumber: {0} must contain at least one number
-        /// </summary>
-        public static string Validation_msg_MustContainNumber => "{0} must contain at least one number";
-        
-        /// <summary>
-        /// Validation_msg_MustContainUppercase: {0} must contain at least one uppercase letter
-        /// </summary>
-        public static string Validation_msg_MustContainUppercase => "{0} must contain at least one uppercase letter";
-        
-        /// <summary>
-        /// Validation_msg_OnlyLetter: Only alphabetic characters are allowed.
-        /// </summary>
-        public static string Validation_msg_OnlyLetter => "Only alphabetic characters are allowed.";
-        
-        /// <summary>
-        /// Validation_msg_OnlyNumber: Only numeric values are allowed.
-        /// </summary>
-        public static string Validation_msg_OnlyNumber => "Only numeric values are allowed.";
-        
-        /// <summary>
-        /// Validation_msg_Range: The value must be between {0} and {1}.
-        /// </summary>
-        public static string Validation_msg_Range => "The value must be between {0} and {1}.";
-        
-        /// <summary>
-        /// Validation_msg_Required: Please enter the required information.
-        /// </summary>
-        public static string Validation_msg_Required => "Please enter the required information.";
-        
-        /// <summary>
-        /// Validation_msg_UppercaseAlphanumericOnly: {0} must contain only uppercase letters and numbers
-        /// </summary>
-        public static string Validation_msg_UppercaseAlphanumericOnly => "{0} must contain only uppercase letters and numbers";
-        
-        /// <summary>
-        /// Validation_msg_UsernameAlreadyTaken: Username is already taken
-        /// </summary>
-        public static string Validation_msg_UsernameAlreadyTaken => "Username is already taken";
+        public static string validation_usernameAlreadyTaken => "Username is already taken";
         
     }
 }

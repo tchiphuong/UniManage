@@ -7,7 +7,7 @@ export interface ApiResponse<T = any> {
     returnCode: number;
     message: string;
     data?: T;
-    errors: string[];
+    errors: (string | FieldErrorModel)[];
 }
 
 export interface PagingInfo {

@@ -10,7 +10,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.Workflow.Requests
 {
-    public sealed class GetRequestListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetRequestListQuery.Result>>>
+    public sealed class GetRequestListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetRequestListQuery.Result>>>
     {
         public string? RequestTypeKey { get; set; }
         public string? Status { get; set; }
@@ -194,7 +194,7 @@ namespace UniManage.Application.Queries.Workflow.Requests
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

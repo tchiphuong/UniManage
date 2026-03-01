@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Form, Input, Label, Modal, Surface, TextField, FieldError } from "@heroui/react";
+import { Button, Form, Input, Label, Modal, Switch } from "@heroui/react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { User, UserService } from "@/services/user.service";
 import { Icon } from "@iconify/react";
+import { addToast } from "@heroui/toast";
 
 // Define Base Schema (without refinements yet)
 const baseUserSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters"),
     displayName: z.string().min(1, "Display name is required"),
-    email: z.string().email("Invalid email address"),
+    // email: z.string().email("Invalid email address"), // Removed
     password: z.string().optional(),
-    status: z.boolean(),
+    status: z.string(),
 });
 
 // Create Schema: Password mandatory
@@ -42,9 +43,9 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
         defaultValues: {
             username: "",
             displayName: "",
-            email: "",
+            // email: "", // Removed
             password: "",
-            status: true,
+            status: "",
         },
     });
 
@@ -56,17 +57,17 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                 reset({
                     username: user.username,
                     displayName: user.displayName,
-                    email: user.email,
+                    // email: user.email, // Removed
                     password: "",
-                    status: user.status === 1,
+                    status: user.status,
                 });
             } else {
                 reset({
                     username: "",
                     displayName: "",
-                    email: "",
+                    // email: "", // Removed
                     password: "",
-                    status: true,
+                    status: "",
                 });
             }
         }
@@ -87,13 +88,24 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                 return UserService.create(payload);
             }
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ["users"] });
+            addToast({
+                title: "Success",
+                description: data.message,
+                color: "success",
+            });
             onClose();
         },
         onError: (error: any) => {
             console.error("Error saving user:", error);
-            setErrorMessage(error?.message || "Failed to save user. Please try again.");
+            const msg = error?.message;
+            setErrorMessage(msg);
+            addToast({
+                title: "Error",
+                description: msg,
+                color: "danger",
+            });
         }
     });
 
@@ -123,31 +135,72 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                             </p>
                         </Modal.Header>
                         <Modal.Body className="p-6">
-                            <Surface variant="default">
-                                <Form className="flex flex-col gap-4" onSubmit={onSubmit}>
-                                    <TextField className="w-full" name="name" type="text">
-                                        <Label>Name</Label>
-                                        <Input placeholder="Enter your name" />
-                                    </TextField>
-                                    <TextField className="w-full" name="email" type="email">
-                                        <Label>Email</Label>
-                                        <Input placeholder="Enter your email" />
-                                    </TextField>
-                                    <TextField className="w-full" name="phone" type="tel">
-                                        <Label>Phone</Label>
-                                        <Input placeholder="Enter your phone number" />
-                                        <FieldError />
-                                    </TextField>
-                                    <TextField className="w-full" name="company">
-                                        <Label>Company</Label>
-                                        <Input placeholder="Enter your company name" />
-                                    </TextField>
-                                    <TextField className="w-full" name="message">
-                                        <Label>Message</Label>
-                                        <Input placeholder="Enter your message" />
-                                    </TextField>
-                                </Form>
-                            </Surface>
+                            <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+                                <Controller
+                                    name="username"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            label="Username"
+                                            placeholder="Enter username"
+                                            errorMessage={errors.username?.message?.toString()}
+                                            isInvalid={!!errors.username}
+                                            variant="bordered"
+                                            labelPlacement="outside"
+                                        />
+                                    )}
+                                />
+
+                                <Controller
+                                    name="displayName"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            label="Display Name"
+                                            placeholder="Enter display name"
+                                            errorMessage={errors.displayName?.message?.toString()}
+                                            isInvalid={!!errors.displayName}
+                                            variant="bordered"
+                                            labelPlacement="outside"
+                                        />
+                                    )}
+                                />
+
+                                {/* Email field removed */}
+
+                                <Controller
+                                    name="password"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Input
+                                            {...field}
+                                            type="password"
+                                            label={isEdit ? "Password (leave blank to keep current)" : "Password"}
+                                            placeholder="Enter password"
+                                            errorMessage={errors.password?.message?.toString()}
+                                            isInvalid={!!errors.password}
+                                            variant="bordered"
+                                            labelPlacement="outside"
+                                        />
+                                    )}
+                                />
+
+                                <Controller
+                                    name="status"
+                                    control={control}
+                                    render={({ field: { value, onChange, ...field } }) => (
+                                        <Switch
+                                            {...field}
+                                            isSelected={value}
+                                            onValueChange={onChange}
+                                        >
+                                            Active Status
+                                        </Switch>
+                                    )}
+                                />
+                            </Form>
                         </Modal.Body>
                         <Modal.Footer>
                             <Button variant="secondary" onPress={onClose} isDisabled={mutation.isPending}>

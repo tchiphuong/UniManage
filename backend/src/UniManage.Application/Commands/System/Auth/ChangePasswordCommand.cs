@@ -44,10 +44,13 @@ namespace UniManage.Application.Commands.System.Auth
             RuleFor(x => x.OldPassword)
                 .NotEmpty().WithMessage("Old password is required");
 
+            // [SECURITY] H4 — Enforce consistent password policy (min 8 + complexity)
             RuleFor(x => x.NewPassword)
                 .NotEmpty().WithMessage("New password is required")
-                .MinimumLength(6).WithMessage("New password must be at least 6 characters")
-                .Must(PasswordHelper.IsValidPassword).WithMessage("New password does not meet requirements");
+                .MinimumLength(8).WithMessage("New password must be at least 8 characters")
+                .MaximumLength(128).WithMessage("New password must not exceed 128 characters")
+                .Must(PasswordHelper.IsValidPassword).WithMessage(
+                    "Password must contain at least one uppercase, one lowercase, one digit, and one special character");
 
             RuleFor(x => x.ConfirmPassword)
                 .NotEmpty().WithMessage("Confirm password is required")
@@ -124,7 +127,7 @@ namespace UniManage.Application.Commands.System.Auth
                         await dbContext.CommitAsync();
 
                         UniLogger.Info($"[ChangePassword] Password changed successfully for user: {request.Username}");
-                        return ResponseHelper.Success(true, CoreResource.Auth_msg_PasswordChanged);
+                        return ResponseHelper.Success(true, CoreResource.auth_passwordChanged);
                     }
                     catch
                     {

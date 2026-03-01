@@ -47,13 +47,15 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
         RuleFor(x => x.Id)
             .GreaterThan(0).WithMessage("Id must be greater than 0");
 
+        /*
         RuleFor(x => x.Email)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Email is required")
             .MaximumLength(100).WithMessage("Email must not exceed 100 characters")
-            .EmailAddress().WithMessage(CoreResource.Validation_msg_InvalidEmail)
+            .EmailAddress().WithMessage(CoreResource.validation_invalidEmail)
             .MustAsync(async (cmd, email, cancel) => !await IsEmailExistsByOtherUserAsync(cmd.Id, email))
-            .WithMessage(CoreResource.Validation_msg_EmailAlreadyRegisteredByOther);
+            .WithMessage(CoreResource.validation_emailAlreadyRegisteredByOther);
+        */
 
         RuleFor(x => x.EmployeeCode)
             .MaximumLength(50).WithMessage("Employee code must not exceed 50 characters");
@@ -64,14 +66,7 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
             .WithMessage("Status must be either 'Active' or 'Inactive'");
     }
 
-    private static async Task<bool> IsEmailExistsByOtherUserAsync(long userId, string email)
-    {
-        using (var dbContext = new DbContext())
-        {
-            // Use EF Core LINQ instead of raw SQL
-            return await dbContext.Set<sy_users>().AnyAsync(u => u.Email == email && u.Id != userId);
-        }
-    }
+    // private static async Task<bool> IsEmailExistsByOtherUserAsync... Removed
 }
 
 #endregion
@@ -90,7 +85,8 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
             Parameter = new List<CoreParamModel>
             {
                 new CoreParamModel(nameof(request.Id), request.Id),
-                new CoreParamModel(nameof(request.Email), request.Email),
+                new CoreParamModel(nameof(request.Id), request.Id),
+                // new CoreParamModel(nameof(request.Email), request.Email),
                 new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
                 new CoreParamModel(nameof(request.Status), request.Status)
             }
@@ -118,7 +114,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
                 }
 
                 // Update properties
-                user.Email = request.Email;
+                // user.Email = request.Email; // Removed
                 user.EmployeeCode = request.EmployeeCode;
                 user.Status = request.Status;
                 user.UpdatedBy = request.HeaderInfo?.Username ?? "SYSTEM";
@@ -128,7 +124,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
                 await dbContext.SaveChangesAsync(ct);
                 await dbContext.CommitAsync(ct);
 
-                var response = ResponseHelper.Success(new UpdateUserCommand.Response { Id = user.Id }, CoreResource.User_msg_UpdateSuccess);
+                var response = ResponseHelper.Success(new UpdateUserCommand.Response { Id = user.Id }, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_user));
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;
                 log.Result = response;
@@ -152,7 +148,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
-                return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

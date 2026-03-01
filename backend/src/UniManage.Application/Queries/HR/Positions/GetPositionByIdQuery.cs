@@ -86,14 +86,14 @@ public sealed class GetPositionByIdQueryHandler : IRequestHandler<GetPositionByI
 
                 if (position == null)
                 {
-                    var notFoundResponse = ResponseHelper.NotFound<GetPositionByIdQuery.Response>(CoreResource.Common_msg_NotFound);
+                    var notFoundResponse = ResponseHelper.NotFound<GetPositionByIdQuery.Response>(CoreResource.common_notFound);
                     logData.ReturnCode = notFoundResponse.ReturnCode;
                     logData.Message = notFoundResponse.Message;
                     UniLogManager.WriteApiLog(logData);
                     return notFoundResponse;
                 }
 
-                var response = ResponseHelper.Success(position, CoreResource.Common_msg_Success);
+                var response = ResponseHelper.Success(position, CoreResource.common_success);
                 logData.Result = position;
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
@@ -103,7 +103,7 @@ public sealed class GetPositionByIdQueryHandler : IRequestHandler<GetPositionByI
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving position: {ex.Message}", ex);
-                var response = ResponseHelper.Error<GetPositionByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<GetPositionByIdQuery.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

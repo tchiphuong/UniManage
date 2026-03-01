@@ -13,6 +13,7 @@ namespace UniManage.Application.Queries.System.Roles
     public sealed class GetRoleComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
     {
         public byte? IsActive { get; set; }
+        public string? Keyword { get; set; }
     }
 
     public sealed class GetRoleComboboxQueryValidator : AbstractValidator<GetRoleComboboxQuery>
@@ -68,7 +69,7 @@ namespace UniManage.Application.Queries.System.Roles
                     var items = await dbContext.QueryAsync<ComboboxItemDto>(sql.ToString(), parameters, ct);
                     var result = items.ToList();
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

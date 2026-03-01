@@ -35,7 +35,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
     {
         public GetWorkShiftByCodeQueryValidator()
         {
-            RuleFor(x => x.Code).NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+            RuleFor(x => x.Code).NotEmpty().WithMessage(CoreResource.validation_required);
         }
     }
 
@@ -68,14 +68,14 @@ namespace UniManage.Application.Queries.HR.WorkShifts
 
                     if (workShift == null)
                     {
-                        var notFoundResponse = ResponseHelper.NotFound<GetWorkShiftByCodeQuery.Response>(CoreResource.Common_msg_NotFound);
+                        var notFoundResponse = ResponseHelper.NotFound<GetWorkShiftByCodeQuery.Response>(CoreResource.common_notFound);
                         log.ReturnCode = notFoundResponse.ReturnCode;
                         log.Message = notFoundResponse.Message;
                         UniLogManager.WriteApiLog(log);
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(workShift, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(workShift, CoreResource.crud_getSuccess);
                     log.Result = workShift;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -85,7 +85,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
                 catch (Exception ex)
                 {
                     UniLogger.Error($"Error getting work shift: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<GetWorkShiftByCodeQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<GetWorkShiftByCodeQuery.Response>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
                     log.IsException = 1;

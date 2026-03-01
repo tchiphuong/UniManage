@@ -1,9 +1,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using UniManage.Application.Commands.System.Auth;
 using UniManage.Application.Queries.System.Auth;
 using UniManage.Model.Common;
+using UniManage.Core.Utilities;
 
 namespace UniManage.Api.Controllers.System
 {
@@ -33,10 +35,16 @@ namespace UniManage.Api.Controllers.System
         /// <param name="request">Thông tin đăng nhập (username, password)</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Access token, refresh token và thông tin user</returns>
+        // ===========================================
+        // [SECURITY] Rate limit login endpoint (C6)
+        // 5 attempts per minute per IP to prevent brute-force
+        // ===========================================
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("LoginRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<ActionResult<ApiResponse<LoginCommand.Response>>> Login([FromBody] LoginCommand request, CancellationToken ct)
         {
             request ??= new();
@@ -64,6 +72,7 @@ namespace UniManage.Api.Controllers.System
         /// <returns>Access token và refresh token mới</returns>
         [HttpPost("refresh")]
         [AllowAnonymous]
+        [EnableRateLimiting("SensitiveRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<RefreshTokenCommand.Response>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<RefreshTokenCommand.Response>), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<ApiResponse<RefreshTokenCommand.Response>>> RefreshToken([FromBody] RefreshTokenCommand request, CancellationToken ct)
@@ -140,11 +149,23 @@ namespace UniManage.Api.Controllers.System
         /// <param name="username">Username từ JWT claims</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Current user information</returns>
+        // ===========================================
+        // [SECURITY] IDOR Fix (H5)
+        // Username MUST come from JWT claims, NOT from query string.
+        // This prevents User A from viewing User B's profile.
+        // ===========================================
         [HttpGet("me")]
         [ProducesResponseType(typeof(ApiResponse<GetCurrentUserQuery.Result>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<GetCurrentUserQuery.Result>), StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<ApiResponse<GetCurrentUserQuery.Result>>> GetCurrentUser([FromQuery] string username, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<GetCurrentUserQuery.Result>>> GetCurrentUser(CancellationToken ct)
         {
+            // Get username from JWT token claims — never from client input
+            var username = this.Username;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Unauthorized(ResponseHelper.Unauthorized<GetCurrentUserQuery.Result>());
+            }
+
             var request = new GetCurrentUserQuery { Username = username, HeaderInfo = HeaderInfo };
 
             var response = await _mediator.Send(request, ct);
@@ -169,7 +190,9 @@ namespace UniManage.Api.Controllers.System
         /// <returns>Forgot password result</returns>
         [HttpPost("forgot-password")]
         [AllowAnonymous]
+        [EnableRateLimiting("SensitiveRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<ActionResult<ApiResponse<bool>>> ForgotPassword([FromBody] ForgotPasswordCommand request, CancellationToken ct)
         {
             request ??= new();
@@ -191,8 +214,10 @@ namespace UniManage.Api.Controllers.System
         /// <returns>Reset password result</returns>
         [HttpPost("reset-password")]
         [AllowAnonymous]
+        [EnableRateLimiting("SensitiveRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<ActionResult<ApiResponse<bool>>> ResetPassword([FromBody] ResetPasswordCommand request, CancellationToken ct)
         {
             request ??= new();
@@ -218,9 +243,15 @@ namespace UniManage.Api.Controllers.System
         /// <param name="username">Username cần kiểm tra</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Username exists result</returns>
+        // ===========================================
+        // [SECURITY] Rate limit user enumeration endpoints (H9)
+        // Prevents automated scanning of valid usernames
+        // ===========================================
         [HttpGet("check-username/{username}")]
         [AllowAnonymous]
+        [EnableRateLimiting("SensitiveRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<CheckUsernameExistsQuery.Result>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<ActionResult<ApiResponse<CheckUsernameExistsQuery.Result>>> CheckUsername([FromRoute] string username, CancellationToken ct)
         {
             var request = new CheckUsernameExistsQuery { Username = username, HeaderInfo = HeaderInfo };
@@ -241,7 +272,9 @@ namespace UniManage.Api.Controllers.System
         /// <returns>Email exists result</returns>
         [HttpGet("check-email/{email}")]
         [AllowAnonymous]
+        [EnableRateLimiting("SensitiveRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<CheckEmailExistsQuery.Result>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<ActionResult<ApiResponse<CheckEmailExistsQuery.Result>>> CheckEmail([FromRoute] string email, CancellationToken ct)
         {
             var request = new CheckEmailExistsQuery { Email = email, HeaderInfo = HeaderInfo };
@@ -260,10 +293,21 @@ namespace UniManage.Api.Controllers.System
         /// <param name="username">Username từ JWT claims</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>User permissions and roles</returns>
+        // ===========================================
+        // [SECURITY] IDOR Fix (H5)
+        // Permissions MUST be loaded from JWT identity, NOT from client input.
+        // ===========================================
         [HttpGet("permissions")]
         [ProducesResponseType(typeof(ApiResponse<GetUserPermissionsQuery.Result>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<ApiResponse<GetUserPermissionsQuery.Result>>> GetPermissions([FromQuery] string username, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<GetUserPermissionsQuery.Result>>> GetPermissions(CancellationToken ct)
         {
+            // Get username from JWT token claims — never from client input
+            var username = this.Username;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Unauthorized(ResponseHelper.Unauthorized<GetUserPermissionsQuery.Result>());
+            }
+
             var request = new GetUserPermissionsQuery { Username = username, HeaderInfo = HeaderInfo };
 
             var response = await _mediator.Send(request, ct);

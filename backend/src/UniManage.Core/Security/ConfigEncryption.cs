@@ -101,17 +101,28 @@ public static class ConfigEncryption
     }
 
     /// <summary>
-    /// Derive encryption key from machine-specific identifier
-    /// WARNING: This is basic implementation. For production:
-    /// - Use Azure Key Vault, AWS KMS, or HashiCorp Vault
-    /// - Use DPAPI on Windows
-    /// - Store key separately, not in code
+    /// Derive encryption key from machine-specific identifier.
+    /// 
+    /// [SECURITY] C4 — Key management hardening:
+    /// - REQUIRES UNIMANAGE_ENCRYPTION_SEED environment variable
+    /// - NO hardcoded fallback — fails fast if misconfigured
+    /// - For production: use Azure Key Vault, AWS KMS, or HashiCorp Vault
+    /// - For Windows: consider DPAPI as alternative
     /// </summary>
     private static byte[] DeriveKeyFromMachineId()
     {
-        // Use machine name + environment variable as seed
-        // IMPORTANT: Set this environment variable on each deployment environment
-        var seed = Environment.MachineName + (Environment.GetEnvironmentVariable("UNIMANAGE_ENCRYPTION_SEED") ?? "DefaultSeed2024");
+        // [SECURITY] C4 — MUST set this environment variable on each deployment
+        var encryptionSeed = Environment.GetEnvironmentVariable("UNIMANAGE_ENCRYPTION_SEED");
+
+        if (string.IsNullOrEmpty(encryptionSeed))
+        {
+            throw new InvalidOperationException(
+                "[SECURITY] UNIMANAGE_ENCRYPTION_SEED environment variable is NOT set. " +
+                "This is REQUIRED for configuration encryption. " +
+                "Set it via: setx UNIMANAGE_ENCRYPTION_SEED \"your-secret-seed-value\" or in your deployment pipeline.");
+        }
+
+        var seed = Environment.MachineName + encryptionSeed;
 
         using (var sha256 = SHA256.Create())
         {

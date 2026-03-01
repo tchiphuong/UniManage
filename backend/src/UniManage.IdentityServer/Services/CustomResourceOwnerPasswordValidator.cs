@@ -14,32 +14,17 @@ namespace UniManage.IdentityServer.Services
     /// </summary>
     public class CustomResourceOwnerPasswordValidator : IResourceOwnerPasswordValidator
     {
+        private readonly IIdentityUserRepository _userRepository;
+
+        public CustomResourceOwnerPasswordValidator(IIdentityUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
         public async Task ValidateAsync(ResourceOwnerPasswordValidationContext context)
         {
             try
             {
-                using var dbContext = new DbContext();
-
-                var sql = @"
-                    SELECT TOP 1
-                        [Id],
-                        [UserName],
-                        [Password],
-                        [EmployeeCode],
-                        [RoleCode],
-                        [Email],
-                        [Status]
-                    FROM [dbo].[sy_users]
-                    WHERE [UserName] = @UserName
-                        AND [Status] = @ActiveStatus"; // Status = 1 = ACTIVE
-
-                var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
-                    sql,
-                    new
-                    {
-                        UserName = context.UserName,
-                        ActiveStatus = CoreCommon.Value.Commonstatus.Active
-                    });
+                var user = await _userRepository.FindByUsernameAsync(context.UserName);
 
                 if (user == null)
                 {
@@ -88,17 +73,6 @@ namespace UniManage.IdentityServer.Services
                     TokenRequestErrors.InvalidGrant,
                     "Authentication failed");
             }
-        }
-
-        private class UserDto
-        {
-            public int Id { get; set; }
-            public string UserName { get; set; } = default!;
-            public string Password { get; set; } = default!;
-            public string? EmployeeCode { get; set; }
-            public string? RoleCode { get; set; }
-            public string? Email { get; set; }
-            public string Status { get; set; }
         }
     }
 }

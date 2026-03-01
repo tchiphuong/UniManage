@@ -96,7 +96,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
                     return notFoundResponse;
                 }
 
-                var response = ResponseHelper.Success(user, CoreResource.User_msg_GetSuccess);
+                var response = ResponseHelper.Success(user, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_user));
                 logData.Result = new { user.Username };
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
@@ -107,7 +107,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
             {
                 UniLogger.Error($"Error retrieving user by id {request.Id}: {ex.Message}", ex);
                 
-                var response = ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.Message;
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 import type { ApiResponse } from "@/types";
-import { getAccessToken } from "./cookies";
+import { getAccessToken, removeAccessToken } from "./cookies";
 
 /**
  * API Client cho UniManage
@@ -13,9 +13,7 @@ class ApiClient {
     constructor() {
         const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
         // Auto-fix for local development port mismatch (IIS Express vs Kestrel)
-        const baseURL = envUrl?.includes("44325")
-            ? "https://localhost:44325/api"
-            : envUrl || "https://localhost:44325/api";
+        const baseURL = envUrl;
 
         this.instance = axios.create({
             baseURL,
@@ -55,7 +53,7 @@ class ApiClient {
 
                 return config;
             },
-            (error) => Promise.reject(error)
+            (error) => Promise.reject(error),
         );
 
         // Response interceptor
@@ -65,12 +63,12 @@ class ApiClient {
                 if (error.response?.status === 401) {
                     // Token hết hạn, redirect to login
                     if (typeof window !== "undefined") {
-                        // Clear cookies sẽ được handle ở logout
-                        window.location.href = "/login";
+                        removeAccessToken(); // Clear cookie to prevent middleware loop
+                        window.location.href = "/auth/login";
                     }
                 }
                 return Promise.reject(error);
-            }
+            },
         );
     }
 

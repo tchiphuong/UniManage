@@ -11,7 +11,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.Inventory.Items
 {
-    public sealed class GetItemListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetItemListQuery.Result>>>
+    public sealed class GetItemListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetItemListQuery.Result>>>
     {
         public string? BrandCode { get; set; }
         public string? CategoryCode { get; set; }
@@ -184,7 +184,7 @@ namespace UniManage.Application.Queries.Inventory.Items
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

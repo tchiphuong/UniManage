@@ -120,7 +120,7 @@ namespace UniManage.Application.Queries.Workflow.Requests
                     var history = await dbContext.QueryAsync<GetRequestByIdQuery.ApprovalHistory>(historySql, new { RequestId = request.Id }, ct);
                     result.ApprovalHistory = history.ToList();
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

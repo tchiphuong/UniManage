@@ -32,7 +32,7 @@ namespace UniManage.Application.Commands.HR.Salaries
         {
             RuleFor(x => x.EmployeeCode)
                 .Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
+                .NotEmpty().WithMessage(CoreResource.validation_required)
                 .MustAsync(async (code, cancel) => await IsEmployeeExistsAsync(code))
                 .WithMessage("Employee not found")
                 .MustAsync(async (code, cancel) => !await HasActiveSalaryAsync(code))
@@ -109,7 +109,7 @@ namespace UniManage.Application.Commands.HR.Salaries
 
                     await dbContext.CommitAsync();
 
-                    var response = ResponseHelper.Success(new CreateSalaryCommand.Response { Id = id }, CoreResource.Common_msg_CreateSuccess);
+                    var response = ResponseHelper.Success(new CreateSalaryCommand.Response { Id = id }, CoreResource.crud_createSuccess);
 
                     log.Result = response.Data;
                     log.ReturnCode = response.ReturnCode;
@@ -122,7 +122,7 @@ namespace UniManage.Application.Commands.HR.Salaries
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error creating salary: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<CreateSalaryCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<CreateSalaryCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

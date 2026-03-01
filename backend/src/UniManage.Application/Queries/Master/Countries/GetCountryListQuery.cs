@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.Master.Countries
 {
     #region Query
 
-    public sealed class GetCountryListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetCountryListQuery.Response>>>
+    public sealed class GetCountryListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetCountryListQuery.Response>>>
     {
         public bool? IsActive { get; set; }
 
@@ -89,7 +89,7 @@ namespace UniManage.Application.Queries.Master.Countries
 
                     var result = await dbContext.QueryPagingAsync<GetCountryListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, CoreResource.Country_msg_ListSuccess);
+                    var response = ResponseHelper.Success(result, string.Format(CoreResource.crud_listSuccess, CoreResource.entity_country));
 
                     logData.Result = result;
                     logData.ReturnCode = response.ReturnCode;
@@ -100,7 +100,7 @@ namespace UniManage.Application.Queries.Master.Countries
                 catch (Exception ex)
                 {
                     UniLogger.Error($"Error retrieving countries: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<PagedResult<GetCountryListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<PagedResult<GetCountryListQuery.Response>>(CoreResource.common_exceptionOccurred);
                     logData.Message = ex.ToString();
                     logData.IsException = 1;
                     logData.ReturnCode = response.ReturnCode;

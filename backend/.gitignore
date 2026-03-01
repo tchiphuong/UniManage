@@ -1,0 +1,7 @@
+## T4 Template Generated Files
+## These .cs files are auto-generated from .tt templates
+## Run the T4 templates to regenerate them locally
+src/UniManage.Core/Database/DatabaseModels.cs
+src/UniManage.Core/Constant/CoreCommon.cs
+src/UniManage.Core/Constant/CoreLanguage.cs
+src/UniManage.Core/Constant/CorePermission.cs

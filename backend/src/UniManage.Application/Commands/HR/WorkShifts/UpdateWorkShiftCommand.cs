@@ -34,22 +34,22 @@ namespace UniManage.Application.Commands.HR.WorkShifts
         public UpdateWorkShiftCommandValidator()
         {
             RuleFor(x => x.Id)
-                .GreaterThan(0).WithMessage(CoreResource.Validation_msg_Required);
+                .GreaterThan(0).WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(100).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 100));
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(100).WithMessage(string.Format(CoreResource.validation_maxLength, 100));
 
             RuleFor(x => x.StartTime)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.EndTime)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
+                .NotEmpty().WithMessage(CoreResource.validation_required)
                 .Must((cmd, endTime) => endTime > cmd.StartTime)
                 .WithMessage("End time must be after start time");
 
             RuleFor(x => x.Description)
-                .MaximumLength(250).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 250))
+                .MaximumLength(250).WithMessage(string.Format(CoreResource.validation_maxLength, 250))
                 .When(x => !string.IsNullOrEmpty(x.Description));
         }
     }
@@ -96,13 +96,13 @@ namespace UniManage.Application.Commands.HR.WorkShifts
                     if (rowsAffected == 0)
                     {
                         await dbContext.RollbackAsync();
-                        return ResponseHelper.NotFound<UpdateWorkShiftCommand.Response>(CoreResource.Common_msg_NotFound);
+                        return ResponseHelper.NotFound<UpdateWorkShiftCommand.Response>(CoreResource.common_notFound);
                     }
 
                     await dbContext.CommitAsync();
 
                     var responseData = new UpdateWorkShiftCommand.Response { Success = true, Id = request.Id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_UpdateSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
 
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -113,7 +113,7 @@ namespace UniManage.Application.Commands.HR.WorkShifts
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error updating work shift: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<UpdateWorkShiftCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<UpdateWorkShiftCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

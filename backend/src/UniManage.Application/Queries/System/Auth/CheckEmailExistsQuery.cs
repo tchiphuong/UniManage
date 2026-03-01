@@ -37,7 +37,7 @@ namespace UniManage.Application.Queries.System.Auth
         {
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email is required")
-                .Must(ValidationHelper.IsValidEmail).WithMessage(CoreResource.Validation_msg_InvalidEmail)
+                .Must(ValidationHelper.IsValidEmail).WithMessage(CoreResource.validation_invalidEmail)
                 .MaximumLength(100).WithMessage("Email must not exceed 100 characters");
         }
     }
@@ -73,7 +73,7 @@ namespace UniManage.Application.Queries.System.Auth
             catch (Exception ex)
             {
                 UniLogger.Error($"[CheckEmailExists] Error checking email: {request.Email}", ex);
-                return ResponseHelper.Error<CheckEmailExistsQuery.Result>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<CheckEmailExistsQuery.Result>(CoreResource.common_exceptionOccurred);
             }
         }
     }

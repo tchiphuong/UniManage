@@ -13,6 +13,7 @@ namespace UniManage.Application.Queries.Master.Units
 
     public sealed class GetUnitComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
     {
+        public string? Keyword { get; set; }
     }
 
     #endregion
@@ -82,7 +83,7 @@ namespace UniManage.Application.Queries.Master.Units
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting unit combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

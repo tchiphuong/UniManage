@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Constant;
@@ -52,26 +52,28 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Username is required")
             .Length(3, 50).WithMessage("Username must be between 3 and 50 characters")
-            .Must(ValidationHelper.IsValidUserCode).WithMessage(CoreResource.Validation_msg_AlphanumericOnly)
+            .Must(ValidationHelper.IsValidUserCode).WithMessage(CoreResource.validation_alphanumericOnly)
             .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
-            .WithMessage(CoreResource.Validation_msg_UsernameAlreadyTaken);
+            .WithMessage(CoreResource.validation_usernameAlreadyTaken);
 
-        // 2. Validate Email
+        // 2. Validate Email - Removed
+        /*
         RuleFor(x => x.Email)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Email is required")
             .MaximumLength(100).WithMessage("Email must not exceed 100 characters")
-            .EmailAddress().WithMessage(CoreResource.Validation_msg_InvalidEmail)
+            .EmailAddress().WithMessage(CoreResource.validation_invalidEmail)
             .MustAsync(async (email, cancel) => !await IsEmailExistsAsync(email))
-            .WithMessage(CoreResource.Validation_msg_EmailAlreadyRegistered);
+            .WithMessage(CoreResource.validation_emailAlreadyRegistered);
+        */
 
         // 3. Validate Password
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required")
             .MinimumLength(8).WithMessage("Password must be at least 8 characters")
-            .Matches(@"[A-Z]").WithMessage(CoreResource.Validation_msg_MustContainUppercase)
-            .Matches(@"[a-z]").WithMessage(CoreResource.Validation_msg_MustContainLowercase)
-            .Matches(@"[0-9]").WithMessage(CoreResource.Validation_msg_MustContainNumber)
+            .Matches(@"[A-Z]").WithMessage(CoreResource.validation_mustContainUppercase)
+            .Matches(@"[a-z]").WithMessage(CoreResource.validation_mustContainLowercase)
+            .Matches(@"[0-9]").WithMessage(CoreResource.validation_mustContainNumber)
             .Matches(@"[\!\?\*\.]").WithMessage("Password must contain at least one special character (!?*.)");
 
         // 4. Validate Status
@@ -94,14 +96,7 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
         }
     }
 
-    private static async Task<bool> IsEmailExistsAsync(string email)
-    {
-        using (var dbContext = new DbContext())
-        {
-            // Use EF Core LINQ instead of raw SQL
-            return await dbContext.Set<sy_users>().AnyAsync(u => u.Email == email);
-        }
-    }
+    // private static async Task<bool> IsEmailExistsAsync(string email) ... Removed
 }
 
 #endregion
@@ -120,7 +115,7 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
             Parameter = new List<CoreParamModel>
             {
                 new CoreParamModel(nameof(request.Username), request.Username),
-                new CoreParamModel(nameof(request.Email), request.Email),
+                // new CoreParamModel(nameof(request.Email), request.Email),
                 new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
                 new CoreParamModel(nameof(request.Status), request.Status),
                 new CoreParamModel(nameof(request.RoleCode), request.RoleCode),
@@ -140,11 +135,11 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
                 {
                     Username = request.Username,
                     Password = passwordHash, // Entity column is "Password" not "PasswordHash"
-                    Email = request.Email,
+                    // Email = request.Email, // Removed
                     EmployeeCode = request.EmployeeCode,
-                    RoleCode = request.RoleCode?.FirstOrDefault() ?? "USER",
+                    RoleCode = request.RoleCode?.FirstOrDefault(),
                     Status = request.Status,
-                    CreatedBy = request.HeaderInfo?.Username ?? "SYSTEM",
+                    CreatedBy = request.HeaderInfo?.Username,
                     CreatedAt = DateTime.Now,
                     RowVersion = new byte[8] // Initialize with empty byte array, SQL Server will manage via rowversion
                 };
@@ -158,7 +153,7 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
                 // Commit transaction
                 await dbContext.CommitAsync(ct);
 
-                var response = ResponseHelper.Success(new CreateUserCommand.Response { Id = newUser.Id }, CoreResource.User_msg_CreateSuccess);
+                var response = ResponseHelper.Success(new CreateUserCommand.Response { Id = newUser.Id }, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_user));
 
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
@@ -174,7 +169,7 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
-                return ResponseHelper.Error<CreateUserCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<CreateUserCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

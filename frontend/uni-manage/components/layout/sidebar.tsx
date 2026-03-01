@@ -1,131 +1,640 @@
-"use client";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { useTranslations, useLocale } from 'next-intl';
+import Cookies from 'js-cookie';
+import {
+    ChevronDownIcon,
+    HomeIcon,
+    FolderOpenIcon,
+    UsersIcon,
+    CubeIcon,
+    DocumentTextIcon,
+    CurrencyDollarIcon,
+    Cog6ToothIcon,
+    CheckCircleIcon,
+    ChatBubbleLeftRightIcon,
+    ChatBubbleBottomCenterTextIcon,
+    MagnifyingGlassIcon,
+    StarIcon,
+    XMarkIcon,
+    ClipboardDocumentCheckIcon,
+    ArchiveBoxIcon,
+    UserGroupIcon,
+    ClockIcon,
+    BanknotesIcon,
+    CalendarDaysIcon,
+    BriefcaseIcon,
+    AcademicCapIcon,
+    ShoppingCartIcon,
+    BuildingStorefrontIcon,
+    TruckIcon,
+    HeartIcon,
+    MegaphoneIcon,
+    CalculatorIcon,
+    WrenchScrewdriverIcon,
+    DocumentDuplicateIcon,
+    BellIcon,
+    ViewColumnsIcon,
+    ChartBarIcon,
+    ClipboardDocumentListIcon,
+    UserCircleIcon,
+    QuestionMarkCircleIcon,
+    PlusIcon,
+    CheckIcon,
+    ChartPieIcon,
+} from '@heroicons/react/24/outline';
+import {
+    StarIcon as StarIconSolid,
+    HomeIcon as HomeIconSolid,
+    FolderOpenIcon as FolderOpenIconSolid,
+    UsersIcon as UsersIconSolid,
+    CubeIcon as CubeIconSolid,
+    DocumentTextIcon as DocumentTextIconSolid,
+    CurrencyDollarIcon as CurrencyDollarIconSolid,
+    Cog6ToothIcon as Cog6ToothIconSolid,
+    CheckCircleIcon as CheckCircleIconSolid,
+    ChatBubbleLeftRightIcon as ChatBubbleLeftRightIconSolid,
+    ChatBubbleBottomCenterTextIcon as ChatBubbleBottomCenterTextIconSolid,
+    ClipboardDocumentCheckIcon as ClipboardDocumentCheckIconSolid,
+    ArchiveBoxIcon as ArchiveBoxIconSolid,
+    UserGroupIcon as UserGroupIconSolid,
+    ClockIcon as ClockIconSolid,
+    BanknotesIcon as BanknotesIconSolid,
+    CalendarDaysIcon as CalendarDaysIconSolid,
+    BriefcaseIcon as BriefcaseIconSolid,
+    AcademicCapIcon as AcademicCapIconSolid,
+    ShoppingCartIcon as ShoppingCartIconSolid,
+    BuildingStorefrontIcon as BuildingStorefrontIconSolid,
+    TruckIcon as TruckIconSolid,
+    HeartIcon as HeartIconSolid,
+    MegaphoneIcon as MegaphoneIconSolid,
+    CalculatorIcon as CalculatorIconSolid,
+    WrenchScrewdriverIcon as WrenchScrewdriverIconSolid,
+    DocumentDuplicateIcon as DocumentDuplicateIconSolid,
+    BellIcon as BellIconSolid,
+    ViewColumnsIcon as ViewColumnsIconSolid,
+    ChartBarIcon as ChartBarIconSolid,
+    ClipboardDocumentListIcon as ClipboardDocumentListIconSolid,
+    UserCircleIcon as UserCircleIconSolid,
+    QuestionMarkCircleIcon as QuestionMarkCircleIconSolid,
+    PlusIcon as PlusIconSolid,
+    CheckIcon as CheckIconSolid,
+    ChartPieIcon as ChartPieIconSolid,
+} from '@heroicons/react/24/solid';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { MenuItem } from '@/types';
+import { useMenu } from '@/services/menu.service';
 
-import { useState } from "react";
-import { Link } from "@/i18n/navigation";
-import { usePathname } from "next/navigation";
+// Icon mapping - outline versions
+const iconComponentsOutline: Record<string, React.ComponentType<{ className?: string }>> = {
+    'fa-tachometer-alt': HomeIcon,
+    'fa-folder-open': FolderOpenIcon,
+    'fa-users': UsersIcon,
+    'fa-box': CubeIcon,
+    'fa-file-alt': DocumentTextIcon,
+    'fa-dollar-sign': CurrencyDollarIcon,
+    'fa-cogs': Cog6ToothIcon,
+    'fa-check-square': CheckCircleIcon,
+    'fa-comments': ChatBubbleLeftRightIcon,
+    'fa-quote-left': ChatBubbleBottomCenterTextIcon,
+    'fa-clipboard-check': ClipboardDocumentCheckIcon,
+    'fa-archive': ArchiveBoxIcon,
+    'fa-user-group': UserGroupIcon,
+    'fa-clock': ClockIcon,
+    'fa-banknotes': BanknotesIcon,
+    'fa-calendar': CalendarDaysIcon,
+    'fa-briefcase': BriefcaseIcon,
+    'fa-graduation-cap': AcademicCapIcon,
+    'fa-shopping-cart': ShoppingCartIcon,
+    'fa-store': BuildingStorefrontIcon,
+    'fa-truck': TruckIcon,
+    'fa-heart': HeartIcon,
+    'fa-megaphone': MegaphoneIcon,
+    'fa-calculator': CalculatorIcon,
+    'fa-wrench': WrenchScrewdriverIcon,
+    'fa-copy': DocumentDuplicateIcon,
+    'fa-bell': BellIcon,
+    'fa-columns': ViewColumnsIcon,
+    'fa-chart-bar': ChartPieIcon,
+    'fa-poll': ChartBarIcon,
+    'fa-clipboard-list': ClipboardDocumentListIcon,
+    'fa-user-circle': UserCircleIcon,
+    'fa-question-circle': QuestionMarkCircleIcon,
+    'fa-plus': PlusIcon,
+    'fa-check': CheckIcon,
+    'fa-history': ClockIcon,
+    // Add missing mappings
+    'fa-comments-alt': ChatBubbleLeftRightIcon,
+};
 
-interface SidebarProps {
-    sidebarOpen: boolean;
+// Icon mapping - solid versions (for active state)
+const iconComponentsSolid: Record<string, React.ComponentType<{ className?: string }>> = {
+    'fa-tachometer-alt': HomeIconSolid,
+    'fa-folder-open': FolderOpenIconSolid,
+    'fa-users': UsersIconSolid,
+    'fa-box': CubeIconSolid,
+    'fa-file-alt': DocumentTextIconSolid,
+    'fa-dollar-sign': CurrencyDollarIconSolid,
+    'fa-cogs': Cog6ToothIconSolid,
+    'fa-check-square': CheckCircleIconSolid,
+    'fa-comments': ChatBubbleLeftRightIconSolid,
+    'fa-quote-left': ChatBubbleBottomCenterTextIconSolid,
+    'fa-clipboard-check': ClipboardDocumentCheckIconSolid,
+    'fa-archive': ArchiveBoxIconSolid,
+    'fa-user-group': UserGroupIconSolid,
+    'fa-clock': ClockIconSolid,
+    'fa-banknotes': BanknotesIconSolid,
+    'fa-calendar': CalendarDaysIconSolid,
+    'fa-briefcase': BriefcaseIconSolid,
+    'fa-graduation-cap': AcademicCapIconSolid,
+    'fa-shopping-cart': ShoppingCartIconSolid,
+    'fa-store': BuildingStorefrontIconSolid,
+    'fa-truck': TruckIconSolid,
+    'fa-heart': HeartIconSolid,
+    'fa-megaphone': MegaphoneIconSolid,
+    'fa-calculator': CalculatorIconSolid,
+    'fa-wrench': WrenchScrewdriverIconSolid,
+    'fa-copy': DocumentDuplicateIconSolid,
+    'fa-bell': BellIconSolid,
+    'fa-columns': ViewColumnsIconSolid,
+    'fa-chart-bar': ChartPieIconSolid,
+    'fa-poll': ChartBarIconSolid,
+    'fa-clipboard-list': ClipboardDocumentListIconSolid,
+    'fa-user-circle': UserCircleIconSolid,
+    'fa-question-circle': QuestionMarkCircleIconSolid,
+    'fa-plus': PlusIconSolid,
+    'fa-check': CheckIconSolid,
+    'fa-history': ClockIconSolid,
+    // Add missing mappings
+    'fa-comments-alt': ChatBubbleLeftRightIconSolid,
+};
+
+// Menu data with translation keys - organized by groups
+// Menu data is now fetched from API via useMenu hook
+
+// Badge counts (mock data - in real app, fetch from API)
+const badgeCounts: Record<string, number> = {
+    todos: 5,
+    comments: 12,
+    projects: 3,
+};
+
+interface MenuItemProps {
+    item: MenuItem;
+    onNavigate: (link: string) => void;
+    currentPath: string;
+    isFavorite: boolean;
+    onToggleFavorite: (id: string) => void;
+    badgeCount?: number;
 }
 
-export function Sidebar({ sidebarOpen }: SidebarProps) {
-    const pathname = usePathname();
-    const [dashboardOpen, setDashboardOpen] = useState(false);
-    const [reportsOpen, setReportsOpen] = useState(false);
+function SidebarMenuItem({
+    item,
+    currentPath,
+    isFavorite,
+    onToggleFavorite,
+    badgeCount,
+}: MenuItemProps) {
+    const t = useTranslations();
+    const [isOpen, setIsOpen] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const hasChildren = item.children && item.children.length > 0;
 
-    const isActive = (path: string) => pathname === path;
+    const isActive =
+        item.link === currentPath ||
+        (hasChildren && item.children?.some((child) => child.link === currentPath));
+
+    useEffect(() => {
+        if (isActive && hasChildren) {
+            setIsOpen(true);
+        }
+    }, [currentPath, hasChildren, isActive]);
+
+    // Use solid icon when active, outline when not
+    const IconComponent = item.icon
+        ? isActive
+            ? iconComponentsSolid[item.icon]
+            : iconComponentsOutline[item.icon]
+        : null;
+
+    const handleExpandToggle = (e: React.MouseEvent) => {
+        if (hasChildren) {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+        }
+    };
+
+    const commonClasses = `mx-2 flex flex-1 cursor-pointer items-center justify-between rounded-full p-1.5 transition-all duration-200 ${isActive
+        ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
+        : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-700/50'
+        }`;
+    const content = (
+        <>
+            <span className="flex flex-1 items-center gap-3 overflow-hidden">
+                {IconComponent && (
+                    <span
+                        className={`shrink-0 rounded-full p-1.5 transition-colors ${isActive
+                            ? 'bg-white/20'
+                            : 'bg-gray-100 group-hover:bg-blue-100 dark:bg-zinc-700 dark:group-hover:bg-blue-900/30'
+                            }`}
+                    >
+                        <IconComponent
+                            className={`h-4 w-4 ${isActive ? '' : 'group-hover:text-blue-500'}`}
+                        />
+                    </span>
+                )}
+                <span className="flex-1 truncate text-left text-sm font-medium">
+                    {t(item.title)}
+                </span>
+            </span>
+
+            <span className="flex shrink-0 items-center gap-1">
+                {/* Badge */}
+                {badgeCount && badgeCount > 0 && (
+                    <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white">
+                        {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                )}
+
+                {/* Keyboard Shortcut */}
+                {item.shortcut && !hasChildren && (
+                    <kbd
+                        className={`hidden rounded-md border px-1.5 py-0.5 text-[10px] font-semibold sm:inline ${isActive
+                            ? 'border-white/30 bg-white/20 text-white'
+                            : 'border-zinc-300 bg-gray-100 text-gray-500 dark:border-zinc-500 dark:bg-zinc-600 dark:text-zinc-300'
+                            }`}
+                    >
+                        ⌘ + {item.shortcut}
+                    </kbd>
+                )}
+
+                {/* Favorite Star - inside button */}
+                {item.id && (
+                    <span
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onToggleFavorite(item.id!);
+                        }}
+                        className="rounded-full p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white/20"
+                    >
+                        {isFavorite ? (
+                            <StarIconSolid className="h-4 w-4 text-yellow-500" />
+                        ) : (
+                            <StarIcon
+                                className={`h-4 w-4 ${isActive ? 'text-white/70 hover:text-yellow-300' : 'text-gray-400 hover:text-yellow-500'}`}
+                            />
+                        )}
+                    </span>
+                )}
+
+                {hasChildren && (
+                    <ChevronDownIcon
+                        className={`mx-1 h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                )}
+            </span>
+        </>
+    );
+
+    return (
+        <li className="relative">
+            <div className="group relative flex items-center">
+                {hasChildren ? (
+                    <div
+                        onClick={handleExpandToggle}
+                        role="button"
+                        onMouseEnter={() => setShowTooltip(true)}
+                        onMouseLeave={() => setShowTooltip(false)}
+                        className={commonClasses}
+                    >
+                        {content}
+                    </div>
+                ) : (
+                    <Link
+                        href={item.link || '#'}
+                        onMouseEnter={() => setShowTooltip(true)}
+                        onMouseLeave={() => setShowTooltip(false)}
+                        className={commonClasses}
+                    >
+                        {content}
+                    </Link>
+                )}
+
+                {/* Tooltip */}
+                {showTooltip && item.description && (
+                    <div className="pointer-events-none absolute left-full z-50 ml-2 w-48 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-zinc-700">
+                        {t(item.description)}
+                        <div className="absolute top-1/2 -left-1 h-2 w-2 -translate-y-1/2 rotate-45 bg-gray-900 dark:bg-zinc-700"></div>
+                    </div>
+                )}
+            </div>
+
+            {hasChildren && isOpen && (
+                <ul className="mt-2 ml-6 space-y-0.5 border-l-2 border-zinc-200 dark:border-zinc-700">
+                    {item.children?.map((subItem, i) => (
+                        <li key={i}>
+                            <Link
+                                href={subItem.link || '#'}
+                                className={`mx-2 flex items-center rounded-full p-1.5 pl-9 text-sm transition-all duration-200 ${subItem.link === currentPath
+                                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-zinc-400 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-200'
+                                    }`}
+                            >
+                                <span className="truncate font-medium">{t(subItem.title)}</span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </li>
+    );
+}
+
+import { US, VN, JP, CN, KR, TH } from 'country-flag-icons/react/3x2';
+
+const languages = [
+    { code: 'en', name: 'English', Flag: US },
+    { code: 'vi', name: 'Tiếng Việt', Flag: VN },
+    { code: 'ja', name: '日本語', Flag: JP },
+    { code: 'zh', name: '中文', Flag: CN },
+    { code: 'ko', name: '한국어', Flag: KR },
+    { code: 'th', name: 'ไทย', Flag: TH },
+];
+
+const FAVORITES_KEY = 'sidebar-favorites';
+
+
+// Main Sidebar Component
+export function Sidebar() {
+    const t = useTranslations();
+    const { sidebarOpen, closeSidebar } = useSidebar();
+    const { menuData, isLoading } = useMenu();
+    const router = useRouter();
+    const pathname = usePathname();
+    const locale = useLocale();
+
+    const [langOpen, setLangOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [favorites, setFavorites] = useState<string[]>([]);
+
+    const handleNavigate = (path: string) => {
+        // Navigation is handled by Link, but we might want to close sidebar on mobile
+        if (window.innerWidth < 1024) {
+            closeSidebar();
+        }
+    };
+
+    // Load favorites from localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem(FAVORITES_KEY);
+        if (saved) {
+            setFavorites(JSON.parse(saved));
+        }
+    }, []);
+
+    // Save favorites to localStorage
+    const toggleFavorite = (id: string) => {
+        setFavorites((prev) => {
+            const newFavorites = prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id];
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites));
+            return newFavorites;
+        });
+    };
+
+    // Language dropdown ref and click-outside handler
+    const langRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (langRef.current && !langRef.current.contains(event.target as Node)) {
+                setLangOpen(false);
+            }
+        };
+        if (langOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [langOpen]);
+
+    const currentLang = languages.find((l) => l.code === locale) || languages[0];
+
+
+
+    // Filter menu items based on search
+    const filteredMenu = menuData.filter((item) => {
+        if (!searchQuery) return true;
+        const title = t(item.title).toLowerCase();
+        const query = searchQuery.toLowerCase();
+        return (
+            title.includes(query) ||
+            item.children?.some((child) => t(child.title).toLowerCase().includes(query))
+        );
+    });
+
+    // Separate favorites and regular items
+    const favoriteItems = filteredMenu.filter((item) => item.id && favorites.includes(item.id));
+    const regularItems = filteredMenu.filter((item) => !item.id || !favorites.includes(item.id));
+
+    // Keyboard shortcuts handler
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Check for Ctrl/Cmd + number
+            if ((e.ctrlKey || e.metaKey) && /^[0-9]$/.test(e.key)) {
+                e.preventDefault();
+                const item = menuData.find((m) => m.shortcut === e.key);
+                if (item) {
+                    if (item.link) {
+                        handleNavigate(item.link);
+                    } else if (item.children?.[0]?.link) {
+                        handleNavigate(item.children[0].link);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleNavigate]);
 
     return (
         <aside
-            className={`fixed left-0 top-18 z-40 h-[calc(100vh-4.5rem)] w-64 transform bg-white dark:bg-gray-800 shadow-md transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:w-0 lg:overflow-hidden"
+            className={`sidebar-transition fixed top-16 left-0 z-40 flex h-[calc(100vh-4rem)] flex-col overflow-hidden bg-white shadow-lg transition-all duration-300 ease-in-out lg:relative lg:top-0 lg:m-3 lg:h-[calc(100vh-5.5rem)] lg:rounded-xl lg:border lg:border-zinc-200 dark:bg-zinc-800 dark:lg:border-zinc-600 ${sidebarOpen
+                ? 'w-full translate-x-0 opacity-100 lg:w-64'
+                : '-translate-x-full opacity-0 lg:w-0 lg:translate-x-0'
                 }`}
         >
-            <nav className="h-full overflow-y-auto p-4">
-                {/* Dashboard Group */}
-                <div className="mb-2">
-                    <button
-                        onClick={() => setDashboardOpen(!dashboardOpen)}
-                        className={`flex w-full items-center justify-between rounded-lg px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 ${dashboardOpen ? "bg-gray-100 dark:bg-gray-700" : ""
-                            }`}
-                    >
-                        <span className="flex items-center">
-                            <svg className="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            Dashboard
-                        </span>
-                        <svg
-                            className={`h-4 w-4 transition-transform duration-200 ${dashboardOpen ? "rotate-180" : ""}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+            {/* Search Box */}
+            {/* Search Box */}
+            <div className="dark:bg-content2 border-b border-zinc-200 p-3 dark:border-zinc-700">
+                <div className="relative">
+                    <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={t('common.search') + '...'}
+                        className="w-full rounded-full border border-zinc-200 bg-gray-50 py-2 pr-8 pl-9 text-sm transition-colors focus:border-blue-500 focus:bg-white focus:outline-none dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:focus:border-blue-500"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-600"
                         >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    {dashboardOpen && (
-                        <div className="ml-4 mt-1 space-y-1 pl-4 border-l-2 border-gray-200 dark:border-gray-600">
-                            <Link
-                                href="/"
-                                className={`block rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 ${isActive("/") ? "bg-gray-50 dark:bg-gray-700 font-medium text-blue-600 dark:text-blue-400" : ""
-                                    }`}
-                            >
-                                Overview
-                            </Link>
-                            <Link
-                                href="#"
-                                className="block rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                                Analytics
-                            </Link>
-                        </div>
+                            <XMarkIcon className="h-4 w-4 text-gray-400" />
+                        </button>
                     )}
                 </div>
+            </div>
 
-                {/* Reports Group */}
-                <div className="mb-2">
-                    <button
-                        onClick={() => setReportsOpen(!reportsOpen)}
-                        className={`flex w-full items-center justify-between rounded-lg px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 ${reportsOpen ? "bg-gray-100 dark:bg-gray-700" : ""
-                            }`}
-                    >
-                        <span className="flex items-center">
-                            <svg className="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Reports
-                        </span>
-                        <svg
-                            className={`h-4 w-4 transition-transform duration-200 ${reportsOpen ? "rotate-180" : ""}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    {reportsOpen && (
-                        <div className="ml-4 mt-1 space-y-1 pl-4 border-l-2 border-gray-200 dark:border-gray-600">
-                            {["Daily", "Weekly", "Monthly", "Quarterly", "Yearly"].map((item) => (
-                                <Link
-                                    key={item}
-                                    href="#"
-                                    className="block rounded-lg px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
-                                >
-                                    {item}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
+            <nav className="flex-1 overflow-x-hidden overflow-y-auto py-4">
+                {isLoading ? (
+                    <div className="space-y-2 p-4">
+                        {[...Array(10)].map((_, i) => (
+                            <div
+                                key={i}
+                                className="h-10 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-700"
+                            ></div>
+                        ))}
+                    </div>
+                ) : (
+                    <>
+                        {/* Favorites Section */}
+                        {favoriteItems.length > 0 && (
+                            <div className="mb-4">
+                                <div className="mb-2 flex items-center gap-2 px-4">
+                                    <StarIconSolid className="h-4 w-4 text-yellow-500" />
+                                    <span className="text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                        {t('common.favorites')}
+                                    </span>
+                                </div>
+                                <ul className="space-y-1">
+                                    {favoriteItems.map((item, index) => (
+                                        <SidebarMenuItem
+                                            key={`fav-${index}`}
+                                            item={item}
+                                            onNavigate={() => handleNavigate(item.link || '#')}
+                                            currentPath={pathname}
+                                            isFavorite={true}
+                                            onToggleFavorite={toggleFavorite}
+                                            badgeCount={item.id ? badgeCounts[item.id] : undefined}
+                                        />
+                                    ))}
+                                </ul>
+                                <div className="mx-4 my-3 border-t border-zinc-200 dark:border-zinc-700"></div>
+                            </div>
+                        )}
 
-                {/* Single Links */}
-                {[
-                    { name: "Users", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z", href: "/system/users" },
-                    { name: "Products", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10l-8 4" },
-                    { name: "Orders", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" },
-                    { name: "Inventory", icon: "M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" },
-                    { name: "Customers", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" },
-                    { name: "Marketing", icon: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" },
-                    { name: "Analytics", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2M9 19l6-6-6-6" },
-                    { name: "Integrations", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-                    { name: "Settings", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z", icon2: "M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
-                    { name: "Help & Support", icon: "M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" },
-                    { name: "Profile", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-                ].map((item) => (
-                    <Link
-                        key={item.name}
-                        href={item.href || "#"}
-                        className="flex items-center rounded-lg px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                        <svg className="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
-                            {item.icon2 && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon2} />}
-                        </svg>
-                        {item.name}
-                    </Link>
-                ))}
+                        {/* Menu Items - Rendered from API tree */}
+                        {regularItems.map((item) => {
+                            // Root items with children → section with header
+                            if (item.children && item.children.length > 0) {
+                                return (
+                                    <div key={item.id || item.title} className="mb-2">
+                                        {/* Section Header */}
+                                        <div className="sticky -top-4 z-10 mb-1 border-b border-zinc-100 bg-white px-4 pb-1 dark:border-zinc-700 dark:bg-zinc-800">
+                                            <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase dark:text-gray-500">
+                                                {t(item.title)}
+                                            </span>
+                                        </div>
+                                        {/* Section Items */}
+                                        <ul className="space-y-0.5">
+                                            {item.children.map((child, index) => (
+                                                <SidebarMenuItem
+                                                    key={`${item.id}-${index}`}
+                                                    item={child}
+                                                    onNavigate={() => handleNavigate(child.link || '#')}
+                                                    currentPath={pathname}
+                                                    isFavorite={
+                                                        child.id ? favorites.includes(child.id) : false
+                                                    }
+                                                    onToggleFavorite={toggleFavorite}
+                                                    badgeCount={child.id ? badgeCounts[child.id] : undefined}
+                                                />
+                                            ))}
+                                        </ul>
+                                    </div>
+                                );
+                            }
+
+                            // Root items without children → standalone menu item
+                            return (
+                                <SidebarMenuItem
+                                    key={item.id || item.title}
+                                    item={item}
+                                    onNavigate={() => handleNavigate(item.link || '#')}
+                                    currentPath={pathname}
+                                    isFavorite={item.id ? favorites.includes(item.id) : false}
+                                    onToggleFavorite={toggleFavorite}
+                                    badgeCount={item.id ? badgeCounts[item.id] : undefined}
+                                />
+                            );
+                        })}
+                    </>
+                )}
+
+                {/* No Results */}
+                {filteredMenu.length === 0 && (
+                    <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                        {t('common.noResults')}
+                    </div>
+                )}
             </nav>
+
+            {/* Compact Footer: Language + Version + Copyright */}
+            <div className="border-t border-zinc-200 px-3 py-2 dark:border-zinc-700">
+                <div className="relative flex items-center justify-between">
+                    {/* Language Selector - Compact */}
+                    <div className="relative" ref={langRef}>
+                        <button
+                            onClick={() => setLangOpen(!langOpen)}
+                            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                        >
+                            <currentLang.Flag
+                                title={currentLang.name}
+                                className="h-4 w-5 rounded-sm"
+                            />
+                            <ChevronDownIcon
+                                className={`h-3 w-3 text-gray-400 transition-transform ${langOpen ? 'rotate-180' : ''}`}
+                            />
+                        </button>
+                        {langOpen && (
+                            <div className="absolute bottom-full left-0 z-20 mb-2 min-w-32 overflow-hidden rounded-lg border border-zinc-100 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+                                {languages
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .filter((lang) => lang.code !== locale)
+                                    .map((lang) => (
+                                        <button
+                                            key={lang.code}
+                                            onClick={() => {
+                                                Cookies.set('locale', lang.code);
+                                                router.refresh();
+                                                setLangOpen(false);
+                                            }}
+                                            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-all hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                        >
+                                            <lang.Flag
+                                                title={lang.name}
+                                                className="h-4 w-5 rounded-sm"
+                                            />
+                                            <span className="text-gray-700 dark:text-gray-300">
+                                                {lang.name}
+                                            </span>
+                                        </button>
+                                    ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Version & Copyright */}
+                    <div className="text-right text-[10px] text-gray-400 dark:text-gray-500">
+                        <span>v1.0.0</span>
+                        <span className="mx-1">•</span>
+                        <span>© 2024 Phuong Tran</span>
+                    </div>
+                </div>
+            </div>
         </aside>
     );
 }

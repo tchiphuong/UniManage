@@ -1,42 +1,52 @@
 Mục tiêu
-Sinh code cho dự án UniManage theo chuẩn CQRS, .NET 8, SQL Server, Dapper (không EF Core), IdentityServer (Duende) với store tự viết, và log4net (log theo ngày & theo API). Ưu tiên code truyền thống, rõ ràng, dễ bảo trì.
+Sinh code cho dự án UniManage theo chuẩn CQRS, .NET 9, SQL Server, Entity Framework Core 9.0 + Dapper (hybrid approach), IdentityServer (Duende) với store tự viết, và log4net (log theo ngày & theo API). Ưu tiên code truyền thống, rõ ràng, dễ bảo trì.
+
+**🔥 HYBRID DATA ACCESS (BẮT BUỘC):**
+
+- ✅ **EF Core 9.0**: CRUD operations (Create, Read, Update, Delete)
+- ✅ **Dapper**: Complex queries, joins, aggregations, performance-critical scenarios
+- ✅ **Rule of Thumb**: Single entity → EF Core, Complex joins → Dapper
 
 **🔥 QUY TẮC QUAN TRỌNG: LUÔN SỬ DỤNG UTILITIES TRƯỚC**
 Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Utilities/ trước để sử dụng lại:
 
--   ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword()
--   ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels() (FluentValidation)
--   ✅ **DatabaseHelper**: UserCodeExistsAsync(), ExecuteWithTransactionAsync(), QueryPagingAsync(), CheckTableExistsAsync()
--   ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError() - API responses chuẩn
--   ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
--   ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
--   ✅ **FileHelper**: IsValidImageFile(), ValidateFileUpload(), GetMimeType(), GetFileSizeText()
--   ✅ **QueryHelper**: BuildOrderByClause(), BuildWhereClause(), EscapeSqlIdentifier() - SQL injection prevention
--   ✅ **TranslateHelper**: TranslateAsync(), RemoveDiacritics(), TranslateCommonTerms() - Google Translate + Vietnamese
+- ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword()
+- ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels() (FluentValidation)
+- ✅ **DatabaseHelper**: UserCodeExistsAsync(), ExecuteWithTransactionAsync(), QueryPagingAsync(), CheckTableExistsAsync()
+- ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError() - API responses chuẩn
+- ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
+- ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
+- ✅ **FileHelper**: IsValidImageFile(), ValidateFileUpload(), GetMimeType(), GetFileSizeText()
+- ✅ **QueryHelper**: BuildOrderByClause(), BuildWhereClause(), EscapeSqlIdentifier() - SQL injection prevention
+- ✅ **TranslateHelper**: TranslateAsync(), RemoveDiacritics(), TranslateCommonTerms() - Google Translate + Vietnamese
 
 **🚫 KHÔNG ĐƯỢC:**
 
--   Viết lại logic đã có trong utilities
--   Tạo response object thủ công thay vì dùng ResponseHelper
--   Hash password bằng cách khác ngoài PasswordHelper.HashPassword()
--   Validate email/phone thủ công thay vì dùng ValidationHelper
--   Viết transaction logic thay vì dùng DatabaseHelper.ExecuteWithTransactionAsync()
+- Viết lại logic đã có trong utilities
+- Tạo response object thủ công thay vì dùng ResponseHelper
+- Hash password bằng cách khác ngoài PasswordHelper.HashPassword()
+- Validate email/phone thủ công thay vì dùng ValidationHelper
+- Viết transaction logic thay vì dùng DatabaseHelper.ExecuteWithTransactionAsync()
 
 **✅ LUÔN LÀMM:**
 
--   Check utilities trước khi code bất kỳ tính năng nào
--   Extend utilities nếu thiếu method cần thiết
--   Sử dụng ResponseHelper cho tất cả API responses
--   Dùng DatabaseHelper cho tất cả database operations có transaction
+- Check utilities trước khi code bất kỳ tính năng nào
+- Extend utilities nếu thiếu method cần thiết
+- Sử dụng ResponseHelper cho tất cả API responses
+- Dùng DatabaseHelper cho tất cả database operations có transaction
 
 Tech stack (bắt buộc)
-Backend: ASP.NET Core .NET 8
+Backend: ASP.NET Core .NET 9
 
 Auth: Duende IdentityServer (tự viết IClientStore, IResourceStore, IPersistedGrantStore, IDeviceFlowStore bằng Dapper)
 
 DB: SQL Server
 
-Data access: Dapper (❌ không EF Core)
+Data access: Entity Framework Core 9.0 + Dapper (Hybrid approach)
+
+- **EF Core**: CRUD operations (Create, Read, Update, Delete)
+- **Dapper**: Complex queries (joins, aggregations), high-performance scenarios
+- **Auto-discovery**: DbContext scans UniManage.Model.Entities namespace for [Table] attributes
 
 Pattern: CQRS + MediatR
 
@@ -44,9 +54,47 @@ Jobs: Hangfire (SQL Server storage, dashboard port riêng)
 
 Logging: log4net (tách file theo ngày và API)
 
-Frontend: Angular 17+ hoặc React + Tailwind (không AngularJS)
+Frontend: Next.js 15 + React 19 + Tailwind CSS v4 + HeroUI v3
 
 CI/CD: GitHub Actions + Docker
+
+**🔥 RESTful API Standards (BẮT BUỘC)**
+
+**URLs PHẢI dùng nouns (danh từ), KHÔNG dùng verbs (động từ):**
+
+✅ **ĐÚNG:**
+
+- GET /api/v1/users - Get list
+- GET /api/v1/users/{id} - Get single
+- POST /api/v1/users - Create
+- PUT /api/v1/users/{id} - Update
+- DELETE /api/v1/users - Delete (có thể batch với body)
+- GET /api/v1/menus - Get menu tree (không cần /tree)
+- GET /api/v1/users/combobox - Exception: combobox cho UI helper
+
+❌ **SAI:**
+
+- GET /api/v1/users/getList (động từ redundant)
+- GET /api/v1/menus/tree (noun redundant, menu đã là resource)
+- POST /api/v1/users/create (động từ redundant)
+- GET /api/v1/getUsers (động từ, không có resource path)
+
+**HTTP Method Mapping:**
+
+- GET: Retrieve resource(s) - KHÔNG thay đổi data
+- POST: Create new resource
+- PUT: Update existing resource (full update)
+- PATCH: Partial update (optional, ít dùng)
+- DELETE: Remove resource(s)
+
+**URL Structure Rules:**
+
+- Plural nouns: /users, /orders, /items (không /user, /order)
+- Hierarchical: /departments/{id}/employees
+- Query params cho filters: /users?status=active&keyword=john
+- Route params cho IDs: /users/{id}, /orders/{code}
+- Avoid redundant paths: /menus thay vì /menus/tree
+- Exception: Helper endpoints như /combobox, /export, /import
 
 Chuẩn API response (bắt buộc)
 JSON camelCase, errors luôn là array.
@@ -130,6 +178,128 @@ Query: Get/List/FindNounQuery (ListUsersQuery).
 
 1 Handler ↔ 1 Command/Query.
 
+**🔥 QUY TẮC BẮT BUỘC: ĐỒNG BỘ INSTRUCTION KHI THAY ĐỔI QUY TẮC**
+
+Khi có bất kỳ thay đổi nào ảnh hưởng đến quy tắc chung (class Common, naming convention, pattern mới, utility mới, cấu trúc project, ...) PHẢI cập nhật đủ cả 3 file instruction:
+
+1. **SKILL.md**: `.agent/skills/unimanage-backend/SKILL.md` — cho Antigravity
+2. **GEMINI.md**: `GEMINI.md` — cho Gemini trong VS Code
+3. **copilot-instructions.md**: `.github/copilot-instructions.md` — cho GitHub Copilot
+
+> **Lý do**: 3 AI tools cùng lúc, nếu không đồng bộ → mỗi tool sinh code theo pattern khác nhau → không nhất quán, gây lỗi.
+
+**🔥 QUY TẮC KẾ THỪA (BẮT BUỘC):**
+
+**Command PHẢI kế thừa BaseCommand:**
+
+- BaseCommand cung cấp HeaderInfo cho logging context
+- HeaderInfo chứa Username, IP, Timestamp, TraceId từ request
+- Tự động tích hợp với CoreLogModel để log chi tiết
+- Mask sensitive data (password, token, secret) trong logs
+
+```csharp
+// ✅ ĐÚNG - Command kế thừa BaseCommand
+public sealed class CreateUserCommand : BaseCommand, IRequest<ApiResponse<Response>>
+{
+    // HeaderInfo inherited from BaseCommand
+    public string UserCode { get; init; } = default!;
+    public string DisplayName { get; init; } = default!;
+
+    public sealed class Response
+    {
+        public int Id { get; init; }
+    }
+}
+
+// ❌ SAI - Thiếu BaseCommand
+public sealed class CreateUserCommand : IRequest<ApiResponse<Response>>
+{
+    // Missing HeaderInfo - không log được context
+    public string UserCode { get; init; } = default!;
+}
+```
+
+**Query PHẢI kế thừa đúng base class:**
+
+- **`BaseListQuery`**: Query trả về `PagedResult` (danh sách + phân trang)
+    - Cung cấp `HeaderInfo` + `Keyword` + `PageIndex` + `PageSize` + `Offset` + `SortBy` + `SortDirection` + `SearchFields`
+    - PageIndex mặc định = 1, PageSize mặc định = 20
+- **`BaseQuery`**: Query đơn (get by id/code, check exists, combobox, permissions...)
+    - Chỉ cung cấp `HeaderInfo` cho logging context
+
+**BaseQuery hierarchy (UniManage.Model/Common/BaseModel.cs):**
+
+```
+BaseQuery          → chỉ có HeaderInfo
+  └── BaseListQuery  → thêm Keyword, SearchFields, PageIndex, PageSize, Offset, SortBy, SortDirection
+```
+
+```csharp
+// ✅ ĐÚNG - List Query kế thừa BaseListQuery
+public sealed class ListUsersQuery : BaseListQuery, IRequest<PagedResponse<UserListItemDto>>
+{
+    // HeaderInfo, Keyword, PageIndex, PageSize, Offset, SortBy, SortDirection inherited from BaseListQuery
+    public byte? Status { get; init; }
+    public string? DepartmentCode { get; init; }
+}
+
+// ✅ ĐÚNG - Single-item Query kế thừa BaseQuery
+public sealed class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<GetUserByIdQuery.Response>>
+{
+    // Chỉ HeaderInfo inherited từ BaseQuery
+    public long Id { get; init; }
+}
+
+// ❌ SAI - List Query thiếu BaseListQuery, duplicate pagination logic
+public sealed class ListUsersQuery : IRequest<PagedResponse<UserListItemDto>>
+{
+    public string? Keyword { get; init; }
+    public int PageIndex { get; init; } = 1; // Duplicate!
+    public int PageSize { get; init; } = 20; // Duplicate!
+}
+```
+
+**BaseCommand/BaseQuery/BaseListQuery location:**
+
+- Namespace: `UniManage.Model.Common`
+- File: `UniManage.Model/Common/BaseModel.cs`
+- `BaseCommand` extends `BaseModel` (has HeaderInfo with [JsonIgnore])
+- `BaseQuery` chỉ có HeaderInfo (cho get by id/code, check exists, combobox)
+- `BaseListQuery` kế thừa `BaseQuery` + thêm pagination/search/sort properties
+
+**HeaderInfo usage in Handlers:**
+
+```csharp
+public async Task<ApiResponse<Response>> Handle(
+    CreateUserCommand request,
+    CancellationToken ct)
+{
+    var log = new CoreLogModel
+    {
+        Username = request.HeaderInfo?.Username ?? "Anonymous",
+        IpAddress = request.HeaderInfo?.IpAddress,
+        TraceId = request.HeaderInfo?.TraceId,
+        Parameters = JsonConvert.SerializeObject(request, _maskSettings)
+    };
+
+    try
+    {
+        // Handler logic...
+        log.Result = JsonConvert.SerializeObject(response);
+        return response;
+    }
+    catch (Exception ex)
+    {
+        log.ErrorMessage = ex.Message;
+        throw;
+    }
+    finally
+    {
+        _logger.Info(JsonConvert.SerializeObject(log));
+    }
+}
+```
+
 Database conventions (SQL Server)
 PK: Id (INT IDENTITY hoặc BIGINT).
 
@@ -143,6 +313,168 @@ Hậu tố cột: Amount/Number/Name/Code/Qty/Date/Rate.
 
 Index: IX*{Table}*{Column}.
 
+**🔥 QUY TẮC QUẢN LÝ TRẠNG THÁI (BẮT BUỘC):**
+
+**Status values PHẢI được quản lý trong bảng sy_commons, KHÔNG hardcode:**
+
+✅ **ĐÚNG - Sử dụng CoreCommon constants (ƯU TIÊN):**
+
+```csharp
+using UniManage.Core.Constant;
+
+// 1. Validate/compare status với CoreCommon constants
+if (status == CoreCommon.Value.Commonstatus.Active) { ... }
+if (request.OrderStatus == CoreCommon.Value.Invoicestatus.Processing) { ... }
+
+// 2. Set status values
+user.Status = CoreCommon.Value.Commonstatus.Active;
+order.Status = CoreCommon.Value.Invoicestatus.New;
+
+// 3. Query với TypeKey constants
+var statuses = await dbContext.QueryAsync<ComboboxItemDto>(
+    @"SELECT ValueKey AS Code, ValueNameVi AS Name, ValueNameEn AS NameEN, Sort
+      FROM sy_commons
+      WHERE TypeKey = @TypeKey AND Status = 1
+      ORDER BY Sort, ValueNameVi",
+    new { TypeKey = CoreCommon.Type.Commonstatus });
+
+// 4. Validate status trước khi save/update
+var validStatus = await dbContext.ExecuteScalarAsync<bool>(
+    @"SELECT CASE WHEN EXISTS(
+        SELECT 1 FROM sy_commons
+        WHERE TypeKey = @TypeKey AND ValueKey = @ValueKey AND Status = 1
+      ) THEN 1 ELSE 0 END",
+    new { TypeKey = CoreCommon.Type.Commonstatus, ValueKey = status });
+```
+
+❌ **SAI:**
+
+```csharp
+// Hardcode status values - KHÔNG BAO GIỜ DÙNG
+if (status == "ACTIVE" || status == "INACTIVE") { ... }
+if (status == "active") { ... } // Dùng CoreCommon.Value.Commonstatus.Active
+
+// Magic strings trong code
+const string ACTIVE = "ACTIVE";
+const string PENDING = "PENDING";
+
+// Enum cho status values
+public enum UserStatus { Active = 1, Inactive = 2 }
+```
+
+**Lý do:**
+
+- ✅ Quản lý tập trung, dễ thay đổi không cần deploy
+- ✅ Hỗ trợ đa ngôn ngữ (ValueNameEn, ValueNameVi trong sy_commons)
+- ✅ Dynamic: admin có thể thêm/sửa status qua UI
+- ✅ Tránh magic strings, giảm bugs
+- ✅ Audit trail: biết ai thay đổi status nào, khi nào
+- ✅ Type-safe: CoreCommon constants tự động generate từ database (T4 template)
+
+**CoreCommon Constants (Auto-generated từ sy_commons):**
+
+```csharp
+// Location: UniManage.Core/Constant/CoreCommon.cs
+// Auto-generated by: UniManage.Core/Constant/CoreCommon.tt (T4 template)
+
+// TypeKey constants
+CoreCommon.Type.Commonstatus      // "CommonStatus"
+CoreCommon.Type.Invoicestatus     // "InvoiceStatus"
+CoreCommon.Type.Language          // "Language"
+CoreCommon.Type.Requeststatus     // "RequestStatus"
+CoreCommon.Type.Requesttype       // "RequestType"
+CoreCommon.Type.Sex               // "Sex"
+
+// ValueKey constants
+CoreCommon.Value.Commonstatus.Active       // "active"
+CoreCommon.Value.Commonstatus.Inactive     // "inactive"
+
+CoreCommon.Value.Invoicestatus.New         // "new"
+CoreCommon.Value.Invoicestatus.Processing  // "processing"
+CoreCommon.Value.Invoicestatus.Delivery    // "delivery"
+CoreCommon.Value.Invoicestatus.Complete    // "complete"
+CoreCommon.Value.Invoicestatus.Cancel      // "cancel"
+CoreCommon.Value.Invoicestatus.Refund      // "refund"
+
+CoreCommon.Value.Language.English          // "english"
+CoreCommon.Value.Language.Vietnamese       // "vietnamese"
+CoreCommon.Value.Language.Zhongwen         // "zhongwen"
+
+CoreCommon.Value.Requeststatus.Draft       // "draft"
+CoreCommon.Value.Requeststatus.Submitted   // "submitted"
+CoreCommon.Value.Requeststatus.Approved    // "approved"
+CoreCommon.Value.Requeststatus.Rejected    // "rejected"
+CoreCommon.Value.Requeststatus.Cancelled   // "cancelled"
+
+CoreCommon.Value.Requesttype.Leave         // "Leave"
+CoreCommon.Value.Requesttype.Overtime      // "Overtime"
+CoreCommon.Value.Requesttype.Businesstrip  // "BusinessTrip"
+
+CoreCommon.Value.Sex.Female                // "female"
+CoreCommon.Value.Sex.Male                  // "male"
+```
+
+**Regenerate CoreCommon constants khi thêm/sửa sy_commons:**
+
+1. Mở CoreCommon.tt trong Visual Studio
+2. Right-click → "Run Custom Tool"
+3. CoreCommon.cs sẽ tự động update với values mới từ database
+
+**Bảng sy_commons structure (ĐÃ TỒN TẠI - verified từ database):**
+
+```sql
+CREATE TABLE sy_commons (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    TypeKey VARCHAR(50) NOT NULL,         -- VD: CommonStatus, InvoiceStatus, Language
+    TypeNameVi NVARCHAR(255) NOT NULL,    -- VD: Trạng thái, Trạng thái đơn hàng
+    TypeNameEn NVARCHAR(255) NOT NULL,    -- VD: Status, Invoice Status
+    ValueKey VARCHAR(50) NOT NULL,        -- VD: active, inactive, pending
+    ValueNameVi NVARCHAR(255) NOT NULL,   -- VD: Kích hoạt, Vô hiệu
+    ValueNameEn NVARCHAR(255) NOT NULL,   -- VD: Active, Inactive
+    Sort SMALLINT NOT NULL,               -- Thứ tự hiển thị
+    Status BIT NOT NULL,                  -- 1=Active, 0=Inactive
+    CONSTRAINT UQ_Commons_TypeKey_ValueKey UNIQUE(TypeKey, ValueKey)
+);
+
+CREATE INDEX IX_Commons_TypeKey ON sy_commons(TypeKey, Status);
+CREATE INDEX IX_Commons_ValueKey ON sy_commons(ValueKey);
+```
+
+**Common TypeKeys & ValueKeys (verified từ database):**
+
+| TypeKey         | ValueKeys                                           | Description         |
+| --------------- | --------------------------------------------------- | ------------------- |
+| `CommonStatus`  | active, inactive                                    | Trạng thái chung    |
+| `InvoiceStatus` | new, processing, delivery, complete, cancel, refund | Trạng thái đơn hàng |
+| `Language`      | english, vietnamese, zhongwen                       | Ngôn ngữ            |
+| `RequestStatus` | draft, submitted, approved, rejected, cancelled     | Trạng thái đơn      |
+| `RequestType`   | Leave, Overtime, BusinessTrip                       | Loại đơn            |
+| `Sex`           | female, male                                        | Giới tính           |
+
+**Sử dụng CoreCommon trong code:**
+
+```csharp
+// ✅ ĐÚNG - Type-safe với IntelliSense
+using UniManage.Core.Constant;
+
+// Compare status
+if (user.Status == CoreCommon.Value.Commonstatus.Active) { ... }
+
+// Set status
+order.Status = CoreCommon.Value.Invoicestatus.Processing;
+
+// Query combobox data với TypeKey constant
+var languages = await dbContext.QueryAsync<ComboboxItemDto>(
+    @"SELECT ValueKey AS Code, ValueNameVi AS Name
+      FROM sy_commons
+      WHERE TypeKey = @TypeKey AND Status = 1",
+    new { TypeKey = CoreCommon.Type.Language });
+
+// ❌ SAI - Magic strings
+if (user.Status == "active") { ... }  // Typo risk, no IntelliSense
+order.Status = "processing";          // Use CoreCommon constants instead
+```
+
 Phân trang SQL:
 
 sql
@@ -153,7 +485,9 @@ OFFSET (@PageIndex - 1) \* @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY;
 
 Database access patterns (bắt buộc)
 
--   Luôn dùng using để đảm bảo dispose connection:
+**🔥 HYBRID APPROACH: EF Core + Dapper**
+
+- Luôn dùng using để đảm bảo dispose connection:
 
 ```csharp
 using (var dbContext = new DbContext())
@@ -162,15 +496,20 @@ using (var dbContext = new DbContext())
 }
 ```
 
--   Command: dùng transaction
+### EF Core Patterns (CRUD operations)
+
+**Command - Create:**
 
 ```csharp
 using (var dbContext = new DbContext(openTransaction: true))
 {
     try
     {
-        // Thực thi command
-        await dbContext.CommitAsync();
+        var entity = new sy_users { Username = ..., Email = ... };
+        dbContext.Set<sy_users>().Add(entity);
+        await dbContext.SaveChangesAsync(ct);
+        await dbContext.CommitAsync(ct);
+        return entity.Id; // Auto-populated by EF Core
     }
     catch
     {
@@ -180,26 +519,104 @@ using (var dbContext = new DbContext(openTransaction: true))
 }
 ```
 
--   Query: không cần transaction
+**Command - Update with Optimistic Concurrency:**
+
+```csharp
+using (var dbContext = new DbContext(openTransaction: true))
+{
+    try
+    {
+        var entity = await dbContext.Set<sy_users>()
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
+
+        if (entity == null) return NotFound();
+
+        // Modify properties
+        entity.Email = newEmail;
+        entity.UpdatedBy = currentUser;
+
+        await dbContext.SaveChangesAsync(ct); // Auto-checks RowVersion
+        await dbContext.CommitAsync(ct);
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        return Conflict("Data has been modified by another user");
+    }
+}
+```
+
+**Query - Read with projection:**
 
 ```csharp
 using (var dbContext = new DbContext())
 {
-    var result = await dbContext.QueryAsync(...);
-    return result;
+    var users = await dbContext.Set<sy_users>()
+        .Where(u => u.Status == "active")
+        .OrderBy(u => u.Username)
+        .Skip((pageIndex - 1) * pageSize)
+        .Take(pageSize)
+        .Select(u => new UserDto { Id = u.Id, Username = u.Username })
+        .ToListAsync(ct);
+
+    return users;
 }
 ```
 
--   Repository pattern:
-    -   Write repo: nhận IDbTransaction từ TransactionBehavior
-    -   Read repo: tự quản lý connection lifecycle
-    -   Đặt tên hàm: \*Async suffix cho async methods
+**Validator - Existence check:**
+
+```csharp
+private static async Task<bool> IsUsernameExistsAsync(string username)
+{
+    using (var dbContext = new DbContext())
+    {
+        return await dbContext.Set<sy_users>()
+            .AnyAsync(u => u.Username == username);
+    }
+}
+```
+
+### Dapper Patterns (Complex queries)
+
+**Complex joins and aggregations:**
+
+```csharp
+using (var dbContext = new DbContext())
+{
+    var sql = @"
+        SELECT u.*, r.RoleName, d.DepartmentName
+        FROM sy_users u
+        LEFT JOIN sy_roles r ON u.RoleCode = r.RoleCode
+        LEFT JOIN hr_departments d ON u.DepartmentCode = d.DepartmentCode
+        WHERE u.Status = @Status";
+
+    return await dbContext.QueryAsync<UserDetailDto>(sql, new { Status = "active" });
+}
+```
+
+**Rule of Thumb:**
+
+- ✅ Use **EF Core** for: Single entity operations, CRUD, basic filters
+- ✅ Use **Dapper** for: Complex joins, aggregations, performance-critical queries
+
+- Repository pattern:
+    - Write repo: Use EF Core, nhận IDbTransaction từ TransactionBehavior
+    - Read repo: EF Core cho simple queries, Dapper cho complex queries
+    - Đặt tên hàm: \*Async suffix cho async methods
 
 **Package Dependencies (Core project)**
 
 ```xml
-<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+<!-- EF Core 9.0 -->
+<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0" />
+
+<!-- Dapper -->
 <PackageReference Include="Dapper" Version="2.1.66" />
+
+<!-- Other -->
+<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 <PackageReference Include="FluentValidation" Version="12.0.0" />
 <PackageReference Include="log4net" Version="3.1.0" />
 <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -275,6 +692,41 @@ Mask dữ liệu nhạy cảm: password|token|secret|authorization.
 
 Không log raw body > 64KB.
 
+**Logging Pattern trong Handler:**
+
+```csharp
+// Khởi tạo log với HeaderInfo từ BaseCommand/BaseQuery
+var log = new CoreLogModel(request.HeaderInfo)
+{
+    Parameter = new List<CoreParamModel>
+    {
+        new CoreParamModel(nameof(request.Username), request.Username),
+        new CoreParamModel(nameof(request.Email), request.Email)
+    }
+};
+
+try
+{
+    // Handler logic...
+    var response = ResponseHelper.Success(data, "Operation successful");
+    log.Result = response;
+    log.ReturnCode = response.ReturnCode;
+    log.Message = response.Message;
+    return response;
+}
+catch (Exception ex)
+{
+    log.IsException = 1;
+    log.Message = ex.Message;
+    log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+    return ResponseHelper.Error<T>("Error message");
+}
+finally
+{
+    UniLogManager.WriteApiLog(log);
+}
+```
+
 Yêu cầu Copilot khi sinh code:
 
 Tạo ApiLogContextMiddleware gắn api theo {controller}-{action}.
@@ -286,197 +738,465 @@ Tạo HttpLoggingMiddleware để log request/response + st, ms.
 Cấu hình log4net bằng SiftingAppender trỏ tới logs/%date{yyyy-MM-dd}/%property{api}.log.
 
 Controller & Handler (mẫu tối thiểu)
+
+**🔥 CONTROLLER FORMATTING RULES (BẮT BUỘC):**
+
+1. **Kế thừa BaseController** (KHÔNG dùng ControllerBase)
+2. **Parameters PHẢI viết cùng dòng với method signature** - KHÔNG xuống dòng
+3. **Body method dùng explicit blocks** - KHÔNG dùng expression-bodied members
+4. **Luôn gán HeaderInfo** trước khi Send
+
+**🔥 RESPONSEHELPER FORMATTING RULES (BẮT BUỘC):**
+
+1. **Parameters PHẢI viết cùng dòng** - KHÔNG xuống dòng
+2. **Áp dụng cho TẤT CẢ methods**: Success, Error, NotFound, Forbidden, etc.
+3. **Nếu dòng quá dài (>120 chars)**: Tách object creation ra biến riêng trước
+
+```csharp
+// ✅ ĐÚNG - Parameters cùng dòng
+var response = ResponseHelper.Success(new CreateUserCommand.Response
+{
+    Id = id
+},
+CoreResource.User_msg_CreateSuccess);
+
+// ✅ ĐÚNG - Object phức tạp tách ra biến
+var responseData = new CreateUserCommand.Response { Id = id, UserCode = userCode };
+var response = ResponseHelper.Success(responseData, CoreResource.User_msg_CreateSuccess);
+
+// ❌ SAI - Xuống dòng parameters
+var response = ResponseHelper.Success(
+    new CreateUserCommand.Response { Id = id },
+    CoreResource.User_msg_CreateSuccess);
+```
+
 Controller (mỏng):
 
-csharp
-Sao chép
-Chỉnh sửa
+```csharp
 [ApiController]
-[Route("api/users")]
-public class UsersController : ControllerBase
+[Route("api/v1/users")]
+public class UsersController : BaseController  // PHẢI kế thừa BaseController
 {
-private readonly IMediator \_mediator;
-public UsersController(IMediator mediator) => \_mediator = mediator;
+    private readonly IMediator _mediator;
+
+    public UsersController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<CreateUserCommand.Response>>> Create(
-        [FromBody] CreateUserCommand req, CancellationToken ct)
-        => Ok(await _mediator.Send(req, ct));
+    public async Task<ActionResult<ApiResponse<CreateUserCommand.Response>>> Create([FromBody] CreateUserCommand command, CancellationToken ct)
+    {
+        command.HeaderInfo = HeaderInfo;  // PHẢI gán HeaderInfo
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResponse<UserListItemDto>>> List(
-        [FromQuery] ListUsersQuery req, CancellationToken ct)
-        => Ok(await _mediator.Send(req, ct));
-
+    public async Task<ActionResult<ApiResponse<PagedResult<GetUserListQuery.Response>>>> List([FromQuery] GetUserListQuery query, CancellationToken ct)
+    {
+        query ??= new GetUserListQuery();
+        query.HeaderInfo = HeaderInfo;  // PHẢI gán HeaderInfo
+        var result = await _mediator.Send(query, ct);
+        return Ok(result);
+    }
 }
+```
+
+**🔥 REGION FORMATTING (BẮT BUỘC):**
+
+**1. Command/Query files PHẢI có 3 regions**: Command/Query, Validator, Handler
+
+```csharp
+#region Command
+// Command definition
+#endregion
+
+#region Validator
+// Validator definition
+#endregion
+
+#region Handler
+// Handler definition
+#endregion
+```
+
+**2. Controller files PHẢI có regions cho Properties và mỗi endpoint**:
+
+```csharp
+[ApiController]
+[Route("api/v1/users")]
+public class UsersController : BaseController
+{
+    #region Properties
+
+    private readonly IMediator _mediator;
+
+    public UsersController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    #endregion
+
+    #region GET: /api/v1/users
+
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<PagedResult<Response>>>> GetList([FromQuery] GetUserListQuery query, CancellationToken ct)
+    {
+        query ??= new GetUserListQuery();
+        query.HeaderInfo = HeaderInfo;
+        var result = await _mediator.Send(query, ct);
+        return Ok(result);
+    }
+
+    #endregion
+
+    #region POST: /api/v1/users
+
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<CreateUserCommand.Response>>> Create([FromBody] CreateUserCommand command, CancellationToken ct)
+    {
+        command.HeaderInfo = HeaderInfo;
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    #endregion
+
+    #region PUT: /api/v1/users/{id}
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<ApiResponse<Response>>> Update([FromRoute] long id, [FromBody] UpdateUserCommand command, CancellationToken ct)
+    {
+        command ??= new UpdateUserCommand();
+        command.Id = id;
+        command.HeaderInfo = HeaderInfo;
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    #endregion
+
+    #region DELETE: /api/v1/users/{id}
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ApiResponse<bool>>> Delete(long id, CancellationToken ct)
+    {
+        var command = new DeleteUserCommand { Id = id, HeaderInfo = HeaderInfo };
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    #endregion
+}
+```
+
 Command mẫu (kèm Validator và Handler):
 
-````csharp
-// Command
-public sealed class CreateUserCommand : IRequest<ApiResponse<CreateUserCommand.Response>>
+```csharp
+#region Command
+
+// Command (PHẢI kế thừa BaseCommand)
+public sealed class CreateUserCommand : BaseCommand, IRequest<ApiResponse<CreateUserCommand.Response>>
 {
-    public string UserCode { get; init; } = default!;
+    public string Username { get; init; } = default!;
     public string DisplayName { get; init; } = default!;
+    public string Email { get; init; } = default!;
+    public string Password { get; init; } = default!;
 
     public sealed class Response
     {
+        public bool Success => Id > 0;
         public int Id { get; init; }
     }
 }
 
-// Validator
+#endregion
+
+#region Validator
+
+// Validator (có thể có static async methods để check DB)
 public sealed class CreateUserValidator : AbstractValidator<CreateUserCommand>
 {
     public CreateUserValidator()
     {
-        RuleFor(x => x.UserCode)
-            .NotEmpty()
-            .MaximumLength(50);
+        RuleFor(x => x.Username)
+            .Cascade(CascadeMode.Stop) // Stop on first error
+            .NotEmpty().WithMessage("Username is required")
+            .Length(3, 50).WithMessage("Username must be between 3 and 50 characters")
+            .Must(ValidationHelper.IsValidUserCode).WithMessage("Username allows only alphanumeric")
+            .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
+            .WithMessage("Username is already taken");
 
-        RuleFor(x => x.DisplayName)
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required")
+            .EmailAddress().WithMessage("Invalid email format")
+            .MustAsync(async (email, cancel) => !await IsEmailExistsAsync(email))
+            .WithMessage("Email is already registered");
+
+        RuleFor(x => x.Password)
             .NotEmpty()
-            .MaximumLength(200);
+            .MinimumLength(8)
+            .Matches(@"[A-Z]").WithMessage("Must contain uppercase")
+            .Matches(@"[a-z]").WithMessage("Must contain lowercase")
+            .Matches(@"[0-9]").WithMessage("Must contain number");
+    }
+
+    private static async Task<bool> IsUsernameExistsAsync(string username)
+    {
+        using (var dbContext = new DbContext())
+        {
+            return await dbContext.Set<sy_users>()
+                .AnyAsync(u => u.Username == username);
+        }
+    }
+
+    private static async Task<bool> IsEmailExistsAsync(string email)
+    {
+        using (var dbContext = new DbContext())
+        {
+            return await dbContext.Set<sy_users>()
+                .AnyAsync(u => u.Email == email);
+        }
     }
 }
 
-// Handler
+#endregion
+
+#region Handler
+
+// Handler (KHÔNG inject ILogger, dùng UniLogManager)
+// **Handler method parameters PHẢI cùng dòng với signature**
 public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiResponse<CreateUserCommand.Response>>
 {
-    private readonly ILogger<CreateUserCommandHandler> _logger;
-
-    public CreateUserCommandHandler(ILogger<CreateUserCommandHandler> logger)
+    public async Task<ApiResponse<CreateUserCommand.Response>> Handle(CreateUserCommand request, CancellationToken ct)
     {
-        _logger = logger;
-    }
-
-    public async Task<ApiResponse<CreateUserCommand.Response>> Handle(
-        CreateUserCommand request,
-        CancellationToken ct)
-    {
-        try
+        // Initialize log với HeaderInfo từ BaseCommand
+        var log = new CoreLogModel(request.HeaderInfo)
         {
-            using (var dbContext = new DbContext(openTransaction: true))
+            Parameter = new List<CoreParamModel>
             {
-                try
-                {
-                    var id = await dbContext.ExecuteScalarAsync<int>(
-                        """
-                        INSERT INTO Users (UserCode, DisplayName)
-                        VALUES (@UserCode, @DisplayName);
-                        SELECT SCOPE_IDENTITY();
-                        """,
-                        new { request.UserCode, request.DisplayName },
-                        ct);
+                new CoreParamModel(nameof(request.Username), request.Username),
+                new CoreParamModel(nameof(request.Email), request.Email)
+            }
+        };
 
-                    await dbContext.CommitAsync(ct);
+        using (var dbContext = new DbContext(openTransaction: true))
+        {
+            try
+            {
+                // Hash password bằng PasswordHelper
+                var passwordHash = PasswordHelper.HashPassword(request.Password);
 
-                    return ApiResponse<CreateUserCommand.Response>.Success(
-                        new() { Id = id });
-                }
-                catch
+                // EF Core Create pattern
+                var newUser = new sy_users
                 {
-                    await dbContext.RollbackAsync(ct);
-                    throw;
-                }
+                    Username = request.Username,
+                    Email = request.Email,
+                    Password = passwordHash,
+                    Status = CoreCommon.Value.Commonstatus.Active,
+                    CreatedBy = request.HeaderInfo!.Username,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                dbContext.Set<sy_users>().Add(newUser);
+                await dbContext.SaveChangesAsync(ct);
+                await dbContext.transaction.CommitAsync(ct);
+
+                var response = ResponseHelper.Success(
+                    new CreateUserCommand.Response { Id = newUser.Id },
+                    "User created successfully");
+
+                log.Result = response;
+                log.ReturnCode = response.ReturnCode;
+                log.Message = response.Message;
+                UniLogManager.WriteApiLog(log);
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                await dbContext.transaction.RollbackAsync(ct);
+
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                UniLogManager.WriteApiLog(log);
+
+                return ResponseHelper.Error<CreateUserCommand.Response>("Error occurred");
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create user {UserCode}", request.UserCode);
-            return ApiResponse<CreateUserCommand.Response>.Fail(
-                "Failed to create user");
-        }
     }
 }
-Query mẫu (paging):
 
-csharp
-Sao chép
-Chỉnh sửa
-// Query
-public sealed class ListUsersQuery : IRequest<PagedResponse<UserListItemDto>>
+#endregion
+```
+
+Query mẫu (paging với EF Core LINQ):
+
+```csharp
+#region Query
+
+// Query (PHẢI kế thừa BaseQuery - có sẵn Keyword, PageIndex, PageSize, SortBy, SortDirection)
+public sealed class GetUserListQuery : BaseQuery, IRequest<ApiResponse<PagedResult>>
 {
-    public string? Keyword { get; init; }
-    public int PageIndex { get; init; } = 1;
-    public int PageSize { get; init; } = 20;
-}
+    public string? Status { get; set; }
 
-// DTO
-public sealed record UserListItemDto(
-    int Id,
-    string UserCode,
-    string DisplayName,
-    byte Status);
-
-// Handler
-public sealed class ListUsersQueryHandler
-    : IRequestHandler<ListUsersQuery, PagedResponse<UserListItemDto>>
-{
-    private readonly ILogger<ListUsersQueryHandler> _logger;
-
-    public ListUsersQueryHandler(ILogger<ListUsersQueryHandler> logger)
+    public class Result
     {
-        _logger = logger;
+        public long Id { get; set; }
+        public string Username { get; set; } = default!;
+        public string? EmployeeCode { get; set; }
+        public string Email { get; set; } = default!;
+        public string Status { get; set; } = default!;
+        public DateTime CreatedAt { get; set; }
     }
+}
 
-    public async Task<PagedResponse<UserListItemDto>> Handle(
-        ListUsersQuery request,
+#endregion
+
+#region Validator
+// Validator (validate PageIndex/PageSize từ BaseQuery)
+public sealed class GetUserListQueryValidator : AbstractValidator<GetUserListQuery>
+{
+    public GetUserListQueryValidator()
+    {
+        RuleFor(x => x.PageIndex)
+            .GreaterThan(0).WithMessage("Page index must be greater than 0");
+
+        RuleFor(x => x.PageSize)
+            .InclusiveBetween(1, 100).WithMessage("Page size must be between 1 and 100");
+    }
+}
+
+#endregion
+
+#region Handler
+
+// Handler (EF Core LINQ cho simple queries)
+public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, ApiResponse<PagedResult>>
+{
+    public async Task<ApiResponse<PagedResult>> Handle(
+        GetUserListQuery request,
         CancellationToken ct)
     {
-        try
+        // Initialize log với HeaderInfo từ BaseQuery
+        var log = new CoreLogModel(request.HeaderInfo)
         {
-            using (var dbContext = new DbContext())
+            Parameter = new List<CoreParamModel>
             {
-                var sql = """
-                    SELECT Id, UserCode, DisplayName, Status
-                    FROM Users
-                    WHERE (@Keyword IS NULL
-                        OR UserCode LIKE @Keyword + '%'
-                        OR DisplayName LIKE '%' + @Keyword + '%')
-                    ORDER BY UserCode
-                    OFFSET (@PageIndex - 1) * @PageSize ROWS
-                    FETCH NEXT @PageSize ROWS ONLY;
+                new CoreParamModel(nameof(request.Keyword), request.Keyword),
+                new CoreParamModel(nameof(request.Status), request.Status)
+            }
+        };
 
-                    SELECT COUNT(*)
-                    FROM Users
-                    WHERE (@Keyword IS NULL
-                        OR UserCode LIKE @Keyword + '%'
-                        OR DisplayName LIKE '%' + @Keyword + '%');
-                    """;
+        using (var dbContext = new DbContext()) // Query KHÔNG cần transaction
+        {
+            try
+            {
+                // EF Core LINQ query
+                var query = dbContext.Set<sy_users>().AsQueryable();
 
-                using (var multi = await dbContext.QueryMultipleAsync(
-                    sql,
-                    new {
-                        request.Keyword,
-                        request.PageIndex,
-                        request.PageSize
-                    },
-                    ct))
+                // Apply filters
+                if (!string.IsNullOrEmpty(request.Keyword))
                 {
-                    var items = await multi.ReadAsync<UserListItemDto>();
-                    var total = await multi.ReadSingleAsync<int>();
+                    var keyword = request.Keyword.Trim();
+                    query = query.Where(u =>
+                        u.Username.Contains(keyword) ||
+                        u.Email.Contains(keyword) ||
+                        (u.EmployeeCode != null && u.EmployeeCode.Contains(keyword)));
+                }
 
-                    var paging = new PagingInfo
+                if (!string.IsNullOrEmpty(request.Status))
+                {
+                    query = query.Where(u => u.Status == request.Status);
+                }
+
+                // Get total count
+                var totalItems = await query.CountAsync(ct);
+
+                // Apply sorting
+                query = request.SortDirection?.ToUpper() == "ASC"
+                    ? query.OrderBy(u => u.CreatedAt)
+                    : query.OrderByDescending(u => u.CreatedAt);
+
+                // Apply pagination with projection
+                var items = await query
+                    .Skip((request.PageIndex - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(u => new GetUserListQuery.Result
+                    {
+                        Id = u.Id,
+                        Username = u.Username,
+                        EmployeeCode = u.EmployeeCode,
+                        Email = u.Email,
+                        Status = u.Status,
+                        CreatedAt = u.CreatedAt
+                    })
+                    .ToListAsync(ct);
+
+                var result = new PagedResult
+                {
+                    Items = items,
+                    Paging = new PagingInfo
                     {
                         PageIndex = request.PageIndex,
                         PageSize = request.PageSize,
-                        TotalItems = total
-                    };
+                        TotalItems = totalItems
+                    }
+                };
 
-                    return PagedResponse<UserListItemDto>.Success(
-                        items.ToList(),
-                        paging);
-                }
+                var response = ResponseHelper.Success(result, "Users retrieved successfully");
+
+                log.Result = result;
+                log.ReturnCode = response.ReturnCode;
+                UniLogManager.WriteApiLog(log);
+
+                return response;
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get users list");
-            return PagedResponse<UserListItemDto>.Fail(
-                "Failed to retrieve users");
+            catch (Exception ex)
+            {
+                UniLogger.Error($"Error retrieving users: {ex.Message}", ex);
+
+                var response = ResponseHelper.Error<PagedResult>("Error occurred");
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = response.ReturnCode;
+                UniLogManager.WriteApiLog(log);
+
+                return response;
+            }
         }
     }
 }
+
+#endregion
+```
+
+**Alternative: Complex queries với Dapper + DatabaseHelper:**
+
+```csharp
+// For complex joins, use Dapper with DatabaseHelper utilities
+var filters = new Dictionary<string, object?>
+{
+    { "Username", QueryHelper.SanitizeSearchTerm(request.Keyword) },
+    { "Status", request.Status }
+};
+var (whereClause, parameters) = DatabaseHelper.BuildWhereClause(filters);
+
+var baseQuery = @"
+    SELECT u.Id, u.Username, u.Email, u.Status,
+           r.RoleName, d.DepartmentName
+    FROM sy_users u
+    LEFT JOIN sy_roles r ON u.RoleCode = r.RoleCode
+    LEFT JOIN hr_departments d ON u.DepartmentCode = d.DepartmentCode";
+
+var result = await DatabaseHelper.QueryPagingAsync(
+    dbContext, baseQuery, whereClause, orderBy, parameters,
+    request.PageIndex, request.PageSize);
+```
+
 Repository classes mẫu:
 
 ```csharp
@@ -608,14 +1328,14 @@ public class UserReadRepository
         }
     }
 }
-````
+```
 
 Repository pattern đơn giản hóa:
 
--   Không dùng interface và DI
--   Static SQL queries
--   Write repo tự quản lý transaction
--   Read repo không dùng transaction
+- Không dùng interface và DI
+- Static SQL queries
+- Write repo tự quản lý transaction
+- Read repo không dùng transaction
 
 MediatR Pipelines (bắt buộc)
 Thứ tự: Logging → Validation → Authorization (tuỳ) → Transaction (Command) → Caching (Query)
@@ -638,10 +1358,74 @@ builder.Services.AddControllers()
 
 ✔️ Có <summary> cho mọi public type/method/prop.
 
-Few-shot gợi ý cho Copilot
-“Sinh CreateUserCommand + Handler + Validator, repo Dapper (Insert), trả ApiResponse theo chuẩn, có TransactionBehavior cho Command.”
+**Query & Filter Utilities (tuỳ chọn cho complex Dapper queries)**
 
-“Sinh ListUsersQuery + Handler + repo Dapper (Search + COUNT, OFFSET/FETCH), trả PagedResponse<UserListItemDto>.”
+**Primary: EF Core LINQ for simple queries**
+
+```csharp
+var query = dbContext.Set<sy_users>().AsQueryable();
+
+if (!string.IsNullOrEmpty(keyword))
+{
+    query = query.Where(u => u.Username.Contains(keyword));
+}
+
+var items = await query
+    .OrderBy(u => u.CreatedAt)
+    .Skip((pageIndex - 1) * pageSize)
+    .Take(pageSize)
+    .ToListAsync(ct);
+```
+
+**Alternative: DatabaseHelper cho complex Dapper queries**
+
+```csharp
+// 1. Build dynamic WHERE clause
+var filters = new Dictionary<string, object?>
+{
+    { "Username", QueryHelper.SanitizeSearchTerm(keyword) },
+    { "Status", status }
+};
+var (whereClause, parameters) = DatabaseHelper.BuildWhereClause(filters);
+
+// 2. Build dynamic ORDER BY
+var columnMappings = new Dictionary<string, string>
+{
+    { "default", "CreatedAt" },
+    { "username", "Username" }
+};
+var (orderBy, _) = QueryHelper.BuildOrderByClause(
+    sortBy,
+    sortDirection ?? "DESC",
+    columnMappings);
+
+// 3. Execute paginated query
+var result = await DatabaseHelper.QueryPagingAsync(
+    dbContext,
+    baseQuery,
+    whereClause,
+    orderBy,
+    parameters,
+    pageIndex,
+    pageSize);
+```
+
+**✅ Luôn sử dụng:**
+
+- **EF Core LINQ** cho single entity queries, CRUD, basic filters
+- `QueryHelper.SanitizeSearchTerm()` cho search keywords (both EF Core and Dapper)
+- `DatabaseHelper` utilities khi dùng Dapper cho complex queries
+
+**🚫 Không được:**
+
+- Viết raw WHERE clauses thủ công
+- Concatenate SQL strings với user input
+- Dùng Dapper cho simple CRUD khi EF Core đơn giản hơn
+
+Few-shot gợi ý cho Copilot
+"Sinh CreateUserCommand kế thừa BaseCommand + Handler + Validator, repo Dapper (Insert), trả ApiResponse theo chuẩn, có TransactionBehavior cho Command, log với CoreLogModel(HeaderInfo)."
+
+"Sinh GetUserListQuery kế thừa BaseQuery + Handler + Validator, sử dụng DatabaseHelper.QueryPagingAsync, QueryHelper.BuildOrderByClause, trả ApiResponse<PagedResult>, log với CoreLogModel(HeaderInfo), sử dụng properties từ BaseQuery (Keyword, PageIndex, PageSize, SortBy, SortDirection)."
 
 “Sinh Dapper IClientStore cho IdentityServer lấy client theo ClientId, có RedirectUris, PostLogoutUris, Scopes từ các bảng riêng.”
 
@@ -652,57 +1436,82 @@ Controller mỏng, mọi nghiệp vụ nằm trong Handler
 
 Command/Query tách rõ, 1–1 Handler
 
+**Command PHẢI kế thừa BaseCommand, Query PHẢI kế thừa BaseQuery**
+
 Có Validator; lỗi hợp nhất theo ApiResponse
 
 Command có TransactionBehavior; Query không
 
-Dapper SQL param hóa, không SELECT \*
+**EF Core LINQ cho CRUD, Dapper cho complex queries**
 
-Update/Delete kiểm tra ROWVERSION
+**Entity classes trong UniManage.Model.Entities namespace với [Table] attribute**
+
+**DbContext auto-discovery: Không cần DbSet properties, dùng Set<TEntity>()**
+
+Update/Delete kiểm tra ROWVERSION với optimistic concurrency
 
 Query trả DTO đã shape + paging chuẩn
 
 Log per-day/per-api, có cid/user/method/path/status/ms, mask secrets
 
+**Handler phải sử dụng CoreLogModel(request.HeaderInfo) với Parameter list**
+
+**Handler KHÔNG inject ILogger, dùng UniLogManager.WriteApiLog()**
+
+**Validator dùng AnyAsync/FirstOrDefaultAsync thay vì ExecuteScalarAsync**
+
+**Query handler dùng EF Core LINQ cho simple queries, DatabaseHelper cho complex queries**
+
+**Phân quyền Endpoint**: Sử dụng thuộc tính `[PermissionAuthorize(CoreFunction.{Name}, CoreAction.{Name})]` tại Controller hoặc Action, ví dụ: `[PermissionAuthorize(CoreFunction.SyUser, CoreAction.View)]`. CoreFunction và CoreAction là các hằng số tự động build qua file `CorePermission.tt`. Không dùng string hardcode.
+
+**Dùng ResponseHelper.Success/Error thay vì tạo response thủ công**
+
+**Alias DbContext khi cần: using DbContext = UniManage.Core.Database.DbContext**
+
 **Cleanup & Code Quality Rules (từ experience)**
 ✅ **Utilities-First Approach:**
 
--   Luôn check UniManage.Core/Utilities/ trước khi viết logic mới
--   Extend utilities thay vì duplicate code
--   Utilities phải có XML documentation đầy đủ
+- Luôn check UniManage.Core/Utilities/ trước khi viết logic mới
+- Extend utilities thay vì duplicate code
+- Utilities phải có XML documentation đầy đủ
 
 ✅ **Package Dependencies:**
 
--   BCrypt.Net-Next cho password hashing (không tự implement)
--   FluentValidation cho validation rules
--   Dapper cho data access (không EF Core)
--   System.Data.SqlClient cho SQL Server connection
+- BCrypt.Net-Next cho password hashing (không tự implement)
+- FluentValidation cho validation rules
+- Entity Framework Core 9.0 cho CRUD operations
+- Dapper cho complex queries và high-performance scenarios
+- System.Data.SqlClient cho SQL Server connection
 
 ✅ **Model Structure:**
 
--   ApiResponse<T> cho tất cả API responses
--   PagedResponse<T> : ApiResponse<PagedResult<T>> cho pagination
--   FieldErrorModel cho validation errors từ FluentValidation
+- ApiResponse<T> cho tất cả API responses
+- PagedResponse<T> : ApiResponse<PagedResult<T>> cho pagination
+- FieldErrorModel cho validation errors từ FluentValidation
 
 ✅ **Database Patterns:**
 
--   using statements để đảm bảo disposal
--   Write operations có transaction (openTransaction: true)
--   Read operations không cần transaction
--   Async methods với CancellationToken
+- using statements để đảm bảo disposal
+- Write operations có transaction (openTransaction: true)
+- Read operations không cần transaction
+- Async methods với CancellationToken
 
 ✅ **File Organization:**
 
--   Không duplicate folders (tránh Helpers/ và Utilities/ cùng tồn tại)
--   Xóa files không sử dụng (Database/Test/, empty handlers)
--   Tổ chức theo responsibility: Database/, Models/, Utilities/, Security/
+- Không duplicate folders (tránh Helpers/ và Utilities/ cùng tồn tại)
+- Xóa files không sử dụng (Database/Test/, empty handlers)
+- Tổ chức theo responsibility: Database/, Models/, Utilities/, Security/
 
 🚫 **Anti-patterns:**
 
--   Không tạo response objects thủ công
--   Không hash passwords bằng MD5/SHA
--   Không viết SQL injection vulnerable queries
--   Không để files duplicate giữa các folders
--   Không để external dependencies trong Core project
+- Không tạo response objects thủ công (dùng ResponseHelper)
+- Không hash passwords bằng MD5/SHA (dùng BCrypt via PasswordHelper)
+- Không viết SQL injection vulnerable queries
+- Không để files duplicate giữa các folders
+- Không để external dependencies trong Core project
+- Không dùng Dapper cho simple CRUD khi EF Core đơn giản hơn
+- Không dùng raw SQL trong Validator (dùng EF Core AnyAsync)
+- Không khai báo DbSet properties trong DbContext (dùng auto-discovery)
+- Không quên using Microsoft.EntityFrameworkCore cho LINQ methods
 
 Nguyên tắc: ít phép màu, ưu tiên rõ ràng, đúng “truyền thống” để team onboard nhanh, debug khỏe.

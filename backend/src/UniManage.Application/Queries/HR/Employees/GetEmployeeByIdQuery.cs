@@ -110,7 +110,7 @@ public sealed class GetEmployeeByIdQueryHandler : IRequestHandler<GetEmployeeByI
                 }
                 else
                 {
-                    response = ResponseHelper.Success(employee, CoreResource.Employee_msg_GetSuccess);
+                    response = ResponseHelper.Success(employee, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_employee));
                     logData.Result = new { employee.EmployeeCode };
                     logData.ReturnCode = response.ReturnCode;
                 }
@@ -118,7 +118,7 @@ public sealed class GetEmployeeByIdQueryHandler : IRequestHandler<GetEmployeeByI
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving employee by id {request.Id}: {ex.Message}", ex);
-                response = ResponseHelper.Error<GetEmployeeByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                response = ResponseHelper.Error<GetEmployeeByIdQuery.Response>(CoreResource.common_exceptionOccurred);
 
                 logData.Message = ex.ToString();
                 logData.IsException = 1;

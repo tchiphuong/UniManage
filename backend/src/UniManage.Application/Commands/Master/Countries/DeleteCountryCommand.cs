@@ -36,7 +36,7 @@ namespace UniManage.Application.Commands.Master.Countries
         public DeleteCountryCommandValidator()
         {
             RuleFor(x => x.Codes)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
+                .NotEmpty().WithMessage(CoreResource.validation_required)
                 .Must(codes => codes.All(c => !string.IsNullOrEmpty(c)))
                 .WithMessage("All codes must be non-empty");
         }
@@ -73,7 +73,7 @@ namespace UniManage.Application.Commands.Master.Countries
                     await dbContext.CommitAsync();
 
                     var responseData = new DeleteCountryCommand.Response { Success = true, DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.Country_msg_DeleteSuccess, deletedCount));
+                    var response = ResponseHelper.Success(responseData, string.Format(string.Format(CoreResource.crud_deleteSuccess, CoreResource.entity_country), deletedCount));
 
                     logData.Result = response.Data;
                     logData.ReturnCode = response.ReturnCode;
@@ -86,7 +86,7 @@ namespace UniManage.Application.Commands.Master.Countries
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error deleting countries: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<DeleteCountryCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<DeleteCountryCommand.Response>(CoreResource.common_exceptionOccurred);
                     logData.Message = ex.ToString();
                     logData.IsException = 1;
                     logData.ReturnCode = response.ReturnCode;

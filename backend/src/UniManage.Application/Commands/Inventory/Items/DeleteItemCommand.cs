@@ -55,7 +55,7 @@ namespace UniManage.Application.Commands.Inventory.Items
                     await dbContext.CommitAsync(ct);
 
                     var responseData = new DeleteItemCommand.Response { DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_DeleteSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_deleteSuccess);
 
                     log.Result = response;
                     log.ReturnCode = response.ReturnCode;

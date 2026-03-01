@@ -132,12 +132,13 @@ namespace UniManage.Resource
         foreach (var resource in defaultResources.OrderBy(x => x.Key))
         {
             string key = resource.Key;
+            string propertyName = key.Replace(".", "_").Replace("-", "_");
             string value = resource.Value.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
 #>
         /// <summary>
         /// <#= key #>: <#= value #>
         /// </summary>
-        public static string <#= key #> => "<#= value #>";
+        public static string <#= propertyName #> => "<#= value #>";
         
 <#
         }

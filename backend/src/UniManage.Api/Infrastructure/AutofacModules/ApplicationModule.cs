@@ -2,6 +2,7 @@ using Autofac;
 using FluentValidation;
 using MediatR;
 using UniManage.Application.Commands.System.Auth;
+using UniManage.Application.Services;
 
 namespace UniManage.Api.Infrastructure.AutofacModules
 {
@@ -29,6 +30,15 @@ namespace UniManage.Api.Infrastructure.AutofacModules
             // Register MediatR Pipeline Behaviors
             builder.RegisterGeneric(typeof(UniManage.Application.Pipelines.ValidationBehavior<,>))
                 .As(typeof(IPipelineBehavior<,>));
+
+            // ===========================================
+            // [SECURITY] Register shared IdentityServer client (L1)
+            // Centralizes all IdentityServer HTTP calls
+            // Used by LoginCommand, RefreshTokenCommand, LogoutCommand
+            // ===========================================
+            builder.RegisterType<IdentityServerClient>()
+                .As<IIdentityServerClient>()
+                .SingleInstance();
         }
     }
 }

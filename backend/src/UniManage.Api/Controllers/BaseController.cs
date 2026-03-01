@@ -7,49 +7,119 @@ namespace UniManage.Api.Controllers
     [ApiController]
     public abstract class BaseController : ControllerBase
     {
-        protected string AccessToken =>
-            Request.Headers.TryGetValue("Authorization", out var value)
-                ? value.ToString().Replace("Bearer ", "").Trim()
-                : null;
+        #region Properties
 
-        protected string UserId =>
-            User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        protected string? AccessToken
+        {
+            get
+            {
+                if (Request.Headers.TryGetValue("Authorization", out var value))
+                {
+                    return value.ToString().Replace("Bearer ", "").Trim();
+                }
+                return null;
+            }
+        }
 
-        protected string Username =>
-            User?.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
+        protected string UserId
+        {
+            get
+            {
+                return User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
+                       User?.FindFirstValue("sub") ?? 
+                       string.Empty;
+            }
+        }
 
-        protected string Email =>
-            User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+        protected string Username
+        {
+            get
+            {
+                return User?.FindFirstValue(ClaimTypes.Name) ?? 
+                       User?.FindFirstValue("name") ?? 
+                       User?.FindFirstValue("username") ?? 
+                       User?.FindFirstValue("preferred_username") ?? 
+                       string.Empty;
+            }
+        }
 
-        protected string Culture =>
-            Request.Headers.TryGetValue("Accept-Language", out var value)
-                ? value.ToString()
-                : "en-US";
+        protected string Email
+        {
+            get
+            {
+                return User?.FindFirstValue(ClaimTypes.Email) ?? 
+                       User?.FindFirstValue("email") ?? 
+                       string.Empty;
+            }
+        }
 
-        protected string ClientIp =>
-            HttpContext?.Connection?.RemoteIpAddress?.ToString();
+        protected string Culture
+        {
+            get
+            {
+                if (Request.Headers.TryGetValue("Accept-Language", out var value))
+                {
+                    return value.ToString();
+                }
+                return "en-US";
+            }
+        }
+
+        protected string? ClientIp
+        {
+            get
+            {
+                return HttpContext?.Connection?.RemoteIpAddress?.ToString();
+            }
+        }
 
         /// <summary>
-        /// L?y t�n controller hi?n t?i
+        /// Lấy tên controller hiện tại
         /// </summary>
-        protected string CurrentController =>
-            ControllerContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+        protected string CurrentController
+        {
+            get
+            {
+                return ControllerContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+            }
+        }
 
         /// <summary>
-        /// L?y t�n action method hi?n t?i
+        /// Lấy tên action method hiện tại
         /// </summary>
-        protected string CurrentAction =>
-            ControllerContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+        protected string CurrentAction
+        {
+            get
+            {
+                return ControllerContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+            }
+        }
 
         /// <summary>
-        /// L?y t�n API d?ng "Controller/Action"
+        /// Lấy tên API dạng "Controller/Action"
         /// </summary>
-        protected string ApiName => $"{CurrentController}/{CurrentAction}";
+        protected string ApiName
+        {
+            get
+            {
+                return $"{CurrentController}/{CurrentAction}";
+            }
+        }
 
         /// <summary>
-        /// Th�ng tin header gom g?n m?t ch?, d? g?i l?i.
+        /// Thông tin header gom gọn một chỗ, dễ gọi lại.
         /// </summary>
-        protected HeaderInfo HeaderInfo => BuildHeaderInfo();
+        protected HeaderInfo HeaderInfo
+        {
+            get
+            {
+                return BuildHeaderInfo();
+            }
+        }
+
+        #endregion
+
+        #region Methods
 
         private HeaderInfo BuildHeaderInfo()
         {
@@ -75,5 +145,7 @@ namespace UniManage.Api.Controllers
                 SessionId = headers.TryGetValue("Session-Id", out var sessionId) ? sessionId.ToString() : null,
             };
         }
+
+        #endregion
     }
 }

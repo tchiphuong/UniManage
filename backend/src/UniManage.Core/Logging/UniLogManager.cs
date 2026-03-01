@@ -118,12 +118,12 @@ namespace UniManage.Core.Logging
                     {
                         var folder = Path.Combine(logPath, date);
 
-                        // Main Log: logs/yyyy-MM-dd/{api}.log
-                        wt2.File(Path.Combine(folder, $"{date}-{name}.log"),
+                        // Main Log: logs/yyyy-MM-dd-{api}-success.log
+                        wt2.File(Path.Combine(folder, $"{date}-{name}-success.log"),
                             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [user:{Username}] [ip:{IpAddress}] [cid:{Cid}] {Message:lj}{NewLine}{Exception}");
 
-                        // Error Log: logs/yyyy-MM-dd/error-{api}.log
-                        wt2.File(Path.Combine(folder, $"{date}-error-{name}.log"),
+                        // Error Log: logs/yyyy-MM-dd-{api}-error.log
+                        wt2.File(Path.Combine(folder, $"{date}-{name}-error.log"),
                             restrictedToMinimumLevel: LogEventLevel.Error,
                             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [user:{Username}] [ip:{IpAddress}] {Message:lj}{NewLine}{Exception}");
                     });

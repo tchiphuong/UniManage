@@ -190,9 +190,10 @@
         }
     }
 #>
-using System;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using UniManage.Model.Attributes;
 
 namespace UniManage.Model.Entities
 {
@@ -202,12 +203,22 @@ namespace UniManage.Model.Entities
         var tableForeignKeys = foreignKeys.ContainsKey(table.Key) 
             ? foreignKeys[table.Key] 
             : new List<(string ColumnName, string ReferencedTable, string ReferencedColumn, string ConstraintName)>();
+        
+        // Check for composite keys
+        var primaryKeyColumns = table.Value.Where(c => c.IsPrimaryKey).Select(c => c.ColumnName).ToList();
+        string primaryKeyAttribute = "";
+        if (primaryKeyColumns.Count > 1)
+        {
+            var keys = string.Join(", ", primaryKeyColumns.Select(c => $"nameof({c})"));
+            primaryKeyAttribute = $"[PrimaryKey({keys})]";
+        }
 #>
     #region <#= table.Key #>
     /// <summary>
     /// Entity class for table <#= table.Key #>
     /// </summary>
     [Table("<#= table.Key #>")]
+    <#= primaryKeyAttribute #>
     public class <#= table.Key #>
     {
 <#
@@ -224,7 +235,7 @@ namespace UniManage.Model.Entities
         /// </summary>
 <#
             }
-            if (column.IsPrimaryKey)
+            if (column.IsPrimaryKey && primaryKeyColumns.Count == 1)
             {
 #>
         [Key]
@@ -232,9 +243,32 @@ namespace UniManage.Model.Entities
             }
             if (fk != default && !string.IsNullOrEmpty(fk.ReferencedTable))
             {
+                // Verify if referenced column is actually the Primary Key
+                // If it's not a PK (e.g. referencing a Code instead of Id), we skip [ForeignKey] attribute
+                // and use [ReferencedKey] for dynamic configuration
+                bool isReferencingPK = false;
+                if (tableSchemas.ContainsKey(fk.ReferencedTable))
+                {
+                    var refTable = tableSchemas[fk.ReferencedTable];
+                    var refCol = refTable.FirstOrDefault(c => c.ColumnName == fk.ReferencedColumn);
+                    if (refCol != default && refCol.IsPrimaryKey)
+                    {
+                        isReferencingPK = true;
+                    }
+                }
+
+                if (isReferencingPK)
+                {
 #>
         [ForeignKey(nameof(<#= fk.ReferencedTable #>))]
 <#
+                }
+                else
+                {
+#>
+        [ReferencedKey(nameof(<#= fk.ReferencedTable #>.<#= fk.ReferencedColumn #>))]
+<#
+                }
             }
             if (!column.IsNullable)
             {
@@ -306,11 +340,23 @@ namespace UniManage.Model.Entities
         foreach (var reverseTable in reverseRelationships)
         {
             string collectionName = reverseTable + "Collection";
+            // Check for multiple relationships to determine if [NotMapped] is needed
+            // If a table has multiple FKs pointing to this table, EF Core can't decide which one to use for this single collection
+            var relationshipCount = foreignKeys[reverseTable].Count(fk => fk.ReferencedTable == table.Key);
+            bool isAmbiguous = relationshipCount > 1;
 #>
 
         /// <summary>
         /// Collection navigation property for <#= reverseTable #>
         /// </summary>
+<#
+            if (isAmbiguous)
+            {
+#>
+        [NotMapped]
+<#
+            }
+#>
         public virtual ICollection<<#= reverseTable #>>? <#= collectionName #> { get; set; }
 <#
         }

@@ -84,7 +84,7 @@ public sealed class CreateUnitCommandHandler : IRequestHandler<CreateUnitCommand
                 await dbContext.transaction.CommitAsync(ct);
 
                 var responseData = new CreateUnitCommand.Response { Id = id, Code = request.Code };
-                var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_CreateSuccess);
+                var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
 
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
@@ -102,7 +102,7 @@ public sealed class CreateUnitCommandHandler : IRequestHandler<CreateUnitCommand
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
-                return ResponseHelper.Error<CreateUnitCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<CreateUnitCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

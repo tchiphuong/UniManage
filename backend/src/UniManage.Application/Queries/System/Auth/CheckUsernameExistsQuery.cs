@@ -72,7 +72,7 @@ namespace UniManage.Application.Queries.System.Auth
             catch (Exception ex)
             {
                 UniLogger.Error($"[CheckUsernameExists] Error checking username: {request.Username}", ex);
-                return ResponseHelper.Error<CheckUsernameExistsQuery.Result>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<CheckUsernameExistsQuery.Result>(CoreResource.common_exceptionOccurred);
             }
         }
     }

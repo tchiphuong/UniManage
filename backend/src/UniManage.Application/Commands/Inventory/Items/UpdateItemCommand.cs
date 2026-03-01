@@ -159,7 +159,7 @@ namespace UniManage.Application.Commands.Inventory.Items
                     await dbContext.CommitAsync(ct);
 
                     var responseData = new UpdateItemCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_UpdateSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
 
                     log.Result = response;
                     log.ReturnCode = response.ReturnCode;

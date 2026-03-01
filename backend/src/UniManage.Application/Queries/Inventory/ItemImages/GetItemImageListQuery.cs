@@ -11,7 +11,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.Inventory.ItemImages
 {
-    public sealed class GetItemImageListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetItemImageListQuery.Result>>>
+    public sealed class GetItemImageListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetItemImageListQuery.Result>>>
     {
         public string? ItemCode { get; set; }
         public bool? IsThumbnail { get; set; }
@@ -147,7 +147,7 @@ namespace UniManage.Application.Queries.Inventory.ItemImages
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

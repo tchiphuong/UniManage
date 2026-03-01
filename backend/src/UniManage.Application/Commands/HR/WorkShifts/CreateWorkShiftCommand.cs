@@ -36,25 +36,25 @@ namespace UniManage.Application.Commands.HR.WorkShifts
         {
             RuleFor(x => x.Code)
                 .Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(20).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 20))
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(20).WithMessage(string.Format(CoreResource.validation_maxLength, 20))
                 .MustAsync(async (code, cancel) => !await IsCodeExistsAsync(code))
                 .WithMessage("Work shift code already exists");
 
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(100).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 100));
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(100).WithMessage(string.Format(CoreResource.validation_maxLength, 100));
 
             RuleFor(x => x.StartTime)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.EndTime)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
+                .NotEmpty().WithMessage(CoreResource.validation_required)
                 .Must((cmd, endTime) => endTime > cmd.StartTime)
                 .WithMessage("End time must be after start time");
 
             RuleFor(x => x.Description)
-                .MaximumLength(250).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 250))
+                .MaximumLength(250).WithMessage(string.Format(CoreResource.validation_maxLength, 250))
                 .When(x => !string.IsNullOrEmpty(x.Description));
         }
 
@@ -106,7 +106,7 @@ namespace UniManage.Application.Commands.HR.WorkShifts
 
                     await dbContext.CommitAsync();
 
-                    var response = ResponseHelper.Success(new CreateWorkShiftCommand.Response { Id = id, Code = request.Code }, CoreResource.Common_msg_CreateSuccess);
+                    var response = ResponseHelper.Success(new CreateWorkShiftCommand.Response { Id = id, Code = request.Code }, CoreResource.crud_createSuccess);
 
                     log.Result = response.Data;
                     log.ReturnCode = response.ReturnCode;
@@ -119,7 +119,7 @@ namespace UniManage.Application.Commands.HR.WorkShifts
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error creating work shift: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<CreateWorkShiftCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<CreateWorkShiftCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

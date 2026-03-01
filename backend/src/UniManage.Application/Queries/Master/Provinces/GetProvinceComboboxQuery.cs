@@ -14,6 +14,7 @@ namespace UniManage.Application.Queries.Master.Provinces
     public sealed class GetProvinceComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
     {
         public string? CountryCode { get; init; }
+        public string? Keyword { get; set; }
     }
 
     #endregion
@@ -98,7 +99,7 @@ namespace UniManage.Application.Queries.Master.Provinces
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting province combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

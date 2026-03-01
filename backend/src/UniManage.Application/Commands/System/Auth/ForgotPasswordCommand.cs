@@ -64,13 +64,13 @@ namespace UniManage.Application.Commands.System.Auth
                         if (user == null)
                         {
                             UniLogger.Info($"[ForgotPassword] User not found: {request.EmailOrUsername}");
-                            return ResponseHelper.Success(true, CoreResource.Auth_msg_ResetLinkSent);
+                            return ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
                         }
 
                         if (string.IsNullOrEmpty(user.Email))
                         {
                             UniLogger.Warn($"[ForgotPassword] User has no email: {user.Username}");
-                            return ResponseHelper.Success(true, CoreResource.Auth_msg_ResetLinkSent);
+                            return ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
                         }
 
                         // Generate reset token
@@ -100,7 +100,7 @@ namespace UniManage.Application.Commands.System.Auth
                         // await emailService.SendPasswordResetEmail(user.Email, resetLink);
 
                         UniLogger.Info($"[ForgotPassword] Reset token generated for user: {user.Username}");
-                        return ResponseHelper.Success(true, CoreResource.Auth_msg_ResetLinkSent);
+                        return ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
                     }
                     catch
                     {

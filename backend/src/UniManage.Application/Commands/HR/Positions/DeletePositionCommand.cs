@@ -1,83 +1,88 @@
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Resource;
 
-namespace UniManage.Application.Commands.HR.Positions;
-
-#region Command
-
-public sealed class DeletePositionCommand : BaseCommand, IRequest<ApiResponse<DeletePositionCommand.Response>>
+namespace UniManage.Application.Commands.HR.Positions
 {
-    public List<int> Ids { get; set; } = new();
+    #region Command
 
-    public sealed class Response
+    public sealed class DeletePositionCommand : BaseCommand, IRequest<ApiResponse<DeletePositionCommand.Response>>
     {
-        public bool Success { get; init; }
-        public int DeletedCount { get; init; }
+        public List<int> Ids { get; init; } = new();
+
+        public sealed class Response { }
     }
-}
 
-#endregion
+    #endregion
 
-#region Validator
+    #region Validator
 
-public sealed class DeletePositionCommandValidator : AbstractValidator<DeletePositionCommand>
-{
-    public DeletePositionCommandValidator()
+    public sealed class DeletePositionValidator : AbstractValidator<DeletePositionCommand>
     {
-        RuleFor(x => x.Ids).NotEmpty().WithMessage("At least one Id is required");
+        public DeletePositionValidator()
+        {
+            RuleFor(x => x.Ids).NotEmpty();
+        }
     }
-}
 
-#endregion
+    #endregion
 
-#region Handler
+    #region Handler
 
-public sealed class DeletePositionCommandHandler : IRequestHandler<DeletePositionCommand, ApiResponse<DeletePositionCommand.Response>>
-{
-    public async Task<ApiResponse<DeletePositionCommand.Response>> Handle(DeletePositionCommand request, CancellationToken ct)
+    public sealed class DeletePositionCommandHandler : IRequestHandler<DeletePositionCommand, ApiResponse<DeletePositionCommand.Response>>
     {
-        CoreLogModel logData = new CoreLogModel(request.HeaderInfo)
+        public async Task<ApiResponse<DeletePositionCommand.Response>> Handle(DeletePositionCommand request, CancellationToken ct)
         {
-            Parameter = new List<CoreParamModel>
+            var log = new CoreLogModel(request.HeaderInfo)
             {
-                new CoreParamModel(nameof(request.Ids), string.Join(",", request.Ids))
-            }
-        };
+                Method = nameof(DeletePositionCommandHandler),
+                Path = "Position" // removed Parameter logic for batch
+            };
 
-        using (DbContext dbContext = new DbContext(openTransaction: true))
-        {
-            try
+            using (var dbContext = new DbContext(openTransaction: true))
             {
-                var rowsAffected = await dbContext.ExecuteAsync(
-                    "DELETE FROM hr_positions WHERE Id IN @Ids",
-                    new { Ids = request.Ids },
-                    ct);
+                try
+                {
+                    var sql = "DELETE FROM hr_positions WHERE Id IN @Ids;";
+                    var rows = await dbContext.ExecuteAsync(sql, new { request.Ids });
 
-                await dbContext.CommitAsync();
+                    if (rows == 0)
+                    {
+                        var notFound = ResponseHelper.NotFound<DeletePositionCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_position));
+                        log.ReturnCode = notFound.ReturnCode;
+                        log.Message = notFound.Message;
+                        UniLogManager.WriteApiLog(log);
+                        return notFound;
+                    }
 
-                var responseData = new DeletePositionCommand.Response { Success = true, DeletedCount = rowsAffected };
-                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.Position_msg_DeleteSuccess, rowsAffected));
-                UniLogManager.WriteApiLog(logData);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                await dbContext.RollbackAsync();
-                UniLogger.Error($"Error deleting positions: {ex.Message}", ex);
-                var response = ResponseHelper.Error<DeletePositionCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
-                logData.Message = ex.ToString();
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
-                return response;
+                    await dbContext.CommitAsync(ct);
+
+                    var response = ResponseHelper.Success(new DeletePositionCommand.Response(), string.Format(CoreResource.crud_deleteSuccess, CoreResource.entity_position));
+                    
+                    log.Result = response;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = response.Message;
+                    UniLogManager.WriteApiLog(log);
+
+                    return response;
+                }
+                catch (Exception ex)
+                {
+                    await dbContext.RollbackAsync(ct);
+                    log.IsException = 1;
+                    log.Message = ex.Message;
+                    log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                    UniLogManager.WriteApiLog(log);
+                    return ResponseHelper.Error<DeletePositionCommand.Response>(CoreResource.common_exceptionOccurred);
+                }
             }
         }
     }
-}
 
-#endregion
+    #endregion
+}

@@ -3,7 +3,7 @@
  * Centralized management of all API endpoints following RESTful conventions
  */
 
-const API_VERSION = '/v1';
+const API_VERSION = "/api/v1";
 
 /**
  * Authentication & Authorization Endpoints
@@ -16,6 +16,9 @@ export const AUTH_ENDPOINTS = {
     CHANGE_PASSWORD: `${API_VERSION}/auth/change-password`,
     FORGOT_PASSWORD: `${API_VERSION}/auth/forgot-password`,
     RESET_PASSWORD: `${API_VERSION}/auth/reset-password`,
+    PERMISSIONS: `${API_VERSION}/auth/permissions`,
+    CHECK_USERNAME: (username: string) => `${API_VERSION}/auth/check-username/${username}`,
+    CHECK_EMAIL: (email: string) => `${API_VERSION}/auth/check-email/${email}`,
 } as const;
 
 /**
@@ -53,6 +56,7 @@ export const MENU_ENDPOINTS = {
     CREATE: `${API_VERSION}/menus`,
     UPDATE: (id: number | string) => `${API_VERSION}/menus/${id}`,
     DELETE: `${API_VERSION}/menus`,
+    TREE: `${API_VERSION}/menus/tree`,
 } as const;
 
 /**
@@ -65,6 +69,18 @@ export const DEPARTMENT_ENDPOINTS = {
     UPDATE: (id: number | string) => `${API_VERSION}/departments/${id}`,
     DELETE: `${API_VERSION}/departments`,
     COMBOBOX: `${API_VERSION}/departments/combobox`,
+} as const;
+
+/**
+ * Position Management Endpoints
+ */
+export const POSITION_ENDPOINTS = {
+    LIST: `${API_VERSION}/positions`,
+    DETAIL: (id: number | string) => `${API_VERSION}/positions/${id}`,
+    CREATE: `${API_VERSION}/positions`,
+    UPDATE: (id: number | string) => `${API_VERSION}/positions/${id}`,
+    DELETE: `${API_VERSION}/positions`,
+    COMBOBOX: `${API_VERSION}/positions/combobox`,
 } as const;
 
 /**
@@ -84,5 +100,6 @@ export const API_ENDPOINTS = {
     ROLE: ROLE_ENDPOINTS,
     MENU: MENU_ENDPOINTS,
     DEPARTMENT: DEPARTMENT_ENDPOINTS,
+    POSITION: POSITION_ENDPOINTS,
     SYSTEM: SYSTEM_ENDPOINTS,
 } as const;

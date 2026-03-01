@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
-using Microsoft.Extensions.Configuration;
+using UniManage.Application.Services;
+using UniManage.Core.Constant;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
@@ -8,6 +9,8 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Commands.System.Auth
 {
+    #region Command
+
     /// <summary>
     /// Refresh Token Command - Làm mới access token
     /// </summary>
@@ -20,24 +23,16 @@ namespace UniManage.Application.Commands.System.Auth
 
         public class Response
         {
-            /// <summary>
-            /// Access Token mới
-            /// </summary>
             public string AccessToken { get; set; } = string.Empty;
-            /// <summary>
-            /// Refresh Token mới
-            /// </summary>
             public string RefreshToken { get; set; } = string.Empty;
-            /// <summary>
-            /// Expires In (seconds)
-            /// </summary>
             public int ExpiresIn { get; set; }
-            /// <summary>
-            /// Token Type
-            /// </summary>
             public string TokenType { get; set; } = "Bearer";
         }
     }
+
+    #endregion
+
+    #region Validator
 
     /// <summary>
     /// Refresh Token Command Validator
@@ -51,71 +46,48 @@ namespace UniManage.Application.Commands.System.Auth
         }
     }
 
+    #endregion
+
+    #region Handler
+
     /// <summary>
-    /// Refresh Token Command Handler
+    /// Refresh Token Command Handler — uses shared IIdentityServerClient + CoreLogModel
     /// </summary>
     public sealed class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, ApiResponse<RefreshTokenCommand.Response>>
     {
+        private readonly IIdentityServerClient _identityClient;
+
+        public RefreshTokenCommandHandler(IIdentityServerClient identityClient)
+        {
+            _identityClient = identityClient;
+        }
+
         public async Task<ApiResponse<RefreshTokenCommand.Response>> Handle(RefreshTokenCommand request, CancellationToken ct)
         {
+            // Khởi tạo log với HeaderInfo từ BaseCommand
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    // Không log refresh token value vì là sensitive data
+                    new CoreParamModel("HasRefreshToken", !string.IsNullOrEmpty(request.RefreshToken))
+                }
+            };
+
             try
             {
-                UniLogger.Info($"[RefreshToken] Start processing refresh token request");
+                var (success, tokenData, error) = await _identityClient.RefreshTokenAsync(
+                    request.RefreshToken, ct);
 
-                // Build configuration
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                    .AddJsonFile("appsettings.json", optional: true)
-                    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
-                    .Build();
-
-                var authority = configuration["IdentityServer:Authority"] ?? "http://localhost:5001";
-                var clientId = configuration["IdentityServer:ClientId"];
-                var clientSecret = configuration["IdentityServer:ClientSecret"];
-
-                if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+                if (!success || tokenData == null)
                 {
-                    UniLogger.Error("[RefreshToken] Missing IdentityServer configuration");
-                    return ResponseHelper.Error<RefreshTokenCommand.Response>("System configuration error");
+                    var errorResponse = ResponseHelper.Error<RefreshTokenCommand.Response>("Invalid or expired refresh token");
+                    log.ReturnCode = errorResponse.ReturnCode;
+                    log.Message = error;
+                    return errorResponse;
                 }
 
-                var tokenEndpoint = $"{authority}/connect/token";
-
-                // Bypass SSL validation in Development
-                var handler = new HttpClientHandler();
-                var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-                if (env == "Development")
-                {
-                    handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                }
-
-                using var client = new HttpClient(handler);
-
-                var tokenResponse = await client.PostAsync(tokenEndpoint, new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("grant_type", "refresh_token"),
-                    new KeyValuePair<string, string>("client_id", clientId),
-                    new KeyValuePair<string, string>("client_secret", clientSecret),
-                    new KeyValuePair<string, string>("refresh_token", request.RefreshToken)
-                }), ct);
-
-                if (!tokenResponse.IsSuccessStatusCode)
-                {
-                    var errorContent = await tokenResponse.Content.ReadAsStringAsync(ct);
-                    UniLogger.Warn($"[RefreshToken] IdentityServer refresh failed: {errorContent}");
-                    return ResponseHelper.Error<RefreshTokenCommand.Response>("Invalid or expired refresh token");
-                }
-
-                var tokenContent = await tokenResponse.Content.ReadAsStringAsync(ct);
-                var tokenData = global::System.Text.Json.JsonSerializer.Deserialize<IdentityTokenResponse>(tokenContent);
-
-                if (tokenData == null)
-                {
-                    UniLogger.Error("[RefreshToken] Failed to parse token response");
-                    return ResponseHelper.Error<RefreshTokenCommand.Response>("Failed to parse token response");
-                }
-
-                var response = new RefreshTokenCommand.Response
+                var responseData = new RefreshTokenCommand.Response
                 {
                     AccessToken = tokenData.access_token,
                     RefreshToken = tokenData.refresh_token,
@@ -123,22 +95,25 @@ namespace UniManage.Application.Commands.System.Auth
                     TokenType = tokenData.token_type
                 };
 
-                UniLogger.Info("[RefreshToken] Token refreshed successfully");
-                return ResponseHelper.Success(response, CoreResource.Auth_msg_TokenRefreshed);
+                var response = ResponseHelper.Success(responseData, CoreResource.auth_tokenRefreshed);
+                log.Result = response;
+                log.ReturnCode = response.ReturnCode;
+                log.Message = response.Message;
+                return response;
             }
             catch (Exception ex)
             {
-                UniLogger.Error("[RefreshToken] Error during token refresh", ex);
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 return ResponseHelper.Error<RefreshTokenCommand.Response>("An error occurred during token refresh");
             }
-        }
-
-        private class IdentityTokenResponse
-        {
-            public string access_token { get; set; } = string.Empty;
-            public int expires_in { get; set; }
-            public string token_type { get; set; } = string.Empty;
-            public string refresh_token { get; set; } = string.Empty;
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
+            }
         }
     }
+
+    #endregion
 }

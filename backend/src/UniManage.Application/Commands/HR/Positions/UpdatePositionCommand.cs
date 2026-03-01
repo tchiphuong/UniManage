@@ -82,11 +82,11 @@ public sealed class UpdatePositionCommandHandler : IRequestHandler<UpdatePositio
 
                 if (rowsAffected == 0)
                 {
-                    return ResponseHelper.NotFound<UpdatePositionCommand.Response>(CoreResource.Common_msg_NotFound);
+                    return ResponseHelper.NotFound<UpdatePositionCommand.Response>(CoreResource.common_notFound);
                 }
 
                 var responseData = new UpdatePositionCommand.Response { Success = true, Id = request.Id };
-                var response = ResponseHelper.Success(responseData, CoreResource.Position_msg_UpdateSuccess);
+                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_position));
 
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
@@ -96,7 +96,7 @@ public sealed class UpdatePositionCommandHandler : IRequestHandler<UpdatePositio
             {
                 await dbContext.RollbackAsync();
                 UniLogger.Error($"Error updating position: {ex.Message}", ex);
-                var response = ResponseHelper.Error<UpdatePositionCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<UpdatePositionCommand.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

@@ -139,7 +139,7 @@ namespace UniManage.Application.Commands.Workflow.ApprovalRoutes
                     await dbContext.CommitAsync(ct);
 
                     var responseData = new CreateApprovalRouteCommand.Response { Id = routeId };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_CreateSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
 
                     log.Result = response;
                     log.ReturnCode = response.ReturnCode;

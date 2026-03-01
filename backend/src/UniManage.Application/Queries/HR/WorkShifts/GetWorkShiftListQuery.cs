@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
 {
     #region Query
 
-    public sealed class GetWorkShiftListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetWorkShiftListQuery.Response>>>
+    public sealed class GetWorkShiftListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetWorkShiftListQuery.Response>>>
     {
         public sealed record Response
         {
@@ -74,7 +74,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
 
                     var result = await dbContext.QueryPagingAsync<GetWorkShiftListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -85,7 +85,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
                 catch (Exception ex)
                 {
                     UniLogger.Error($"Error retrieving work shifts: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<PagedResult<GetWorkShiftListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<PagedResult<GetWorkShiftListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
                     log.IsException = 1;

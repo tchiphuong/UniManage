@@ -17,6 +17,15 @@ namespace UniManage.IdentityServer
                 new ApiScope("unimanage.api", "UniManage API"),
             };
 
+        public static IEnumerable<ApiResource> ApiResources =>
+            new ApiResource[]
+            {
+                new ApiResource("UniManage.Api", "UniManage API")
+                {
+                    Scopes = { "unimanage.api" }
+                }
+            };
+
         public static IEnumerable<Client> Clients =>
             new Client[]
             {
@@ -26,14 +35,11 @@ namespace UniManage.IdentityServer
                     ClientName = "UniManage Client",
                     ClientSecrets = { new Secret("secret".Sha256()) },
 
-                    // Hỗ trợ LoginCommand (Password) và Frontend (Code)
+                    // Hỗ trợ LoginCommand (Password)
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
 
                     AllowedScopes = { "openid", "profile", "unimanage.api" },
                     
-                    // Cấu hình cho Frontend (nếu dùng Code flow sau này)
-                    RedirectUris = { "http://localhost:5173/signin-oidc" },
-                    PostLogoutRedirectUris = { "http://localhost:5173/signout-callback-oidc" },
                     AllowOfflineAccess = true,
                     AccessTokenLifetime = 3600
                 }

@@ -44,28 +44,28 @@ namespace UniManage.Application.Commands.Master.Countries
         {
             RuleFor(x => x.Code)
                 .Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(20).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 20))
-                .Matches("^[A-Z]+$").WithMessage(CoreResource.Validation_msg_UppercaseAlphanumericOnly)
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(20).WithMessage(string.Format(CoreResource.validation_maxLength, 20))
+                .Matches("^[A-Z]+$").WithMessage(CoreResource.validation_uppercaseAlphanumericOnly)
                 .MustAsync(async (code, cancel) => !await IsCodeExistsAsync(code))
-                .WithMessage(CoreResource.Validation_msg_AlreadyExists);
+                .WithMessage(CoreResource.validation_alreadyExists);
 
             RuleFor(x => x.NameVi)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(100).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 100));
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(100).WithMessage(string.Format(CoreResource.validation_maxLength, 100));
 
             RuleFor(x => x.NameEn)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-                .MaximumLength(100).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 100));
+                .NotEmpty().WithMessage(CoreResource.validation_required)
+                .MaximumLength(100).WithMessage(string.Format(CoreResource.validation_maxLength, 100));
 
             RuleFor(x => x.FullNameVi)
-                .MaximumLength(200).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 200));
+                .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
 
             RuleFor(x => x.FullNameEn)
-                .MaximumLength(200).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 200));
+                .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
 
             RuleFor(x => x.PhoneCode)
-                .MaximumLength(20).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 20));
+                .MaximumLength(20).WithMessage(string.Format(CoreResource.validation_maxLength, 20));
         }
 
         private static async Task<bool> IsCodeExistsAsync(string code)
@@ -125,7 +125,7 @@ namespace UniManage.Application.Commands.Master.Countries
 
                     await dbContext.CommitAsync();
 
-                    var response = ResponseHelper.Success(new CreateCountryCommand.Response { Code = request.Code }, CoreResource.Country_msg_CreateSuccess);
+                    var response = ResponseHelper.Success(new CreateCountryCommand.Response { Code = request.Code }, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_country));
                     logData.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(logData);
 
@@ -136,7 +136,7 @@ namespace UniManage.Application.Commands.Master.Countries
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error creating country: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<CreateCountryCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<CreateCountryCommand.Response>(CoreResource.common_exceptionOccurred);
                     logData.Message = ex.ToString();
                     logData.IsException = 1;
                     logData.ReturnCode = response.ReturnCode;

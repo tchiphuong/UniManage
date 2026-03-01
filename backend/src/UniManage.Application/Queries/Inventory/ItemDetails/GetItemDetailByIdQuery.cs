@@ -81,7 +81,7 @@ namespace UniManage.Application.Queries.Inventory.ItemDetails
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

@@ -181,7 +181,6 @@ namespace UniManage.Resource
                         if (exists == 0)
                         {
                             string insertSql = @" INSERT INTO sy_resources (
-                                                            Uuid,
                                                             ResourceKey,
                                                             ResourceValue,
                                                             SourceLanguage,
@@ -192,7 +191,6 @@ namespace UniManage.Resource
                                                             UpdatedAt
                                                         )
                                                         VALUES (
-                                                            @Uuid,
                                                             @ResourceKey,
                                                             @ResourceValue,
                                                             @SourceLanguage,
@@ -207,7 +205,6 @@ namespace UniManage.Resource
 
                             dbContext.ExecuteAsync(insertSql, new
                             {
-                                Uuid = Guid.NewGuid(),
                                 ResourceKey = resourceName,
                                 ResourceValue = translatedData,
                                 SourceLanguage = defaultLang,

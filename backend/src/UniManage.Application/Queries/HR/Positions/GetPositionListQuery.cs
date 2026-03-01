@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.HR.Positions;
 
 #region Query
 
-public sealed class GetPositionListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetPositionListQuery.Response>>>
+public sealed class GetPositionListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetPositionListQuery.Response>>>
 {
     public sealed record Response
     {
@@ -77,7 +77,7 @@ public sealed class GetPositionListQueryHandler : IRequestHandler<GetPositionLis
 
                 var result = await dbContext.QueryPagingAsync<GetPositionListQuery.Response>(query, request);
 
-                var response = ResponseHelper.Success(result, CoreResource.Common_msg_Success);
+                var response = ResponseHelper.Success(result, CoreResource.common_success);
 
                 logData.Result = result;
                 logData.ReturnCode = response.ReturnCode;
@@ -88,7 +88,7 @@ public sealed class GetPositionListQueryHandler : IRequestHandler<GetPositionLis
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving positions: {ex.Message}", ex);
-                var response = ResponseHelper.Error<PagedResult<GetPositionListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<PagedResult<GetPositionListQuery.Response>>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

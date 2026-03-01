@@ -13,6 +13,12 @@ namespace UniManage.IdentityServer.Services
     /// </summary>
     public class CustomProfileService : IProfileService
     {
+        private readonly IIdentityUserRepository _userRepository;
+
+        public CustomProfileService(IIdentityUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
         public async Task GetProfileDataAsync(ProfileDataRequestContext context)
         {
             try
@@ -25,26 +31,7 @@ namespace UniManage.IdentityServer.Services
                     return;
                 }
 
-                using var dbContext = new DbContext();
-
-                var sql = @"
-                    SELECT TOP 1
-                        [Id],
-                        [UserName],
-                        [EmployeeCode],
-                        [RoleCode],
-                        [Email]
-                    FROM [dbo].[sy_users]
-                    WHERE [Id] = @UserId
-                        AND [Status] = @ActiveStatus";
-
-                var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
-                    sql,
-                    new
-                    {
-                        UserId = int.Parse(userId),
-                        ActiveStatus = CoreCommon.Value.Commonstatus.Active
-                    });
+                var user = await _userRepository.FindByIdAsync(int.Parse(userId));
 
                 if (user == null)
                 {
@@ -55,6 +42,7 @@ namespace UniManage.IdentityServer.Services
                 var claims = new List<SysClaim>
                 {
                     new System.Security.Claims.Claim(ClaimConstants.StandardClaims.Subject, user.Id.ToString()),
+                    new System.Security.Claims.Claim(ClaimConstants.StandardClaims.Name, user.UserName), // Add standard name claim
                     new System.Security.Claims.Claim(ClaimConstants.CustomClaims.Username, user.UserName),
                     new System.Security.Claims.Claim(ClaimConstants.CustomClaims.EmployeeCode, user.EmployeeCode ?? ""),
                     new System.Security.Claims.Claim(ClaimConstants.CustomClaims.Role, user.RoleCode ?? ApplicationConstants.Defaults.DefaultRole)
@@ -92,23 +80,7 @@ namespace UniManage.IdentityServer.Services
                     return;
                 }
 
-                using var dbContext = new DbContext();
-
-                var sql = @"
-                    SELECT COUNT(*)
-                    FROM [dbo].[sy_users]
-                    WHERE [Id] = @UserId
-                        AND [Status] = @ActiveStatus";
-
-                var count = await dbContext.ExecuteScalarAsync<int>(
-                    sql,
-                    new
-                    {
-                        UserId = int.Parse(userId),
-                        ActiveStatus = CoreCommon.Value.Commonstatus.Active
-                    });
-
-                context.IsActive = count > 0;
+                context.IsActive = await _userRepository.IsUserActiveAsync(int.Parse(userId));
             }
             catch (Exception ex)
             {
@@ -117,13 +89,6 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
-        private class UserDto
-        {
-            public int Id { get; set; }
-            public string UserName { get; set; } = default!;
-            public string? EmployeeCode { get; set; }
-            public string? RoleCode { get; set; }
-            public string? Email { get; set; }
-        }
+
     }
 }

@@ -93,7 +93,7 @@ public sealed class DeleteEmployeeCommandHandler : IRequestHandler<DeleteEmploye
 
                     await db.CommitAsync(ct);
 
-                var response = ResponseHelper.Success(new DeleteEmployeeCommand.Response { Id = request.Id }, string.Format(CoreResource.Employee_msg_DeleteSuccess, 1));
+                var response = ResponseHelper.Success(new DeleteEmployeeCommand.Response { Id = request.Id }, string.Format(string.Format(CoreResource.crud_deleteSuccess, CoreResource.entity_employee), 1));
                     log.ReturnCode = response.ReturnCode;
                     log.Message = response.Message;
                     UniLogger.Info(JsonConvert.SerializeObject(log));

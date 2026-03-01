@@ -60,7 +60,7 @@ public sealed class DeleteUnitCommandHandler : IRequestHandler<DeleteUnitCommand
                 await dbContext.transaction.CommitAsync(ct);
 
                 var responseData = new DeleteUnitCommand.Response { Success = true, DeletedCount = deletedCount };
-                var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_DeleteSuccess);
+                var response = ResponseHelper.Success(responseData, CoreResource.crud_deleteSuccess);
 
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
@@ -78,7 +78,7 @@ public sealed class DeleteUnitCommandHandler : IRequestHandler<DeleteUnitCommand
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
-                return ResponseHelper.Error<DeleteUnitCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<DeleteUnitCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

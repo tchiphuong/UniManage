@@ -200,7 +200,7 @@ namespace UniManage.Core.Utilities
         /// <param name="filters">Additional custom filters (optional)</param>
         /// <param name="defaultSortColumn">Default sort column name (optional, auto-detect CreatedAt if not provided)</param>
         /// <returns>Paged result with items and paging info</returns>
-        public static async Task<PagedResult<TResult>> QueryPagingAsync<TResult>(this DbContext dbContext, StringBuilder baseQuery, BaseQuery request, Dictionary<string, object?>? filters = null, string? defaultSortColumn = null) where TResult : class
+        public static async Task<PagedResult<TResult>> QueryPagingAsync<TResult>(this DbContext dbContext, StringBuilder baseQuery, BaseListQuery request, Dictionary<string, object?>? filters = null, string? defaultSortColumn = null) where TResult : class
         {
             // Build WHERE clause from request and custom filters
             filters ??= new Dictionary<string, object?>();
@@ -285,7 +285,7 @@ namespace UniManage.Core.Utilities
         /// <summary>
         /// Execute paginated query with explicit WHERE clause and ORDER BY (Dynamic)
         /// </summary>
-        public static async Task<PagedResult<dynamic>> QueryPagingAsync(DbContext dbContext, string baseQuery, string whereClause, object parameters, BaseQuery request, Type? resultType = null, string? defaultSortColumn = null)
+        public static async Task<PagedResult<dynamic>> QueryPagingAsync(DbContext dbContext, string baseQuery, string whereClause, object parameters, BaseListQuery request, Type? resultType = null, string? defaultSortColumn = null)
         {
             // 1. Validation cơ bản - extract from request
             var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
@@ -374,7 +374,7 @@ namespace UniManage.Core.Utilities
             string baseQuery, 
             string whereClause, 
             object parameters, 
-            BaseQuery request, 
+            BaseListQuery request, 
             string? defaultSortColumn = null) where TResult : class
         {
             var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;

@@ -33,7 +33,7 @@ namespace UniManage.Application.Commands.HR.Attendance
         public CheckOutCommandValidator()
         {
             RuleFor(x => x.EmployeeCode)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
         }
     }
 
@@ -110,7 +110,7 @@ namespace UniManage.Application.Commands.HR.Attendance
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error checking out: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<CheckOutCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<CheckOutCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

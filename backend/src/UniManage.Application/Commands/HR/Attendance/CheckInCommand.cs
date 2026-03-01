@@ -34,7 +34,7 @@ namespace UniManage.Application.Commands.HR.Attendance
         {
             RuleFor(x => x.EmployeeCode)
                 .Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
+                .NotEmpty().WithMessage(CoreResource.validation_required)
                 .MustAsync(async (code, cancel) => await IsEmployeeExistsAsync(code))
                 .WithMessage("Employee not found");
         }
@@ -132,7 +132,7 @@ namespace UniManage.Application.Commands.HR.Attendance
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error checking in: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<CheckInCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<CheckInCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

@@ -61,7 +61,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
                 await dbContext.CommitAsync();
 
                 var responseData = new DeleteDepartmentCommand.Response { Success = true, DeletedCount = rowsAffected };
-                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.Department_msg_DeleteSuccess, rowsAffected));
+                var response = ResponseHelper.Success(responseData, string.Format(string.Format(CoreResource.crud_deleteSuccess, CoreResource.entity_department), rowsAffected));
                 UniLogManager.WriteApiLog(logData);
                 return response;
             }
@@ -69,7 +69,7 @@ public sealed class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepar
             {
                 await dbContext.RollbackAsync();
                 UniLogger.Error($"Error deleting departments: {ex.Message}", ex);
-                var response = ResponseHelper.Error<DeleteDepartmentCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<DeleteDepartmentCommand.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

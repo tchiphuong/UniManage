@@ -1,0 +1,208 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="Microsoft.Data.SqlClient" #>
+<#@ assembly name="Newtonsoft.Json" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Microsoft.Data.SqlClient" #>
+<#@ import namespace="Newtonsoft.Json.Linq" #>
+<#@ output extension=".cs" encoding="utf-8" #>
+<#
+    // =============================================
+    // T4 Template: CorePermission.tt
+    // Auto-generates Function và Action constants
+    // từ bảng sy_functions và sy_actions trong DB
+    // =============================================
+
+    // Đọc config từ appsettings.json
+    string configPath = Host.ResolvePath("..\\appsettings.json");
+    if (!File.Exists(configPath))
+    {
+        throw new FileNotFoundException("Không tìm thấy file appsettings.json tại: " + configPath);
+    }
+
+    var jsonConfig = JObject.Parse(File.ReadAllText(configPath));
+    var dbConfig = jsonConfig["Database"];
+
+    string dbServer = dbConfig["Server"]?.ToString();
+    string dbDatabase = dbConfig["DefaultDatabase"]?.ToString();
+    string dbUser = dbConfig["UserId"]?.ToString();
+    string dbPassword = dbConfig["Password"]?.ToString();
+
+    string connectionString = $"Data Source={dbServer};Initial Catalog={dbDatabase};User ID={dbUser};Password={dbPassword};TrustServerCertificate=True;";
+
+    // Models for Functions and Actions
+    var functions = new List<(string Code, string ResourceKey, string GroupCode)>();
+    var actions = new List<(string Code, string ResourceKey, int Sort)>();
+
+    string errorMessage = "";
+
+    try
+    {
+        using (var conn = new SqlConnection(connectionString))
+        {
+            conn.Open();
+
+            // Query sy_functions
+            using (var cmd = new SqlCommand(@"
+                    SELECT [Code], [ResourceKey], [GroupCode]
+                    FROM [dbo].[sy_functions]
+                    WHERE [IsActive] = 1
+                    ORDER BY [GroupCode], [Code]
+                ", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string code = reader["Code"]?.ToString();
+                    string resourceKey = reader["ResourceKey"]?.ToString();
+                    string groupCode = reader["GroupCode"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(code))
+                    {
+                        functions.Add((code, resourceKey, groupCode));
+                    }
+                }
+            }
+
+            // Query sy_actions
+            using (var cmd2 = new SqlCommand(@"
+                    SELECT [Code], [ResourceKey], [Sort]
+                    FROM [dbo].[sy_actions]
+                    WHERE [IsActive] = 1
+                    ORDER BY [Sort], [Code]
+                ", conn))
+            using (var reader2 = cmd2.ExecuteReader())
+            {
+                while (reader2.Read())
+                {
+                    string code = reader2["Code"]?.ToString();
+                    string resourceKey = reader2["ResourceKey"]?.ToString();
+                    int sort = reader2["Sort"] != DBNull.Value ? Convert.ToInt32(reader2["Sort"]) : 0;
+
+                    if (!string.IsNullOrEmpty(code))
+                    {
+                        actions.Add((code, resourceKey, sort));
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        errorMessage = ex.ToString();
+    }
+#>
+namespace UniManage.Core.Constant
+{
+<#
+    if (!string.IsNullOrEmpty(errorMessage))
+    {
+#>
+    /*
+        ERROR GENERATING CONSTANTS:
+        <#= errorMessage #>
+    */
+<#
+    }
+#>
+    /// <summary>
+    /// Auto-generated từ bảng sy_functions trong database.
+    /// Không chỉnh sửa thủ công — chạy lại T4 template để cập nhật.
+    /// </summary>
+    public static class CoreFunction
+    {
+<#
+    foreach (var func in functions)
+    {
+        var constName = ToPascalCase(func.Code);
+#>
+        /// <summary>
+        /// <#= func.ResourceKey #>
+        /// </summary>
+        public const string <#= constName #> = "<#= func.Code #>";
+
+<#
+    }
+#>
+        public static readonly List<(string Code, string ResourceKey)> All = new List<(string, string)>
+        {
+<#
+    foreach (var func in functions)
+    {
+#>
+            ("<#= func.Code #>", "<#= func.ResourceKey #>"),
+<#
+    }
+#>
+        };
+    }
+
+    /// <summary>
+    /// Auto-generated từ bảng sy_actions trong database.
+    /// Không chỉnh sửa thủ công — chạy lại T4 template để cập nhật.
+    /// </summary>
+    public static class CoreAction
+    {
+<#
+    foreach (var action in actions)
+    {
+        var constName = ToPascalCase(action.Code);
+#>
+        /// <summary>
+        /// <#= action.ResourceKey #>
+        /// </summary>
+        public const string <#= constName #> = "<#= action.Code #>";
+
+<#
+    }
+#>
+        public static readonly List<(string Code, string ResourceKey)> All = new List<(string, string)>
+        {
+<#
+    foreach (var action in actions)
+    {
+#>
+            ("<#= action.Code #>", "<#= action.ResourceKey #>"),
+<#
+    }
+#>
+        };
+    }
+}
+<#+
+    private string ToPascalCase(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        
+        var words = text.Split(new[] { '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var sb = new StringBuilder();
+        
+        foreach (var word in words)
+        {
+            if (word.Length > 0)
+            {
+                sb.Append(char.ToUpper(word[0]));
+                if (word.Length > 1)
+                {
+                    sb.Append(word.Substring(1).ToLower());
+                }
+            }
+        }
+        
+        var result = sb.ToString();
+        if (string.IsNullOrEmpty(result)) return text;
+        
+        if (char.IsDigit(result[0]))
+        {
+            return "_" + result;
+        }
+        
+        return result;
+    }
+#>

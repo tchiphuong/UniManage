@@ -10,7 +10,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.Inventory.ItemDetails
 {
-    public sealed class GetItemDetailListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetItemDetailListQuery.Result>>>
+    public sealed class GetItemDetailListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetItemDetailListQuery.Result>>>
     {
         public string? ItemCode { get; set; }
         public int? Type { get; set; }
@@ -148,7 +148,7 @@ namespace UniManage.Application.Queries.Inventory.ItemDetails
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

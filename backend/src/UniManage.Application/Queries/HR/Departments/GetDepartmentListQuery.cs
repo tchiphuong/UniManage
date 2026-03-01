@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.HR.Departments;
 
 #region Query
 
-public sealed class GetDepartmentListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetDepartmentListQuery.Response>>>
+public sealed class GetDepartmentListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetDepartmentListQuery.Response>>>
 {
     public sealed record Response
     {
@@ -77,7 +77,7 @@ public sealed class GetDepartmentListQueryHandler : IRequestHandler<GetDepartmen
 
                 var result = await dbContext.QueryPagingAsync<GetDepartmentListQuery.Response>(query, request);
 
-                var response = ResponseHelper.Success(result, CoreResource.Common_msg_Success);
+                var response = ResponseHelper.Success(result, CoreResource.common_success);
 
                 logData.Result = result;
                 logData.ReturnCode = response.ReturnCode;
@@ -88,7 +88,7 @@ public sealed class GetDepartmentListQueryHandler : IRequestHandler<GetDepartmen
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving departments: {ex.Message}", ex);
-                var response = ResponseHelper.Error<PagedResult<GetDepartmentListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<PagedResult<GetDepartmentListQuery.Response>>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

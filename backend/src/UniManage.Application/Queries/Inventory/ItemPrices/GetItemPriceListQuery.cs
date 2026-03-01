@@ -10,7 +10,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.Inventory.ItemPrices
 {
-    public sealed class GetItemPriceListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetItemPriceListQuery.Result>>>
+    public sealed class GetItemPriceListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetItemPriceListQuery.Result>>>
     {
         public string? ItemCode { get; set; }
         public DateTime? FromDate { get; set; }
@@ -162,7 +162,7 @@ namespace UniManage.Application.Queries.Inventory.ItemPrices
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

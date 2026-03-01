@@ -62,14 +62,14 @@ public sealed class CreateEmployeeCommandValidator : AbstractValidator<CreateEmp
             .Cascade(CascadeMode.Stop)
             .MaximumLength(100).WithMessage("Email must not exceed 100 characters")
             .Must(email => string.IsNullOrEmpty(email) || ValidationHelper.IsValidEmail(email))
-            .WithMessage(CoreResource.Validation_msg_InvalidEmail)
+            .WithMessage(CoreResource.validation_invalidEmail)
             .MustAsync(async (email, cancel) => string.IsNullOrEmpty(email) || !await IsEmailExistsAsync(email))
             .WithMessage("Email already exists");
 
         RuleFor(x => x.PhoneNumber)
             .MaximumLength(20).WithMessage("Phone number must not exceed 20 characters")
             .Must(phone => string.IsNullOrEmpty(phone) || ValidationHelper.IsValidPhoneNumber(phone))
-            .WithMessage(CoreResource.Validation_msg_InvalidPhone);
+            .WithMessage(CoreResource.validation_invalidPhone);
 
         RuleFor(x => x.Gender)
             .MaximumLength(10).WithMessage("Gender must not exceed 10 characters");
@@ -215,7 +215,7 @@ public sealed class CreateEmployeeCommandHandler : IRequestHandler<CreateEmploye
                 await dbContext.transaction.CommitAsync(ct);
 
             var responseData = new CreateEmployeeCommand.Response { Id = id, EmployeeCode = request.EmployeeCode };
-            var response = ResponseHelper.Success(responseData, CoreResource.Employee_msg_CreateSuccess);
+            var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_employee));
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;
                 UniLogManager.WriteApiLog(log);
@@ -231,7 +231,7 @@ public sealed class CreateEmployeeCommandHandler : IRequestHandler<CreateEmploye
                 log.ReturnCode = 500;
                 UniLogManager.WriteApiLog(log);
 
-                return ResponseHelper.Error<CreateEmployeeCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<CreateEmployeeCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

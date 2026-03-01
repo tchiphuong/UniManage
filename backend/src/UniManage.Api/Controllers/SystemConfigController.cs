@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using UniManage.Application.Commands.System;
-using UniManage.Application.Queries.System;
+using UniManage.Application.Commands.System.SystemConfigs;
+using UniManage.Application.Queries.System.SystemConfigs;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
 

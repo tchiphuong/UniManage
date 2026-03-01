@@ -84,7 +84,7 @@ export default function LoginPage() {
                     <LanguageSwitcher />
                 </div>
 
-                <div className="w-full max-w-[400px] space-y-8">
+                <div className="w-full max-w-100 space-y-8">
                     <div className="text-center space-y-2">
                         <h1 className="text-3xl font-bold tracking-tight text-foreground">
                             {t("loginTitle")}
@@ -92,7 +92,7 @@ export default function LoginPage() {
                         <p className="text-default-500">{t("loginSubtitle")}</p>
                     </div>
 
-                    <Form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+                    <Form className="flex flex-col gap-6" onSubmit={handleSubmit} validationBehavior="aria">
                         <div className="space-y-4">
                             <TextField
                                 className="flex flex-col gap-1.5"
@@ -113,7 +113,21 @@ export default function LoginPage() {
                                     className="flex w-full px-3 py-2 bg-default-100 hover:bg-default-200 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 transition-all border-none data-[invalid=true]:ring-danger-500 data-[invalid=true]:bg-danger-50"
                                     placeholder={t("usernamePlaceholder")}
                                 />
-                                <FieldError className="text-tiny text-danger-500" />
+                                <FieldError className="text-tiny text-danger-500">
+                                    {(validationErrors) => {
+                                        if (typeof validationErrors === "string") return validationErrors;
+                                        if (Array.isArray(validationErrors)) return validationErrors.join(", ");
+                                        if (validationErrors && typeof validationErrors === "object") {
+                                            if ("validationErrors" in (validationErrors as any)) {
+                                                return ((validationErrors as any).validationErrors as string[])?.join(", ");
+                                            }
+                                            if ("messages" in (validationErrors as any)) {
+                                                return ((validationErrors as any).messages as string[])?.join(", ");
+                                            }
+                                        }
+                                        return String(validationErrors || "");
+                                    }}
+                                </FieldError>
                             </TextField>
 
                             <div className="space-y-1">
@@ -136,7 +150,22 @@ export default function LoginPage() {
                                         className="flex w-full px-3 py-2 bg-default-100 hover:bg-default-200 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 transition-all border-none data-[invalid=true]:ring-danger-500 data-[invalid=true]:bg-danger-50"
                                         placeholder={t("passwordPlaceholder")}
                                     />
-                                    <FieldError className="text-tiny text-danger-500" />
+                                    <FieldError className="text-tiny text-danger-500">
+                                        {(validationErrors) => {
+                                            if (typeof validationErrors === "string") return validationErrors;
+                                            if (Array.isArray(validationErrors)) return validationErrors.join(", ");
+                                            if (validationErrors && typeof validationErrors === "object") {
+                                                if ("validationErrors" in (validationErrors as any)) {
+                                                    return ((validationErrors as any).validationErrors as string[])?.join(", ");
+                                                }
+                                                // Fallback for FieldErrorModel or other object types
+                                                if ("messages" in (validationErrors as any)) {
+                                                    return ((validationErrors as any).messages as string[])?.join(", ");
+                                                }
+                                            }
+                                            return String(validationErrors || "");
+                                        }}
+                                    </FieldError>
                                 </TextField>
 
                                 <div className="flex items-center gap-2 pt-1">
@@ -159,7 +188,11 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        {error && <ErrorMessage>{error}</ErrorMessage>}
+                        {error && (
+                            <div className="p-3 rounded-lg bg-danger-50 text-danger-600 text-sm">
+                                {typeof error === "string" ? error : JSON.stringify(error)}
+                            </div>
+                        )}
 
                         <Button
                             type="submit"

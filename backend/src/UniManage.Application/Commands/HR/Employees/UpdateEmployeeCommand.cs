@@ -59,7 +59,7 @@ public sealed class UpdateEmployeeCommandValidator : AbstractValidator<UpdateEmp
             .Cascade(CascadeMode.Stop)
             .MaximumLength(100).WithMessage("Email must not exceed 100 characters")
             .Must(email => string.IsNullOrEmpty(email) || ValidationHelper.IsValidEmail(email))
-            .WithMessage(CoreResource.Validation_msg_InvalidEmail)
+            .WithMessage(CoreResource.validation_invalidEmail)
             .MustAsync(async (command, email, cancel) =>
                 string.IsNullOrEmpty(email) || !await IsEmailTakenByAnotherAsync(email, command.Id))
             .WithMessage("Email already exists");
@@ -67,7 +67,7 @@ public sealed class UpdateEmployeeCommandValidator : AbstractValidator<UpdateEmp
         RuleFor(x => x.PhoneNumber)
             .MaximumLength(20).WithMessage("Phone number must not exceed 20 characters")
             .Must(phone => string.IsNullOrEmpty(phone) || ValidationHelper.IsValidPhoneNumber(phone))
-            .WithMessage(CoreResource.Validation_msg_InvalidPhone);
+            .WithMessage(CoreResource.validation_invalidPhone);
 
         RuleFor(x => x.Gender)
             .MaximumLength(10).WithMessage("Gender must not exceed 10 characters");
@@ -202,7 +202,7 @@ public sealed class UpdateEmployeeCommandHandler : IRequestHandler<UpdateEmploye
 
                 await dbContext.transaction.CommitAsync(ct);
 
-                var response = ResponseHelper.Success(new UpdateEmployeeCommand.Response { Id = request.Id }, CoreResource.Employee_msg_UpdateSuccess);
+                var response = ResponseHelper.Success(new UpdateEmployeeCommand.Response { Id = request.Id }, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_employee));
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;
                 UniLogManager.WriteApiLog(log);
@@ -218,7 +218,7 @@ public sealed class UpdateEmployeeCommandHandler : IRequestHandler<UpdateEmploye
                 log.ReturnCode = 500;
                 UniLogManager.WriteApiLog(log);
 
-                return ResponseHelper.Error<UpdateEmployeeCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<UpdateEmployeeCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

@@ -1,9 +1,12 @@
+using Dapper;
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
 
 namespace UniManage.Application.Queries.HR.Attendance
@@ -12,22 +15,17 @@ namespace UniManage.Application.Queries.HR.Attendance
 
     public sealed class GetAttendanceByIdQuery : BaseQuery, IRequest<ApiResponse<GetAttendanceByIdQuery.Response>>
     {
-        public int Id { get; init; }
+        public long Id { get; init; }
 
-        public sealed record Response
+        public sealed class Response
         {
-            public int Id { get; set; }
-            public string EmployeeCode { get; set; } = default!;
-            public string EmployeeName { get; set; } = default!;
+            public long Id { get; set; }
+            public long EmployeeId { get; set; }
             public DateTime AttendanceDate { get; set; }
             public TimeSpan? CheckInTime { get; set; }
             public TimeSpan? CheckOutTime { get; set; }
-            public string Status { get; set; } = default!;
-            public string? CreatedBy { get; set; }
-            public DateTime CreatedAt { get; set; }
-            public string? UpdatedBy { get; set; }
-            public DateTime? UpdatedAt { get; set; }
-            public byte[] DataRowVersion { get; set; } = default!;
+            public byte Status { get; set; }
+            public string? Note { get; set; }
         }
     }
 
@@ -39,7 +37,7 @@ namespace UniManage.Application.Queries.HR.Attendance
     {
         public GetAttendanceByIdQueryValidator()
         {
-            RuleFor(x => x.Id).GreaterThan(0).WithMessage(CoreResource.Validation_msg_Required);
+            RuleFor(x => x.Id).GreaterThan(0);
         }
     }
 
@@ -53,6 +51,8 @@ namespace UniManage.Application.Queries.HR.Attendance
         {
             var log = new CoreLogModel(request.HeaderInfo)
             {
+                Method = nameof(GetAttendanceByIdQueryHandler),
+                Path = "Attendance",
                 Parameter = new List<CoreParamModel>
                 {
                     new CoreParamModel(nameof(request.Id), request.Id)
@@ -63,43 +63,34 @@ namespace UniManage.Application.Queries.HR.Attendance
             {
                 try
                 {
-                    var attendance = await dbContext.QueryFirstOrDefaultAsync<GetAttendanceByIdQuery.Response>(
-                        @"SELECT a.Id, a.EmployeeCode, e.FullName AS EmployeeName, a.AttendanceDate,
-                                 a.CheckInTime, a.CheckOutTime, a.Status,
-                                 a.CreatedBy, a.CreatedAt, a.UpdatedBy, a.UpdatedAt, a.DataRowVersion
-                          FROM hr_attendance a
-                          INNER JOIN hr_employees e ON a.EmployeeCode = e.EmployeeCode
-                          WHERE a.Id = @Id",
-                        new { request.Id },
-                        ct);
+                    var sql = "SELECT Id, EmployeeId, AttendanceDate, CheckInTime, CheckOutTime, Status, Note FROM hr_attendances WHERE Id = @Id;";
+                    var item = await dbContext.QueryFirstOrDefaultAsync<GetAttendanceByIdQuery.Response>(sql, new { request.Id });
 
-                    if (attendance == null)
+                    if (item == null)
                     {
-                        var notFoundResponse = ResponseHelper.NotFound<GetAttendanceByIdQuery.Response>(CoreResource.Common_msg_NotFound);
-                        log.ReturnCode = notFoundResponse.ReturnCode;
-                        log.Message = notFoundResponse.Message;
+                        var notFound = ResponseHelper.NotFound<GetAttendanceByIdQuery.Response>(string.Format(CoreResource.crud_notFound, "Attendance"));
+                        log.ReturnCode = notFound.ReturnCode;
+                        log.Message = notFound.Message;
                         UniLogManager.WriteApiLog(log);
-                        return notFoundResponse;
+                        return notFound;
                     }
 
-                    var response = ResponseHelper.Success(attendance, CoreResource.Common_msg_GetSuccess);
-                    log.Result = attendance;
+                    var response = ResponseHelper.Success(item, string.Format(CoreResource.crud_getSuccess, "Attendance"));
+
+                    log.Result = response;
                     log.ReturnCode = response.ReturnCode;
+                    log.Message = response.Message;
                     UniLogManager.WriteApiLog(log);
 
                     return response;
                 }
                 catch (Exception ex)
                 {
-                    UniLogger.Error($"Error getting attendance: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<GetAttendanceByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
-
-                    log.Message = ex.ToString();
                     log.IsException = 1;
-                    log.ReturnCode = response.ReturnCode;
+                    log.Message = ex.Message;
+                    log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                     UniLogManager.WriteApiLog(log);
-
-                    return response;
+                    return ResponseHelper.Error<GetAttendanceByIdQuery.Response>(CoreResource.common_exceptionOccurred);
                 }
             }
         }

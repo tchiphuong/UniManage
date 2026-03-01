@@ -32,13 +32,13 @@ namespace UniManage.Application.Commands.HR.Salaries
         public UpdateSalaryCommandValidator()
         {
             RuleFor(x => x.Id)
-                .GreaterThan(0).WithMessage(CoreResource.Validation_msg_Required);
+                .GreaterThan(0).WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.SalaryAmount)
                 .GreaterThan(0).WithMessage("Salary amount must be greater than 0");
 
             RuleFor(x => x.DataRowVersion)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
         }
     }
 
@@ -71,7 +71,7 @@ namespace UniManage.Application.Commands.HR.Salaries
                     if (currentSalary == null)
                     {
                         await dbContext.RollbackAsync();
-                        return ResponseHelper.NotFound<UpdateSalaryCommand.Response>(CoreResource.Common_msg_NotFound);
+                        return ResponseHelper.NotFound<UpdateSalaryCommand.Response>(CoreResource.common_notFound);
                     }
 
                     var rowsAffected = await dbContext.ExecuteAsync(
@@ -113,7 +113,7 @@ namespace UniManage.Application.Commands.HR.Salaries
                     await dbContext.CommitAsync();
 
                     var responseData = new UpdateSalaryCommand.Response { Success = true, Id = request.Id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_UpdateSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
 
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -124,7 +124,7 @@ namespace UniManage.Application.Commands.HR.Salaries
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error updating salary: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<UpdateSalaryCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<UpdateSalaryCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

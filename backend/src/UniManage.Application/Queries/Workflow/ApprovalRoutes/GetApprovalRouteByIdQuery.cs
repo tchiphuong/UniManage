@@ -119,7 +119,7 @@ namespace UniManage.Application.Queries.Workflow.ApprovalRoutes
                         level.Approvers = approvers.ToList();
                     }
 
-                    var response = ResponseHelper.Success(route, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(route, CoreResource.crud_getSuccess);
 
                     log.Result = route;
                     log.ReturnCode = response.ReturnCode;

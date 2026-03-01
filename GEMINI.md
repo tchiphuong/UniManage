@@ -174,6 +174,16 @@ Query: Get/List/FindNounQuery (ListUsersQuery).
 
 1 Handler ↔ 1 Command/Query.
 
+**🔥 QUY TẮC BẮT BUỘC: ĐỒNG BỘ INSTRUCTION KHI THAY ĐỔI QUY TẮC**
+
+Khi có bất kỳ thay đổi nào ảnh hưởng đến quy tắc chung (class Common, naming convention, pattern mới, utility mới, cấu trúc project, ...) PHẢI cập nhật đủ cả 3 file instruction:
+
+1. **SKILL.md**: `.agent/skills/unimanage-backend/SKILL.md` — cho Antigravity
+2. **GEMINI.md**: `GEMINI.md` — cho Gemini trong VS Code
+3. **copilot-instructions.md**: `.github/copilot-instructions.md` — cho GitHub Copilot
+
+> **Lý do**: 3 AI tools cùng lúc, nếu không đồng bộ → mỗi tool sinh code theo pattern khác nhau → không nhất quán, gây lỗi.
+
 **🔥 QUY TẮC KẾ THỪA (BẮT BUỘC):**
 
 **Command PHẢI kế thừa BaseCommand:**
@@ -205,22 +215,38 @@ public sealed class CreateUserCommand : IRequest<ApiResponse<Response>>
 }
 ```
 
-**Query PHẢI kế thừa BaseQuery:**
+**Query PHẢI kế thừa đúng base class:**
 
-- BaseQuery cung cấp HeaderInfo + Keyword + PageIndex + PageSize + SortBy + SortDirection
-- Không cần khai báo lại pagination properties
-- PageIndex mặc định = 1, PageSize mặc định = 20
+- **`BaseListQuery`**: Query trả về `PagedResult` (danh sách + phân trang)
+    - Cung cấp `HeaderInfo` + `Keyword` + `PageIndex` + `PageSize` + `Offset` + `SortBy` + `SortDirection` + `SearchFields`
+    - PageIndex mặc định = 1, PageSize mặc định = 20
+- **`BaseQuery`**: Query đơn (get by id/code, check exists, combobox, permissions...)
+    - Chỉ cung cấp `HeaderInfo` cho logging context
+
+**BaseQuery hierarchy (UniManage.Model/Common/BaseModel.cs):**
+
+```
+BaseQuery          → chỉ có HeaderInfo
+  └── BaseListQuery  → thêm Keyword, SearchFields, PageIndex, PageSize, Offset, SortBy, SortDirection
+```
 
 ```csharp
-// ✅ ĐÚNG - Query kế thừa BaseQuery
-public sealed class ListUsersQuery : BaseQuery, IRequest<PagedResponse<UserListItemDto>>
+// ✅ ĐÚNG - List Query kế thừa BaseListQuery
+public sealed class ListUsersQuery : BaseListQuery, IRequest<PagedResponse<UserListItemDto>>
 {
-    // HeaderInfo, Keyword, PageIndex, PageSize, SortBy, SortDirection inherited from BaseQuery
+    // HeaderInfo, Keyword, PageIndex, PageSize, Offset, SortBy, SortDirection inherited from BaseListQuery
     public byte? Status { get; init; }
     public string? DepartmentCode { get; init; }
 }
 
-// ❌ SAI - Thiếu BaseQuery và duplicate pagination logic
+// ✅ ĐÚNG - Single-item Query kế thừa BaseQuery
+public sealed class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<GetUserByIdQuery.Response>>
+{
+    // Chỉ HeaderInfo inherited từ BaseQuery
+    public long Id { get; init; }
+}
+
+// ❌ SAI - List Query thiếu BaseListQuery
 public sealed class ListUsersQuery : IRequest<PagedResponse<UserListItemDto>>
 {
     public string? Keyword { get; init; }
@@ -229,12 +255,13 @@ public sealed class ListUsersQuery : IRequest<PagedResponse<UserListItemDto>>
 }
 ```
 
-**BaseCommand/BaseQuery location:**
+**BaseCommand/BaseQuery/BaseListQuery location:**
 
 - Namespace: `UniManage.Model.Common`
 - File: `UniManage.Model/Common/BaseModel.cs`
-- BaseCommand extends BaseModel (has HeaderInfo with [JsonIgnore])
-- BaseQuery has HeaderInfo + pagination properties
+- `BaseCommand` extends `BaseModel` (has HeaderInfo with [JsonIgnore])
+- `BaseQuery` chỉ có HeaderInfo (cho get by id/code, check exists, combobox)
+- `BaseListQuery` kế thừa `BaseQuery` + thêm pagination/search/sort properties
 
 **HeaderInfo usage in Handlers:**
 

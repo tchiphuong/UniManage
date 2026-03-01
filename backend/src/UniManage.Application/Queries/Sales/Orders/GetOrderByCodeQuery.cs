@@ -106,7 +106,7 @@ namespace UniManage.Application.Queries.Sales.Orders
                     var items = await dbContext.QueryAsync<GetOrderByCodeQuery.OrderItemDto>(itemsSql, new { OrderCode = request.OrderCode }, ct);
                     order.Items = items.ToList();
 
-                    var response = ResponseHelper.Success(order, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(order, CoreResource.crud_getSuccess);
 
                     log.Result = order;
                     log.ReturnCode = response.ReturnCode;

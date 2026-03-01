@@ -12,7 +12,7 @@ namespace UniManage.Application.Queries.System.User;
 
 #region Query
 
-public sealed class GetUserListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetUserListQuery.Response>>>
+public sealed class GetUserListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetUserListQuery.Response>>>
 {
     public string? Status { get; set; }
 
@@ -22,7 +22,6 @@ public sealed class GetUserListQuery : BaseQuery, IRequest<ApiResponse<PagedResu
         public string Username { get; set; } = default!;
         public string EmployeeCode { get; set; } = default!;
         public string RoleCode { get; set; } = default!;
-        public string? Email { get; set; }
         public string Status { get; set; } = default!;
         public DateTime CreatedAt { get; set; }
     }
@@ -94,7 +93,7 @@ public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, 
 
                 // Apply pagination
                 var items = await query
-                    .Skip((request.PageIndex - 1) * request.PageSize)
+                    .Skip(request.Offset)
                     .Take(request.PageSize)
                     .Select(u => new GetUserListQuery.Response
                     {
@@ -102,7 +101,6 @@ public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, 
                         Username = u.Username,
                         EmployeeCode = u.EmployeeCode ?? string.Empty,
                         RoleCode = u.RoleCode ?? string.Empty,
-                        Email = u.Email,
                         Status = u.Status,
                         CreatedAt = u.CreatedAt
                     })
@@ -120,7 +118,7 @@ public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, 
                     }
                 };
 
-                var response = ResponseHelper.Success(result, CoreResource.User_msg_ListSuccess);
+                var response = ResponseHelper.Success(result, string.Format(CoreResource.crud_listSuccess, CoreResource.entity_user));
 
                 logData.Result = result;
                 logData.ReturnCode = response.ReturnCode;
@@ -132,7 +130,7 @@ public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, 
             {
                 UniLogger.Error($"Error retrieving users list: {ex.Message}", ex);
                 
-                var response = ResponseHelper.Error<PagedResult<GetUserListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<PagedResult<GetUserListQuery.Response>>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.Message;
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

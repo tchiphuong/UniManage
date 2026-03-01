@@ -35,16 +35,16 @@ namespace UniManage.Application.Commands.HR.Attendance
         public UpdateAttendanceCommandValidator()
         {
             RuleFor(x => x.Id)
-                .GreaterThan(0).WithMessage(CoreResource.Validation_msg_Required);
+                .GreaterThan(0).WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.AttendanceDate)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.Status)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.DataRowVersion)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
 
             RuleFor(x => x.CheckOutTime)
                 .GreaterThan(x => x.CheckInTime)
@@ -105,7 +105,7 @@ namespace UniManage.Application.Commands.HR.Attendance
                     await dbContext.CommitAsync();
 
                     var responseData = new UpdateAttendanceCommand.Response { Success = true, Id = request.Id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_UpdateSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
 
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -116,7 +116,7 @@ namespace UniManage.Application.Commands.HR.Attendance
                     await dbContext.RollbackAsync();
                     UniLogger.Error($"Error updating attendance: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<UpdateAttendanceCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<UpdateAttendanceCommand.Response>(CoreResource.common_exceptionOccurred);
                     log.Message = ex.ToString();
                     log.IsException = 1;
                     log.ReturnCode = response.ReturnCode;

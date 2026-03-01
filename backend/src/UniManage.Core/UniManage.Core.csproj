@@ -79,6 +79,10 @@
       <CustomToolNamespace></CustomToolNamespace>
       <LastGenOutput>CoreLanguage.cs</LastGenOutput>
     </None>
+    <None Update="Constant\CorePermission.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CorePermission.cs</LastGenOutput>
+    </None>
     <None Update="Database\DatabaseModels.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>DatabaseModels.cs</LastGenOutput>
@@ -122,6 +126,11 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>CoreLanguage.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Constant\CorePermission.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CorePermission.tt</DependentUpon>
     </Compile>
     <Compile Update="Database\DatabaseModels.cs">
       <DesignTime>True</DesignTime>

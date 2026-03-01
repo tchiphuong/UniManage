@@ -13,6 +13,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
 
     public sealed class GetWorkShiftComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
     {
+        public string? Keyword { get; set; }
     }
 
     #endregion
@@ -86,7 +87,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting work shift combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

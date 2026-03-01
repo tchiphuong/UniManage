@@ -73,7 +73,7 @@ namespace UniManage.Application.Queries.Master.Countries
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting country combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
             }
         }
 

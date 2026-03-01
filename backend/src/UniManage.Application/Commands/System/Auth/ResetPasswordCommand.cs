@@ -130,7 +130,7 @@ namespace UniManage.Application.Commands.System.Auth
                         await dbContext.CommitAsync();
 
                         UniLogger.Info($"[ResetPassword] Password reset successfully for user: {tokenData.Username}");
-                        return ResponseHelper.Success(true, CoreResource.Auth_msg_PasswordReset);
+                        return ResponseHelper.Success(true, CoreResource.auth_passwordReset);
                     }
                     catch
                     {

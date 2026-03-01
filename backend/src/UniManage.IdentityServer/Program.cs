@@ -17,14 +17,18 @@ UniManage.Core.Logging.UniLogManager.Initialize(builder.Configuration["AppSettin
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
-// Add IdentityServer with In-Memory stores (Simplified)
+// Register Identity User Repository
+builder.Services.AddScoped<IIdentityUserRepository, IdentityUserRepository>();
+
+// Add IdentityServer with Dapper stores
 builder.Services.AddIdentityServer(options =>
     {
         options.EmitStaticAudienceClaim = true;
     })
-    .AddInMemoryIdentityResources(Config.IdentityResources)
-    .AddInMemoryApiScopes(Config.ApiScopes)
-    .AddInMemoryClients(Config.Clients)
+    .AddClientStore<DapperClientStore>()
+    .AddResourceStore<DapperResourceStore>()
+    .AddPersistedGrantStore<DapperPersistedGrantStore>()
+    .AddDeviceFlowStore<DapperDeviceFlowStore>()
     .AddProfileService<CustomProfileService>()
     .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>()
     .AddDeveloperSigningCredential();

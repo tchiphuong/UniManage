@@ -31,7 +31,7 @@ namespace UniManage.Api.Middleware
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.ContentType = "application/json; charset=utf-8";
 
-                var response = ResponseHelper.Error<object>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<object>(CoreResource.common_exceptionOccurred);
 
                 var json = JsonConvert.SerializeObject(response);
                 await context.Response.WriteAsync(json, Encoding.UTF8);

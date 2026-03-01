@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.HR.Salaries
 {
     #region Query
 
-    public sealed class GetSalaryListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetSalaryListQuery.Response>>>
+    public sealed class GetSalaryListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetSalaryListQuery.Response>>>
     {
         public string? EmployeeCode { get; set; }
 
@@ -89,7 +89,7 @@ namespace UniManage.Application.Queries.HR.Salaries
 
                     var result = await dbContext.QueryPagingAsync<GetSalaryListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -100,7 +100,7 @@ namespace UniManage.Application.Queries.HR.Salaries
                 catch (Exception ex)
                 {
                     UniLogger.Error($"Error retrieving salaries: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<PagedResult<GetSalaryListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<PagedResult<GetSalaryListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
                     log.IsException = 1;

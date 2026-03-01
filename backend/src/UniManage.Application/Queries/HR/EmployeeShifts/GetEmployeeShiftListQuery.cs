@@ -10,7 +10,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.HR.EmployeeShifts
 {
-    public sealed class GetEmployeeShiftListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetEmployeeShiftListQuery.Result>>>
+    public sealed class GetEmployeeShiftListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetEmployeeShiftListQuery.Result>>>
     {
         public string? EmployeeCode { get; set; }
         public string? WorkShiftCode { get; set; }
@@ -185,7 +185,7 @@ namespace UniManage.Application.Queries.HR.EmployeeShifts
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

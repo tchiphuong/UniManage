@@ -10,7 +10,7 @@ using UniManage.Resource;
 
 namespace UniManage.Application.Queries.Workflow.ApprovalRoutes
 {
-    public sealed class GetApprovalRouteListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetApprovalRouteListQuery.Result>>>
+    public sealed class GetApprovalRouteListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetApprovalRouteListQuery.Result>>>
     {
         public string? RequestTypeKey { get; set; }
 
@@ -129,7 +129,7 @@ namespace UniManage.Application.Queries.Workflow.ApprovalRoutes
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;

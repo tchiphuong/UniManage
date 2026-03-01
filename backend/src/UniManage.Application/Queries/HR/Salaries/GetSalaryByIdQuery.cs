@@ -36,7 +36,7 @@ namespace UniManage.Application.Queries.HR.Salaries
     {
         public GetSalaryByIdQueryValidator()
         {
-            RuleFor(x => x.Id).GreaterThan(0).WithMessage(CoreResource.Validation_msg_Required);
+            RuleFor(x => x.Id).GreaterThan(0).WithMessage(CoreResource.validation_required);
         }
     }
 
@@ -71,14 +71,14 @@ namespace UniManage.Application.Queries.HR.Salaries
 
                     if (salary == null)
                     {
-                        var notFoundResponse = ResponseHelper.NotFound<GetSalaryByIdQuery.Response>(CoreResource.Common_msg_NotFound);
+                        var notFoundResponse = ResponseHelper.NotFound<GetSalaryByIdQuery.Response>(CoreResource.common_notFound);
                         log.ReturnCode = notFoundResponse.ReturnCode;
                         log.Message = notFoundResponse.Message;
                         UniLogManager.WriteApiLog(log);
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(salary, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(salary, CoreResource.crud_getSuccess);
                     log.Result = salary;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -88,7 +88,7 @@ namespace UniManage.Application.Queries.HR.Salaries
                 catch (Exception ex)
                 {
                     UniLogger.Error($"Error getting salary: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<GetSalaryByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<GetSalaryByIdQuery.Response>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
                     log.IsException = 1;

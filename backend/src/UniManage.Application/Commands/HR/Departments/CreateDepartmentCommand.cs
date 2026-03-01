@@ -41,22 +41,22 @@ public sealed class CreateDepartmentCommandValidator : AbstractValidator<CreateD
     {
         RuleFor(x => x.Code)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-            .MaximumLength(50).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 50))
-            .Matches("^[A-Z0-9]+$").WithMessage(CoreResource.Validation_msg_OnlyNumber)
+            .NotEmpty().WithMessage(CoreResource.validation_required)
+            .MaximumLength(50).WithMessage(string.Format(CoreResource.validation_maxLength, 50))
+            .Matches("^[A-Z0-9]+$").WithMessage(CoreResource.validation_onlyNumbers)
             .MustAsync(async (code, cancel) => !await IsCodeExistsAsync(code))
-            .WithMessage(CoreResource.Validation_msg_AlreadyExists);
+            .WithMessage(CoreResource.validation_alreadyExists);
 
         RuleFor(x => x.NameVi)
-            .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-            .MaximumLength(200).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 200));
+            .NotEmpty().WithMessage(CoreResource.validation_required)
+            .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
 
         RuleFor(x => x.NameEn)
-            .NotEmpty().WithMessage(CoreResource.Validation_msg_Required)
-            .MaximumLength(200).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 200));
+            .NotEmpty().WithMessage(CoreResource.validation_required)
+            .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
 
         RuleFor(x => x.Description)
-            .MaximumLength(500).WithMessage(string.Format(CoreResource.Validation_msg_MaxLength, 500));
+            .MaximumLength(500).WithMessage(string.Format(CoreResource.validation_maxLength, 500));
     }
 
     private static async Task<bool> IsCodeExistsAsync(string code)
@@ -111,7 +111,7 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
 
                 await dbContext.CommitAsync();
 
-                var response = ResponseHelper.Success(new CreateDepartmentCommand.Response { Id = id, Code = request.Code }, CoreResource.Department_msg_CreateSuccess);
+                var response = ResponseHelper.Success(new CreateDepartmentCommand.Response { Id = id, Code = request.Code }, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_department));
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
 
@@ -122,7 +122,7 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
                 await dbContext.RollbackAsync();
                 UniLogger.Error($"Error creating department: {ex.Message}", ex);
 
-                var response = ResponseHelper.Error<CreateDepartmentCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<CreateDepartmentCommand.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

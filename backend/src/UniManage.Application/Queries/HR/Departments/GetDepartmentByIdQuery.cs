@@ -86,14 +86,14 @@ public sealed class GetDepartmentByIdQueryHandler : IRequestHandler<GetDepartmen
 
                 if (department == null)
                 {
-                    var notFoundResponse = ResponseHelper.NotFound<GetDepartmentByIdQuery.Response>(CoreResource.Common_msg_NotFound);
+                    var notFoundResponse = ResponseHelper.NotFound<GetDepartmentByIdQuery.Response>(CoreResource.common_notFound);
                     logData.ReturnCode = notFoundResponse.ReturnCode;
                     logData.Message = notFoundResponse.Message;
                     UniLogManager.WriteApiLog(logData);
                     return notFoundResponse;
                 }
 
-                var response = ResponseHelper.Success(department, CoreResource.Common_msg_Success);
+                var response = ResponseHelper.Success(department, CoreResource.common_success);
                 logData.Result = department;
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
@@ -103,7 +103,7 @@ public sealed class GetDepartmentByIdQueryHandler : IRequestHandler<GetDepartmen
             catch (Exception ex)
             {
                 UniLogger.Error($"Error retrieving department: {ex.Message}", ex);
-                var response = ResponseHelper.Error<GetDepartmentByIdQuery.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<GetDepartmentByIdQuery.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

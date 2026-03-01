@@ -84,7 +84,7 @@ public sealed class UpdateUnitCommandHandler : IRequestHandler<UpdateUnitCommand
                 {
                     await dbContext.transaction.RollbackAsync(ct);
 
-                    var notFoundResponse = ResponseHelper.NotFound<UpdateUnitCommand.Response>(CoreResource.Common_msg_NotFound);
+                    var notFoundResponse = ResponseHelper.NotFound<UpdateUnitCommand.Response>(CoreResource.common_notFound);
                     log.Result = notFoundResponse;
                     log.ReturnCode = notFoundResponse.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -94,7 +94,7 @@ public sealed class UpdateUnitCommandHandler : IRequestHandler<UpdateUnitCommand
                 await dbContext.transaction.CommitAsync(ct);
 
                 var responseData = new UpdateUnitCommand.Response { Success = true };
-                var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_UpdateSuccess);
+                var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
 
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
@@ -112,7 +112,7 @@ public sealed class UpdateUnitCommandHandler : IRequestHandler<UpdateUnitCommand
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
-                return ResponseHelper.Error<UpdateUnitCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<UpdateUnitCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

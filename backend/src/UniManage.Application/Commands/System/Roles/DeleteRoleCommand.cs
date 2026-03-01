@@ -68,7 +68,7 @@ namespace UniManage.Application.Commands.System.Roles
                     await dbContext.CommitAsync(ct);
 
                     var responseData = new DeleteRoleCommand.Response { DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, CoreResource.Common_msg_DeleteSuccess);
+                    var response = ResponseHelper.Success(responseData, CoreResource.crud_deleteSuccess);
 
                     log.Result = response;
                     log.ReturnCode = response.ReturnCode;

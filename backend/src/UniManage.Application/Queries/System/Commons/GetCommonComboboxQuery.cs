@@ -15,6 +15,7 @@ namespace UniManage.Application.Queries.System.Commons
     public sealed class GetCommonComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
     {
         public string TypeKey { get; init; } = default!;
+        public string? Keyword { get; set; }
     }
 
     #endregion
@@ -26,7 +27,7 @@ namespace UniManage.Application.Queries.System.Commons
         public GetCommonComboboxQueryValidator()
         {
             RuleFor(x => x.TypeKey)
-                .NotEmpty().WithMessage(CoreResource.Validation_msg_Required);
+                .NotEmpty().WithMessage(CoreResource.validation_required);
         }
     }
 
@@ -108,7 +109,7 @@ namespace UniManage.Application.Queries.System.Commons
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting common combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

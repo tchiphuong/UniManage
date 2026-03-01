@@ -12,7 +12,7 @@ namespace UniManage.Application.Queries.System.Menus;
 
 #region Query
 
-public sealed class GetMenuListQuery : BaseQuery, IRequest<ApiResponse<List<GetMenuListQuery.Response>>>
+public sealed class GetMenuListQuery : BaseListQuery, IRequest<ApiResponse<List<GetMenuListQuery.Response>>>
 {
     public sealed class Response
     {
@@ -74,7 +74,8 @@ public sealed class GetMenuListQueryHandler : IRequestHandler<GetMenuListQuery, 
                            INNER JOIN sy_role_permissions rp ON f.Code = rp.FunctionCode
                            INNER JOIN sy_user_roles ur ON rp.RoleCode = ur.RoleCode
                            INNER JOIN sy_users u ON ur.Username = u.Username
-                           WHERE u.Username = @Username";
+                           WHERE u.Username = @Username
+                           ORDER BY m.Id";
 
                 var userMenus = (await dbContext.QueryAsync<GetMenuListQuery.Response>(userMenusSql, new { Username = username }, ct)).ToList();
 
@@ -130,7 +131,17 @@ public sealed class GetMenuListQueryHandler : IRequestHandler<GetMenuListQuery, 
                     }
                 }
 
-                var response = ResponseHelper.Success(rootMenus, CoreResource.Common_msg_GetSuccess);
+                // Sort root menus and children by Id
+                rootMenus = rootMenus.OrderBy(m => m.Id).ToList();
+                foreach (var menu in allMenus)
+                {
+                    if (menu.Children.Any())
+                    {
+                        menu.Children = menu.Children.OrderBy(c => c.Id).ToList();
+                    }
+                }
+
+                var response = ResponseHelper.Success(rootMenus, CoreResource.crud_getSuccess);
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;
@@ -142,7 +153,7 @@ public sealed class GetMenuListQueryHandler : IRequestHandler<GetMenuListQuery, 
             {
                 UniLogger.Error($"Error retrieving menu tree: {ex.Message}", ex);
 
-                var response = ResponseHelper.Error<List<GetMenuListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<List<GetMenuListQuery.Response>>(CoreResource.common_exceptionOccurred);
                 log.IsException = 1;
                 log.Message = ex.Message;
                 log.ReturnCode = response.ReturnCode;

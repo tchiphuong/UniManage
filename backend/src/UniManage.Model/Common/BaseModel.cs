@@ -19,7 +19,8 @@ namespace UniManage.Model.Common
     }
 
     /// <summary>
-    /// Base class for all queries providing common properties
+    /// Base class for single-item or condition-based queries (get by id, get by code, check exists, combobox...)
+    /// Only provides HeaderInfo for logging context
     /// </summary>
     public abstract class BaseQuery
     {
@@ -27,7 +28,13 @@ namespace UniManage.Model.Common
         /// Request header information for logging
         /// </summary>
         public HeaderInfo HeaderInfo { get; set; } = new();
+    }
 
+    /// <summary>
+    /// Base class for list/paged queries providing pagination, search, and sort properties
+    /// </summary>
+    public abstract class BaseListQuery : BaseQuery
+    {
         /// <summary>
         /// Optional keyword for searching
         /// </summary>
@@ -48,6 +55,11 @@ namespace UniManage.Model.Common
         /// Items per page
         /// </summary>
         public int PageSize { get; set; } = 20;
+
+        /// <summary>
+        /// Calculated offset for pagination (skip count)
+        /// </summary>
+        public int Offset => (PageIndex - 1) * PageSize;
 
         /// <summary>
         /// Sort field

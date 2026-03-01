@@ -82,11 +82,11 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
 
                 if (rowsAffected == 0)
                 {
-                    return ResponseHelper.NotFound<UpdateDepartmentCommand.Response>(CoreResource.Common_msg_NotFound);
+                    return ResponseHelper.NotFound<UpdateDepartmentCommand.Response>(CoreResource.common_notFound);
                 }
 
                 var responseData = new UpdateDepartmentCommand.Response { Success = true, Id = request.Id };
-                var response = ResponseHelper.Success(responseData, CoreResource.Department_msg_UpdateSuccess);
+                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_department));
 
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
@@ -96,7 +96,7 @@ public sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepar
             {
                 await dbContext.RollbackAsync();
                 UniLogger.Error($"Error updating department: {ex.Message}", ex);
-                var response = ResponseHelper.Error<UpdateDepartmentCommand.Response>(CoreResource.Common_msg_ExceptionOccurred);
+                var response = ResponseHelper.Error<UpdateDepartmentCommand.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
                 logData.IsException = 1;
                 logData.ReturnCode = response.ReturnCode;

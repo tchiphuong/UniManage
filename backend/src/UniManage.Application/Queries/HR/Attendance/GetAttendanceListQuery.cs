@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.HR.Attendance
 {
     #region Query
 
-    public sealed class GetAttendanceListQuery : BaseQuery, IRequest<ApiResponse<PagedResult<GetAttendanceListQuery.Response>>>
+    public sealed class GetAttendanceListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetAttendanceListQuery.Response>>>
     {
         public string? EmployeeCode { get; set; }
         public DateTime? FromDate { get; set; }
@@ -110,7 +110,7 @@ namespace UniManage.Application.Queries.HR.Attendance
 
                     var result = await dbContext.QueryPagingAsync<GetAttendanceListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, CoreResource.Common_msg_GetSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -121,7 +121,7 @@ namespace UniManage.Application.Queries.HR.Attendance
                 catch (Exception ex)
                 {
                     UniLogger.Error($"Error retrieving attendance: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<PagedResult<GetAttendanceListQuery.Response>>(CoreResource.Common_msg_ExceptionOccurred);
+                    var response = ResponseHelper.Error<PagedResult<GetAttendanceListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
                     log.IsException = 1;

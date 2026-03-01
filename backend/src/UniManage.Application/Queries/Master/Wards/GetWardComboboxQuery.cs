@@ -14,6 +14,7 @@ namespace UniManage.Application.Queries.Master.Wards
     public sealed class GetWardComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
     {
         public string? ProvinceCode { get; init; }
+        public string? Keyword { get; set; }
     }
 
     #endregion
@@ -98,7 +99,7 @@ namespace UniManage.Application.Queries.Master.Wards
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting ward combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.Common_msg_ExceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

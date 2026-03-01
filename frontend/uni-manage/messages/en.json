@@ -28,7 +28,8 @@
         "language": "Language",
         "languageVietnamese": "Vietnamese",
         "languageEnglish": "English",
-        "languageSelect": "Select language"
+        "languageSelect": "Select language",
+        "noResults": "No results found"
     },
     "auth": {
         "login": "Login",
@@ -128,5 +129,38 @@
         "addUser": "Add User",
         "newReport": "New Report",
         "support": "Support"
+    },
+    "menu": {
+        "group": {
+            "main": "Overview",
+            "hr": "Human Resources",
+            "sales": "Sales",
+            "inventory": "Inventory",
+            "system": "System"
+        },
+        "dashboard": "Dashboard",
+        "employees": "Employees",
+        "departments": "Departments",
+        "positions": "Positions",
+        "attendance": "Attendance",
+        "salaries": "Salaries",
+        "customers": "Customers",
+        "orders": "Orders",
+        "items": "Items",
+        "users": "Users",
+        "roles": "Roles",
+        "settings": "Settings"
+    },
+    "confirmDialog": {
+        "title": "Confirm Action",
+        "message": "Are you sure you want to proceed with this action?",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "deleteTitle": "Confirm Deletion",
+        "deleteMessage": "This data will be permanently deleted and cannot be recovered. Are you sure you want to continue?",
+        "saveTitle": "Save Changes",
+        "saveMessage": "Do you want to save your changes?",
+        "discardTitle": "Discard Changes",
+        "discardMessage": "Are you sure you want to discard your changes? This action cannot be undone."
     }
 }
