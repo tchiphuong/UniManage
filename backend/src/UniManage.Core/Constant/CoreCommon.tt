@@ -31,7 +31,7 @@
     string connectionString = $"Data Source={dbServer};Initial Catalog={dbDatabase};User ID={dbUser};Password={dbPassword};TrustServerCertificate=True;";
 
     // Lấy dữ liệu từ bảng sy_commons
-    var commons = new List<(string TypeKey, string TypeNameVi, string ValueKey, string ValueNameVi)>();
+    var commons = new List<(string TypeKey, string TypeNameVi, string ValueKey, string ValueNameVi, int Status)>();
     string errorMessage = "";
 
     try 
@@ -40,9 +40,8 @@
         {
             conn.Open();
             using (var cmd = new SqlCommand(@"
-                    SELECT [TypeKey], [TypeNameVi], [ValueKey], [ValueNameVi]
+                    SELECT [TypeKey], [TypeNameVi], [ValueKey], [ValueNameVi], CAST([Status] AS INT) AS [Status]
                     FROM [dbo].[sy_commons]
-                    WHERE [Status] = 1
                     ORDER BY [TypeKey], [Sort]
                 ", conn))
             using (var reader = cmd.ExecuteReader())
@@ -53,10 +52,11 @@
                     string typeNameVi = reader["TypeNameVi"]?.ToString();
                     string valueKey = reader["ValueKey"]?.ToString();
                     string valueNameVi = reader["ValueNameVi"]?.ToString();
+                    int status = reader["Status"] != DBNull.Value ? (int)reader["Status"] : 0;
 
                     if (!string.IsNullOrEmpty(typeKey) && !string.IsNullOrEmpty(valueKey))
                     {
-                        commons.Add((typeKey, typeNameVi, valueKey, valueNameVi));
+                        commons.Add((typeKey, typeNameVi, valueKey, valueNameVi, status));
                     }
                 }
             }
@@ -71,6 +71,8 @@
 #>
 namespace UniManage.Core.Constant
 {
+    using System.Collections.Generic;
+
     public static class CoreCommon
     {
 <#
@@ -116,7 +118,8 @@ namespace UniManage.Core.Constant
         foreach (var item in group)
         {
             var valueName = ToPascalCase(item.ValueKey);
-            var valueSummary = !string.IsNullOrEmpty(item.ValueNameVi) ? item.ValueNameVi : item.ValueKey;
+            var statusSuffix = item.Status == 0 ? " [INACTIVE]" : "";
+            var valueSummary = (!string.IsNullOrEmpty(item.ValueNameVi) ? item.ValueNameVi : item.ValueKey) + statusSuffix;
 #>
                 /// <summary>
                 /// <#= valueSummary #>
@@ -126,6 +129,15 @@ namespace UniManage.Core.Constant
 <#
         }
 #>
+                /// <summary>
+                /// Danh sách các giá trị đang hoạt động (Status = 1)
+                /// </summary>
+                public static readonly List<string> All = new List<string> { <#= string.Join(", ", group.Where(x => x.Status == 1).Select(item => ToPascalCase(item.ValueKey))) #> };
+
+                /// <summary>
+                /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
+                /// </summary>
+                public static readonly List<string> AllWithInactive = new List<string> { <#= string.Join(", ", group.Select(item => ToPascalCase(item.ValueKey))) #> };
             }
 
 <#

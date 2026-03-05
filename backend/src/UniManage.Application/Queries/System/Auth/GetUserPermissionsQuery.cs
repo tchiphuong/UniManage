@@ -1,6 +1,7 @@
 using Dapper;
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -14,10 +15,6 @@ namespace UniManage.Application.Queries.System.Auth
     /// </summary>
     public sealed class GetUserPermissionsQuery : BaseQuery, IRequest<ApiResponse<GetUserPermissionsQuery.Result>>
     {
-        /// <summary>
-        /// Username
-        /// </summary>
-        public string Username { get; set; } = string.Empty;
 
         public class Result
         {
@@ -39,8 +36,8 @@ namespace UniManage.Application.Queries.System.Auth
     {
         public GetUserPermissionsQueryValidator()
         {
-            RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required");
+            RuleFor(x => x.HeaderInfo.Username)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userIdentity));
         }
     }
 
@@ -51,10 +48,17 @@ namespace UniManage.Application.Queries.System.Auth
     {
         public async Task<ApiResponse<GetUserPermissionsQuery.Result>> Handle(GetUserPermissionsQuery request, CancellationToken ct)
         {
+            var username = request.HeaderInfo.Username ?? string.Empty;
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new CoreParamModel(nameof(request.HeaderInfo.Username), username)
+                }
+            };
+
             try
             {
-                UniLogger.Info($"[GetUserPermissions] Getting permissions for user: {request.Username}");
-
                 using (var dbContext = new DbContext())
                 {
                     // Get user roles
@@ -67,7 +71,7 @@ namespace UniManage.Application.Queries.System.Auth
 
                     var roles = (await dbContext.QueryAsync<string>(
                         rolesSql,
-                        new { request.Username })).ToList();
+                        new { Username = username })).ToList();
 
                     // Get user permissions (FunctionCode + ActionCode)
                     var permissionsSql = @"
@@ -81,7 +85,7 @@ namespace UniManage.Application.Queries.System.Auth
 
                     var permissions = (await dbContext.QueryAsync<string>(
                         permissionsSql,
-                        new { request.Username })).ToList();
+                        new { Username = username })).ToList();
 
                     var result = new GetUserPermissionsQuery.Result
                     {
@@ -89,14 +93,23 @@ namespace UniManage.Application.Queries.System.Auth
                         Roles = roles
                     };
 
-                    UniLogger.Info($"[GetUserPermissions] Retrieved {permissions.Count} permissions and {roles.Count} roles for user: {request.Username}");
-                    return ResponseHelper.Success(result);
+                    var response = ResponseHelper.Success(result);
+                    log.Result = response;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = $"Retrieved {permissions.Count} permissions and {roles.Count} roles for user: {username}";
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                UniLogger.Error($"[GetUserPermissions] Error getting permissions for user: {request.Username}", ex);
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 return ResponseHelper.Error<GetUserPermissionsQuery.Result>(CoreResource.common_exceptionOccurred);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }

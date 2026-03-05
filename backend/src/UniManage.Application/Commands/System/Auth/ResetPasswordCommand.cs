@@ -1,5 +1,7 @@
 using FluentValidation;
 using MediatR;
+using UniManage.Application.Utilities;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -35,16 +37,22 @@ namespace UniManage.Application.Commands.System.Auth
         public ResetPasswordCommandValidator()
         {
             RuleFor(x => x.Token)
-                .NotEmpty().WithMessage("Reset token is required");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_resetToken));
 
+            // [SECURITY] H4 — Unified password policy via extension method
             RuleFor(x => x.NewPassword)
-                .NotEmpty().WithMessage("New password is required")
-                .MinimumLength(6).WithMessage("New password must be at least 6 characters")
-                .Must(PasswordHelper.IsValidPassword).WithMessage("New password does not meet requirements");
+                .Password(CoreResource.lbl_newPassword);
 
             RuleFor(x => x.ConfirmPassword)
-                .NotEmpty().WithMessage("Confirm password is required")
-                .Equal(x => x.NewPassword).WithMessage("Passwords do not match");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_confirmPassword))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.ConfirmPassword)
+                        .Equal(x => x.NewPassword)
+                        .WithMessage(CoreResource.validation_confirmPasswordMismatch);
+                });
         }
     }
 
@@ -55,94 +63,98 @@ namespace UniManage.Application.Commands.System.Auth
     {
         public async Task<ApiResponse<bool>> Handle(ResetPasswordCommand request, CancellationToken ct)
         {
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new CoreParamModel(nameof(request.Token), StringHelper.MaskSensitiveData(request.Token))
+                }
+            };
+
+            var dbContext = new DbContext(openTransaction: true);
             try
             {
-                UniLogger.Info("[ResetPassword] Processing password reset request");
-
-                using (var dbContext = new DbContext(openTransaction: true))
+                using (dbContext)
                 {
-                    try
+                    // Tìm tất cả reset token chưa sử dụng của user
+                    var getAllTokensSql = @"
+                        SELECT [Username], [Token], [ExpiresAt], [UsedAt]
+                        FROM [dbo].[sy_password_reset_tokens]
+                        WHERE [UsedAt] IS NULL AND [ExpiresAt] > GETUTCDATE()";
+
+                    var allTokens = await dbContext.QueryAsync<TokenDto>(getAllTokensSql, null, ct);
+                    TokenDto? validToken = null;
+
+                    foreach (var tokenItem in allTokens)
                     {
-                        // Tìm reset token
-                        var tokenSql = @"
-                            SELECT TOP 1
-                                [Username],
-                                [Token],
-                                [ExpiresAt],
-                                [UsedAt]
-                            FROM [dbo].[sy_password_reset_tokens]
-                            WHERE [Token] = @Token";
-
-                        var tokenData = await dbContext.QueryFirstOrDefaultAsync<TokenDto>(
-                            tokenSql,
-                            new { request.Token },
-                            ct);
-
-                        if (tokenData == null)
+                        if (PasswordHelper.VerifyPassword(request.Token, tokenItem.Token))
                         {
-                            UniLogger.Warn("[ResetPassword] Invalid reset token");
-                            return ResponseHelper.Error<bool>("Invalid or expired reset token");
+                            validToken = tokenItem;
+                            break;
                         }
-
-                        if (tokenData.UsedAt.HasValue)
-                        {
-                            UniLogger.Warn("[ResetPassword] Token already used");
-                            return ResponseHelper.Error<bool>("Reset token has already been used");
-                        }
-
-                        if (tokenData.ExpiresAt < DateTime.UtcNow)
-                        {
-                            UniLogger.Warn("[ResetPassword] Token expired");
-                            return ResponseHelper.Error<bool>("Reset token has expired");
-                        }
-
-                        // Hash mật khẩu mới
-                        var hashedPassword = PasswordHelper.HashPassword(request.NewPassword);
-
-                        // Update password
-                        var updatePasswordSql = @"
-                            UPDATE [dbo].[sy_users]
-                            SET [Password] = @Password,
-                                [UpdatedAt] = GETDATE(),
-                                [UpdatedBy] = 'system'
-                            WHERE [Username] = @Username";
-
-                        await dbContext.ExecuteAsync(
-                            updatePasswordSql,
-                            new
-                            {
-                                Password = hashedPassword,
-                                Username = tokenData.Username
-                            },
-                            ct);
-
-                        // Đánh dấu token đã sử dụng
-                        var markTokenUsedSql = @"
-                            UPDATE [dbo].[sy_password_reset_tokens]
-                            SET [UsedAt] = GETDATE()
-                            WHERE [Token] = @Token";
-
-                        await dbContext.ExecuteAsync(
-                            markTokenUsedSql,
-                            new { request.Token },
-                            ct);
-
-                        await dbContext.CommitAsync();
-
-                        UniLogger.Info($"[ResetPassword] Password reset successfully for user: {tokenData.Username}");
-                        return ResponseHelper.Success(true, CoreResource.auth_passwordReset);
                     }
-                    catch
+
+                    if (validToken == null)
                     {
                         await dbContext.RollbackAsync();
-                        throw;
+                        var errorResponse = ResponseHelper.Error<bool>(CoreResource.auth_invalidResetToken);
+                        log.ReturnCode = errorResponse.ReturnCode;
+                        log.Message = "Invalid or expired reset token provided";
+                        return errorResponse;
                     }
+
+                    // Hash mật khẩu mới
+                    var hashedPassword = PasswordHelper.HashPassword(request.NewPassword);
+
+                    // Update password
+                    var updatePasswordSql = @"
+                        UPDATE [dbo].[sy_users]
+                        SET [Password] = @Password,
+                            [UpdatedAt] = GETDATE(),
+                            [UpdatedBy] = @SystemUser
+                        WHERE [Username] = @Username";
+
+                    await dbContext.ExecuteAsync(
+                        updatePasswordSql,
+                        new
+                        {
+                            Password = hashedPassword,
+                            Username = validToken.Username,
+                            SystemUser = ApplicationConstants.Defaults.SystemUser
+                        },
+                        ct);
+
+                    // Đánh dấu token đã sử dụng
+                    var markTokenUsedSql = @"
+                        UPDATE [dbo].[sy_password_reset_tokens]
+                        SET [UsedAt] = GETDATE()
+                        WHERE [Token] = @TokenHash";
+
+                    await dbContext.ExecuteAsync(
+                        markTokenUsedSql,
+                        new { TokenHash = validToken.Token },
+                        ct);
+
+                    await dbContext.CommitAsync();
+
+                    var response = ResponseHelper.Success(true, CoreResource.auth_passwordReset);
+                    log.Result = response;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = $"Password reset successfully for user: {validToken.Username}";
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                UniLogger.Error("[ResetPassword] Error during password reset", ex);
-                return ResponseHelper.Error<bool>("An error occurred while resetting password");
+                await dbContext.RollbackAsync();
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                return ResponseHelper.Error<bool>(CoreResource.common_error);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
 

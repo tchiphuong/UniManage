@@ -4,7 +4,6 @@ using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
-using UniManage.Model.Common;
 using UniManage.Resource;
 
 namespace UniManage.Application.Commands.System.Roles
@@ -25,24 +24,39 @@ namespace UniManage.Application.Commands.System.Roles
     public sealed class CreateRoleCommandValidator : AbstractValidator<CreateRoleCommand>
     {
         public CreateRoleCommandValidator()
-        {
-            RuleFor(x => x.RoleCode)
-                .NotEmpty().WithMessage("Role code is required")
-                .Length(2, 50).WithMessage("Role code must be between 2 and 50 characters")
-                .Must(ValidationHelper.IsValidUserCode).WithMessage("Role code allows only alphanumeric and underscore")
-                .MustAsync(async (code, cancel) => !await IsRoleCodeExistsAsync(code))
-                .WithMessage("Role code already exists");
+    {
+        RuleFor(x => x.RoleCode)
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleCode))
+            .DependentRules(() =>
+            {
+                RuleFor(x => x.RoleCode)
+                    .Length(2, 50)
+                    .WithMessage(string.Format(CoreResource.validation_length, CoreResource.lbl_roleCode, 2, 50))
+                    .Must(ValidationHelper.IsValidUserCode)
+                    .WithMessage(CoreResource.validation_alphanumericOnly)
+                    .MustAsync(async (code, cancel) => !await IsRoleCodeExistsAsync(code))
+                    .WithMessage(CoreResource.validation_alreadyExists);
+            });
 
-            RuleFor(x => x.RoleName)
-                .NotEmpty().WithMessage("Role name is required")
-                .Length(2, 200).WithMessage("Role name must be between 2 and 200 characters");
+        RuleFor(x => x.RoleName)
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleName))
+            .DependentRules(() =>
+            {
+                RuleFor(x => x.RoleName)
+                    .Length(2, 200)
+                    .WithMessage(string.Format(CoreResource.validation_length, CoreResource.lbl_roleName, 2, 200));
+            });
 
-            RuleFor(x => x.Description)
-                .MaximumLength(500).WithMessage("Description must not exceed 500 characters");
+        RuleFor(x => x.Description)
+            .MaximumLength(500)
+            .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_description, 500));
 
-            RuleFor(x => x.IsActive)
-                .InclusiveBetween((byte)0, (byte)1).WithMessage("IsActive must be 0 or 1");
-        }
+        RuleFor(x => x.IsActive)
+            .InclusiveBetween((byte)0, (byte)1)
+            .WithMessage(CoreResource.validation_invalidStatus);
+    }
 
         private static async Task<bool> IsRoleCodeExistsAsync(string roleCode)
         {
@@ -104,7 +118,7 @@ namespace UniManage.Application.Commands.System.Roles
                     await dbContext.RollbackAsync(ct);
                     UniLogger.Error($"Error creating role: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<CreateRoleCommand.Response>("Error occurred while creating role");
+                    var response = ResponseHelper.Error<CreateRoleCommand.Response>(CoreResource.common_exceptionOccurred);
 
                     log.IsException = 1;
                     log.Message = ex.Message;

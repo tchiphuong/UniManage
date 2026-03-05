@@ -1,6 +1,7 @@
 using Dapper;
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -36,9 +37,16 @@ namespace UniManage.Application.Queries.System.Auth
         public CheckEmailExistsQueryValidator()
         {
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email is required")
-                .Must(ValidationHelper.IsValidEmail).WithMessage(CoreResource.validation_invalidEmail)
-                .MaximumLength(100).WithMessage("Email must not exceed 100 characters");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_email))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.Email)
+                        .Must(ValidationHelper.IsValidEmail)
+                        .WithMessage(CoreResource.validation_invalidEmail)
+                        .MaximumLength(100)
+                        .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_email, 100));
+                });
         }
     }
 
@@ -49,6 +57,14 @@ namespace UniManage.Application.Queries.System.Auth
     {
         public async Task<ApiResponse<CheckEmailExistsQuery.Result>> Handle(CheckEmailExistsQuery request, CancellationToken ct)
         {
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new CoreParamModel(nameof(request.Email), request.Email)
+                }
+            };
+
             try
             {
                 using (var dbContext = new DbContext())
@@ -67,13 +83,23 @@ namespace UniManage.Application.Queries.System.Auth
                         Exists = exists
                     };
 
-                    return ResponseHelper.Success(result);
+                    var response = ResponseHelper.Success(result);
+                    log.Result = response;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = $"Email exists check for '{request.Email}': {exists}";
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                UniLogger.Error($"[CheckEmailExists] Error checking email: {request.Email}", ex);
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 return ResponseHelper.Error<CheckEmailExistsQuery.Result>(CoreResource.common_exceptionOccurred);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }

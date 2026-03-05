@@ -125,6 +125,8 @@ namespace UniManage.Core.Utilities
             return Regex.Replace(input.Trim(), @"\s+", " ");
         }
 
+
+
         /// <summary>
         /// Chuyển danh sách ValidationFailure thành List<FieldErrorModel> gom nhiều lỗi theo field.
         /// </summary>

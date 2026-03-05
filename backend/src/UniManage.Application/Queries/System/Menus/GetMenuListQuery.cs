@@ -36,11 +36,13 @@ public sealed class GetMenuListQueryValidator : AbstractValidator<GetMenuListQue
     public GetMenuListQueryValidator()
     {
         RuleFor(x => x.HeaderInfo)
-            .NotNull().WithMessage("HeaderInfo is required")
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, "HeaderInfo"))
             .DependentRules(() =>
             {
                 RuleFor(x => x.HeaderInfo!.Username)
-                    .NotEmpty().WithMessage("Username is required");
+                    .NotEmpty()
+                    .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username));
             });
     }
 }

@@ -7,6 +7,7 @@ using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
+using UniManage.Resource;
 using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.System.User;
@@ -71,8 +72,8 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
                 // Soft delete: Set Status to "Inactive" (or use CoreCommon.Value.Commonstatus.Inactive if available)
                 foreach (var user in users)
                 {
-                    user.Status = "Inactive"; // Soft delete
-                    user.UpdatedBy = request.HeaderInfo?.Username ?? "SYSTEM";
+                    user.Status = CoreCommon.Value.Commonstatus.Inactive; // Soft delete
+                    user.UpdatedBy = request.HeaderInfo?.Username ?? ApplicationConstants.Defaults.SystemUser;
                     user.UpdatedAt = DateTime.Now;
                 }
 
@@ -104,8 +105,7 @@ public sealed class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
-                return ResponseHelper.Error<DeleteUserCommand.Response>(
-                    $"Failed to delete users: {ex.Message}");
+                return ResponseHelper.Error<DeleteUserCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }

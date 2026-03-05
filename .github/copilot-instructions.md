@@ -10,10 +10,11 @@ Sinh code cho dự án UniManage theo chuẩn CQRS, .NET 9, SQL Server, Entity F
 **🔥 QUY TẮC QUAN TRỌNG: LUÔN SỬ DỤNG UTILITIES TRƯỚC**
 Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Utilities/ trước để sử dụng lại:
 
-- ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword()
-- ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels() (FluentValidation)
+- ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword() (Min 8 chars, complexity)
+- ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels()
 - ✅ **DatabaseHelper**: UserCodeExistsAsync(), ExecuteWithTransactionAsync(), QueryPagingAsync(), CheckTableExistsAsync()
-- ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError() - API responses chuẩn
+- ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError()
+- ✅ **Shared Validation**: Dùng `.All.Contains(status)` từ `CoreCommon.Value` auto-generated cho các danh sách giá trị.
 - ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
 - ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
 - ✅ **FileHelper**: IsValidImageFile(), ValidateFileUpload(), GetMimeType(), GetFileSizeText()
@@ -34,6 +35,8 @@ Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Util
 - Extend utilities nếu thiếu method cần thiết
 - Sử dụng ResponseHelper cho tất cả API responses
 - Dùng DatabaseHelper cho tất cả database operations có transaction
+- **Validator Resources**: LUÔN dùng `CoreResource` cho tất cả nhãn và thông báo lỗi (mẫu: `string.Format(CoreResource.validation_required, CoreResource.lbl_username)`).
+- **Logging Standard**: LUÔN dùng `nameof(request.PropertyName)` cho tên tham số trong `CoreParamModel`.
 
 Tech stack (bắt buộc)
 Backend: ASP.NET Core .NET 9
@@ -370,6 +373,8 @@ public enum UserStatus { Active = 1, Inactive = 2 }
 - ✅ Tránh magic strings, giảm bugs
 - ✅ Audit trail: biết ai thay đổi status nào, khi nào
 - ✅ Type-safe: CoreCommon constants tự động generate từ database (T4 template)
+- ✅ **Security**: Login handler PHẢI check `Status == "Active"` để chặn user bị vô hiệu hóa.
+- ✅ **Security**: Actions cá nhân (đổi pass, update info cá nhân) PHẢI lấy Username từ JWT qua `this.Username`.
 
 **CoreCommon Constants (Auto-generated từ sy_commons):**
 
@@ -923,24 +928,20 @@ public sealed class CreateUserValidator : AbstractValidator<CreateUserCommand>
     {
         RuleFor(x => x.Username)
             .Cascade(CascadeMode.Stop) // Stop on first error
-            .NotEmpty().WithMessage("Username is required")
-            .Length(3, 50).WithMessage("Username must be between 3 and 50 characters")
-            .Must(ValidationHelper.IsValidUserCode).WithMessage("Username allows only alphanumeric")
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
+            .Length(3, 50).WithMessage(string.Format(CoreResource.validation_range, CoreResource.lbl_username, 3, 50))
+            .Must(ValidationHelper.IsValidUserCode).WithMessage(CoreResource.validation_alphanumericOnly)
             .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
-            .WithMessage("Username is already taken");
+            .WithMessage(string.Format(CoreResource.validation_alreadyExists, CoreResource.lbl_username));
 
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required")
-            .EmailAddress().WithMessage("Invalid email format")
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_email))
+            .Must(ValidationHelper.IsValidEmail).WithMessage(CoreResource.validation_invalidEmail)
             .MustAsync(async (email, cancel) => !await IsEmailExistsAsync(email))
-            .WithMessage("Email is already registered");
+            .WithMessage(string.Format(CoreResource.validation_alreadyExists, CoreResource.lbl_email));
 
         RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(8)
-            .Matches(@"[A-Z]").WithMessage("Must contain uppercase")
-            .Matches(@"[a-z]").WithMessage("Must contain lowercase")
-            .Matches(@"[0-9]").WithMessage("Must contain number");
+            .Password(CoreResource.lbl_password);
     }
 
     private static async Task<bool> IsUsernameExistsAsync(string username)
@@ -1467,6 +1468,9 @@ Log per-day/per-api, có cid/user/method/path/status/ms, mask secrets
 **Alias DbContext khi cần: using DbContext = UniManage.Core.Database.DbContext**
 
 **Cleanup & Code Quality Rules (từ experience)**
+- **Resource Standardization**: 100% Validators phải sử dụng `CoreResource` cho field labels và error messages.
+- **Type-safe Logging**: Luôn sử tựng `nameof(request.PropertyName)` cho `CoreParamModel`.
+- **Unified Security**: Sử dụng `.Password()` extension và check `Status == "Active"` khi login.
 ✅ **Utilities-First Approach:**
 
 - Luôn check UniManage.Core/Utilities/ trước khi viết logic mới

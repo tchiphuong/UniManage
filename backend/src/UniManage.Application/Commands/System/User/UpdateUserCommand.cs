@@ -45,7 +45,8 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
     public UpdateUserCommandValidator()
     {
         RuleFor(x => x.Id)
-            .GreaterThan(0).WithMessage("Id must be greater than 0");
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, "Id"));
 
         /*
         RuleFor(x => x.Email)
@@ -58,12 +59,22 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
         */
 
         RuleFor(x => x.EmployeeCode)
-            .MaximumLength(50).WithMessage("Employee code must not exceed 50 characters");
+            .MaximumLength(50)
+            .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_employeeCode, 50));
 
         RuleFor(x => x.Status)
-            .NotEmpty().WithMessage("Status is required")
-            .Must(status => status == "Active" || status == "Inactive")
-            .WithMessage("Status must be either 'Active' or 'Inactive'");
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_status))
+            .DependentRules(() =>
+            {
+                RuleFor(x => x.Status)
+                    .Must(status => CoreCommon.Value.Commonstatus.All.Contains(status))
+                    .WithMessage(CoreResource.validation_invalidStatus);
+            });
+
+        RuleFor(x => x.RowVersion)
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, "RowVersion"));
     }
 
     // private static async Task<bool> IsEmailExistsByOtherUserAsync... Removed
@@ -103,21 +114,21 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
                 if (user == null)
                 {
                     await dbContext.RollbackAsync(ct);
-                    return ResponseHelper.NotFound<UpdateUserCommand.Response>("User not found");
+                    return ResponseHelper.NotFound<UpdateUserCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_user));
                 }
 
                 // Check RowVersion for optimistic concurrency
                 if (request.RowVersion != null && !user.RowVersion.SequenceEqual(request.RowVersion))
                 {
                     await dbContext.RollbackAsync(ct);
-                    return ResponseHelper.Error<UpdateUserCommand.Response>("User has been modified by another process");
+                    return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_concurrencyError);
                 }
 
                 // Update properties
                 // user.Email = request.Email; // Removed
                 user.EmployeeCode = request.EmployeeCode;
                 user.Status = request.Status;
-                user.UpdatedBy = request.HeaderInfo?.Username ?? "SYSTEM";
+                user.UpdatedBy = request.HeaderInfo?.Username ?? ApplicationConstants.Defaults.SystemUser;
                 user.UpdatedAt = DateTime.Now;
 
                 // Save changes - EF Core will handle RowVersion concurrency check
@@ -139,7 +150,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
                 log.Message = "Concurrency conflict";
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
-                return ResponseHelper.Error<UpdateUserCommand.Response>("User has been modified by another process");
+                return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_concurrencyError);
             }
             catch (Exception ex)
             {

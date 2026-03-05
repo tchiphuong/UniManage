@@ -6,6 +6,7 @@ using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Resource;
 
 namespace UniManage.Application.Commands.System.User;
 
@@ -72,7 +73,7 @@ public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRol
 
                 if (string.IsNullOrEmpty(username))
                 {
-                    return ResponseHelper.NotFound<AssignUserRoleCommand.Response>("User not found");
+                    return ResponseHelper.NotFound<AssignUserRoleCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_user));
                 }
             }
 
@@ -142,7 +143,7 @@ public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRol
             log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
             UniLogger.Error(JsonConvert.SerializeObject(log));
 
-            return ResponseHelper.Error<AssignUserRoleCommand.Response>($"Failed to assign role: {ex.Message}");
+            return ResponseHelper.Error<AssignUserRoleCommand.Response>(CoreResource.common_exceptionOccurred);
         }
     }
 }

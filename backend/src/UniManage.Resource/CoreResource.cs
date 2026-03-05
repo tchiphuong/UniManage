@@ -3,10 +3,35 @@ namespace UniManage.Resource
     /// <summary>
     /// Core resource strings for UniManage application
     /// Auto-generated from database by T4 template
-    /// Last generated: 2026-03-02 01:24:30
+    /// Last generated: 2026-03-06 01:16:23
     /// </summary>
     public static class CoreResource
     {
+        /// <summary>
+        /// auth.accountInactive: Account is inactive or locked
+        /// </summary>
+        public static string auth_accountInactive => "Account is inactive or locked";
+        
+        /// <summary>
+        /// auth.accountLocked: Account is temporarily locked due to many failed attempts. Please try again after 30 minutes.
+        /// </summary>
+        public static string auth_accountLocked => "Account is temporarily locked due to many failed attempts. Please try again after 30 minutes.";
+        
+        /// <summary>
+        /// auth.emailNotFound: Email not found for this user
+        /// </summary>
+        public static string auth_emailNotFound => "Email not found for this user";
+        
+        /// <summary>
+        /// auth.invalidLogin: Invalid username or password
+        /// </summary>
+        public static string auth_invalidLogin => "Invalid username or password";
+        
+        /// <summary>
+        /// auth.invalidResetToken: Invalid or expired reset token
+        /// </summary>
+        public static string auth_invalidResetToken => "Invalid or expired reset token";
+        
         /// <summary>
         /// auth.loginSuccess: Login successful
         /// </summary>
@@ -16,6 +41,11 @@ namespace UniManage.Resource
         /// auth.logoutSuccess: Logged out successfully
         /// </summary>
         public static string auth_logoutSuccess => "Logged out successfully";
+        
+        /// <summary>
+        /// auth.oldPasswordIncorrect: Old password is incorrect
+        /// </summary>
+        public static string auth_oldPasswordIncorrect => "Old password is incorrect";
         
         /// <summary>
         /// auth.passwordChanged: Password changed successfully
@@ -38,6 +68,11 @@ namespace UniManage.Resource
         public static string auth_tokenRefreshed => "Token refreshed successfully";
         
         /// <summary>
+        /// auth.userNotFound: User not found
+        /// </summary>
+        public static string auth_userNotFound => "User not found";
+        
+        /// <summary>
         /// common.error: An error occurred
         /// </summary>
         public static string common_error => "An error occurred";
@@ -46,6 +81,11 @@ namespace UniManage.Resource
         /// common.exceptionOccurred: System exception occurred
         /// </summary>
         public static string common_exceptionOccurred => "System exception occurred";
+        
+        /// <summary>
+        /// common.concurrencyError: Data has been modified by another user or does not exist
+        /// </summary>
+        public static string common_concurrencyError => "Data has been modified by another user or does not exist";
         
         /// <summary>
         /// common.forbidden: Access forbidden
@@ -151,6 +191,91 @@ namespace UniManage.Resource
         /// entity.user: User
         /// </summary>
         public static string entity_user => "User";
+
+        /// <summary>
+        /// lbl.config: Config
+        /// </summary>
+        public static string lbl_config => "Config";
+
+        /// <summary>
+        /// lbl.configValue: Config Value
+        /// </summary>
+        public static string lbl_configValue => "Config Value";
+
+        /// <summary>
+        /// lbl.description: Description
+        /// </summary>
+        public static string lbl_description => "Description";
+
+        /// <summary>
+        /// lbl.employeeCode: Employee Code
+        /// </summary>
+        public static string lbl_employeeCode => "Employee Code";
+        
+        /// <summary>
+        /// lbl.confirmPassword: Confirm password
+        /// </summary>
+        public static string lbl_confirmPassword => "Confirm password";
+        
+        /// <summary>
+        /// lbl.email: Email
+        /// </summary>
+        public static string lbl_email => "Email";
+        
+        /// <summary>
+        /// lbl.emailOrUsername: Email or Username
+        /// </summary>
+        public static string lbl_emailOrUsername => "Email or Username";
+        
+        /// <summary>
+        /// lbl.newPassword: New password
+        /// </summary>
+        public static string lbl_newPassword => "New password";
+        
+        /// <summary>
+        /// lbl.oldPassword: Old password
+        /// </summary>
+        public static string lbl_oldPassword => "Old password";
+        
+        /// <summary>
+        /// lbl.password: Password
+        /// </summary>
+        public static string lbl_password => "Password";
+        
+        /// <summary>
+        /// lbl.resetToken: Reset token
+        /// </summary>
+        public static string lbl_resetToken => "Reset token";
+        
+        /// <summary>
+        /// lbl.userIdentity: User identity
+        /// </summary>
+        public static string lbl_userIdentity => "User identity";
+
+        /// <summary>
+        /// lbl.role: Role
+        /// </summary>
+        public static string lbl_role => "Role";
+
+        /// <summary>
+        /// lbl.roleCode: Role Code
+        /// </summary>
+        public static string lbl_roleCode => "Role Code";
+
+        /// <summary>
+        /// lbl.roleName: Role Name
+        /// </summary>
+        public static string lbl_roleName => "Role Name";
+
+        /// <summary>
+        /// lbl.status: Status
+        /// </summary>
+        public static string lbl_status => "Status";
+        
+        /// <summary>
+        /// lbl.username: Username
+        /// </summary>
+        public static string lbl_username => "Username";
         
         /// <summary>
         /// validation.alphanumericOnly: {0} allows only alphanumeric characters
@@ -171,6 +296,11 @@ namespace UniManage.Resource
         /// validation.codeAlreadyExists: {0} code already exists
         /// </summary>
         public static string validation_codeAlreadyExists => "{0} code already exists";
+        
+        /// <summary>
+        /// validation.confirmPasswordMismatch: Confirm password does not match new password
+        /// </summary>
+        public static string validation_confirmPasswordMismatch => "Confirm password does not match new password";
         
         /// <summary>
         /// validation.emailAlreadyRegistered: Email is already registered
@@ -196,6 +326,11 @@ namespace UniManage.Resource
         /// validation.invalidFormat: Invalid format for {0}
         /// </summary>
         public static string validation_invalidFormat => "Invalid format for {0}";
+
+        /// <summary>
+        /// validation.invalidStatus: Invalid status provided
+        /// </summary>
+        public static string validation_invalidStatus => "Invalid status provided";
         
         /// <summary>
         /// validation.invalidPhone: Invalid phone number format
@@ -233,6 +368,11 @@ namespace UniManage.Resource
         public static string validation_mustContainUppercase => "{0} must contain at least one uppercase letter";
         
         /// <summary>
+        /// validation.newPasswordDifferent: New password must be different from old password
+        /// </summary>
+        public static string validation_newPasswordDifferent => "New password must be different from old password";
+        
+        /// <summary>
         /// validation.onlyLetters: {0} allows only letters
         /// </summary>
         public static string validation_onlyLetters => "{0} allows only letters";
@@ -241,6 +381,11 @@ namespace UniManage.Resource
         /// validation.onlyNumbers: {0} allows only numbers
         /// </summary>
         public static string validation_onlyNumbers => "{0} allows only numbers";
+        
+        /// <summary>
+        /// validation.passwordComplexity: Password must contain at least one uppercase, one lowercase, one digit, and one special character
+        /// </summary>
+        public static string validation_passwordComplexity => "Password must contain at least one uppercase, one lowercase, one digit, and one special character";
         
         /// <summary>
         /// validation.range: {0} must be between {1} and {2}

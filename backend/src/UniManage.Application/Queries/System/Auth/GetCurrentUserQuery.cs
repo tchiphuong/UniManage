@@ -1,6 +1,7 @@
 using Dapper;
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -14,10 +15,6 @@ namespace UniManage.Application.Queries.System.Auth
     /// </summary>
     public sealed class GetCurrentUserQuery : BaseQuery, IRequest<ApiResponse<GetCurrentUserQuery.Result>>
     {
-        /// <summary>
-        /// Username (từ JWT token)
-        /// </summary>
-        public string Username { get; set; } = string.Empty;
 
         public class Result
         {
@@ -59,8 +56,8 @@ namespace UniManage.Application.Queries.System.Auth
     {
         public GetCurrentUserQueryValidator()
         {
-            RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required");
+            RuleFor(x => x.HeaderInfo.Username)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userIdentity));
         }
     }
 
@@ -71,10 +68,17 @@ namespace UniManage.Application.Queries.System.Auth
     {
         public async Task<ApiResponse<GetCurrentUserQuery.Result>> Handle(GetCurrentUserQuery request, CancellationToken ct)
         {
+            var username = request.HeaderInfo.Username ?? string.Empty;
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new CoreParamModel(nameof(request.HeaderInfo.Username), username)
+                }
+            };
+
             try
             {
-                UniLogger.Info($"[GetCurrentUser] Getting user info for: {request.Username}");
-
                 using (var dbContext = new DbContext())
                 {
                     var sql = @"
@@ -91,22 +95,33 @@ namespace UniManage.Application.Queries.System.Auth
 
                     var user = await dbContext.QueryFirstOrDefaultAsync<GetCurrentUserQuery.Result>(
                         sql,
-                        new { request.Username });
+                        new { Username = username });
 
                     if (user == null)
                     {
-                        UniLogger.Warn($"[GetCurrentUser] User not found: {request.Username}");
-                        return ResponseHelper.NotFound<GetCurrentUserQuery.Result>("User not found");
+                        var errorResponse = ResponseHelper.NotFound<GetCurrentUserQuery.Result>("User not found");
+                        log.ReturnCode = errorResponse.ReturnCode;
+                        log.Message = $"User not found in database: {username}";
+                        return errorResponse;
                     }
 
-                    UniLogger.Info($"[GetCurrentUser] Retrieved user info successfully for: {request.Username}");
-                    return ResponseHelper.Success(user, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_user));
+                    var response = ResponseHelper.Success(user, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_user));
+                    log.Result = response;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = $"Retrieved user info successfully for: {username}";
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                UniLogger.Error($"[GetCurrentUser] Error getting user info for: {request.Username}", ex);
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 return ResponseHelper.Error<GetCurrentUserQuery.Result>(CoreResource.common_exceptionOccurred);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }

@@ -1,11 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.System.SystemConfigs;
 using UniManage.Application.Queries.System.SystemConfigs;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
 
-namespace UniManage.Api.Controllers
+namespace UniManage.Api.Controllers.System
 {
     [ApiController]
     [Route("api/v1/system-configs")]
@@ -25,6 +27,7 @@ namespace UniManage.Api.Controllers
         #region GET: /api/v1/system-configs
 
         [HttpGet]
+        [PermissionAuthorize(CoreFunction.SyConfig, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<IEnumerable<SystemConfig>>>> GetList(CancellationToken ct)
         {
             var query = new GetSystemConfigListQuery { HeaderInfo = HeaderInfo };
@@ -37,6 +40,7 @@ namespace UniManage.Api.Controllers
         #region GET: /api/v1/system-configs/{code}
 
         [HttpGet("{code}")]
+        [PermissionAuthorize(CoreFunction.SyConfig, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<SystemConfig>>> GetByCode(string code, CancellationToken ct)
         {
             var query = new GetSystemConfigByCodeQuery { Code = code, HeaderInfo = HeaderInfo };
@@ -49,6 +53,7 @@ namespace UniManage.Api.Controllers
         #region PUT: /api/v1/system-configs/{id}
 
         [HttpPut("{id}")]
+        [PermissionAuthorize(CoreFunction.SyConfig, CoreAction.Update)]
         public async Task<ActionResult<ApiResponse<bool>>> Update(int id, [FromBody] UpdateSystemConfigCommand command, CancellationToken ct)
         {
             command ??= new UpdateSystemConfigCommand();

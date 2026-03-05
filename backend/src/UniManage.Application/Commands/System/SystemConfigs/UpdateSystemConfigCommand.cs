@@ -6,6 +6,7 @@ using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
+using UniManage.Resource;
 
 namespace UniManage.Application.Commands.System.SystemConfigs
 {
@@ -25,7 +26,9 @@ namespace UniManage.Application.Commands.System.SystemConfigs
     {
         public UpdateSystemConfigValidator()
         {
-            RuleFor(x => x.Id).GreaterThan(0);
+            RuleFor(x => x.Id)
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, "Id"));
         }
     }
 
@@ -57,14 +60,14 @@ namespace UniManage.Application.Commands.System.SystemConfigs
                     var current = await dbContext.QueryFirstOrDefaultAsync<SystemConfig>(sqlGet, new { request.Id });
 
                     if (current == null)
-                        return ResponseHelper.NotFound<bool>("Config not found");
+                        return ResponseHelper.NotFound<bool>(string.Format(CoreResource.crud_notFound, CoreResource.lbl_config));
 
                     // 2. Validate Data Type
                     if (current.DataType == "BOOL" && request.ConfigValue != "true" && request.ConfigValue != "false")
-                        return ResponseHelper.Error<bool>("Value must be 'true' or 'false' for BOOL type");
+                        return ResponseHelper.Error<bool>(string.Format(CoreResource.validation_invalidFormat, CoreResource.lbl_configValue));
 
                     if (current.DataType == "INT" && !int.TryParse(request.ConfigValue, out _))
-                        return ResponseHelper.Error<bool>("Value must be an integer for INT type");
+                        return ResponseHelper.Error<bool>(string.Format(CoreResource.validation_invalidFormat, CoreResource.lbl_configValue));
 
                     // 3. Update
                     var sqlUpdate = @"
@@ -83,7 +86,7 @@ namespace UniManage.Application.Commands.System.SystemConfigs
 
                     await dbContext.CommitAsync(ct);
 
-                    var response = ResponseHelper.Success(true, "Config updated successfully");
+                    var response = ResponseHelper.Success(true, string.Format(CoreResource.crud_updateSuccess, CoreResource.lbl_config));
 
                     log.Result = response;
                     log.ReturnCode = response.ReturnCode;
@@ -100,7 +103,7 @@ namespace UniManage.Application.Commands.System.SystemConfigs
                     log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                     UniLogManager.WriteApiLog(log);
 
-                    return ResponseHelper.Error<bool>("Error occurred");
+                    return ResponseHelper.Error<bool>(CoreResource.common_exceptionOccurred);
                 }
             }
         }

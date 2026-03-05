@@ -159,15 +159,7 @@ namespace UniManage.Api.Controllers.System
         [ProducesResponseType(typeof(ApiResponse<GetCurrentUserQuery.Result>), StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ApiResponse<GetCurrentUserQuery.Result>>> GetCurrentUser(CancellationToken ct)
         {
-            // Get username from JWT token claims — never from client input
-            var username = this.Username;
-            if (string.IsNullOrEmpty(username))
-            {
-                return Unauthorized(ResponseHelper.Unauthorized<GetCurrentUserQuery.Result>());
-            }
-
-            var request = new GetCurrentUserQuery { Username = username, HeaderInfo = HeaderInfo };
-
+            var request = new GetCurrentUserQuery { HeaderInfo = HeaderInfo };
             var response = await _mediator.Send(request, ct);
 
             if (response.ReturnCode != 0)
@@ -301,15 +293,7 @@ namespace UniManage.Api.Controllers.System
         [ProducesResponseType(typeof(ApiResponse<GetUserPermissionsQuery.Result>), StatusCodes.Status200OK)]
         public async Task<ActionResult<ApiResponse<GetUserPermissionsQuery.Result>>> GetPermissions(CancellationToken ct)
         {
-            // Get username from JWT token claims — never from client input
-            var username = this.Username;
-            if (string.IsNullOrEmpty(username))
-            {
-                return Unauthorized(ResponseHelper.Unauthorized<GetUserPermissionsQuery.Result>());
-            }
-
-            var request = new GetUserPermissionsQuery { Username = username, HeaderInfo = HeaderInfo };
-
+            var request = new GetUserPermissionsQuery { HeaderInfo = HeaderInfo };
             var response = await _mediator.Send(request, ct);
             return Ok(response);
         }

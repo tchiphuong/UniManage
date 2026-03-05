@@ -1,10 +1,10 @@
 using FluentValidation;
 using MediatR;
 using Newtonsoft.Json;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
-using UniManage.Model.Common;
 using UniManage.Model.Common;
 using UniManage.Resource;
 
@@ -29,7 +29,8 @@ namespace UniManage.Application.Commands.Workflow.Requests
         {
             RuleFor(x => x.RequestTypeKey)
                 .NotEmpty().WithMessage("Request type key is required")
-                .MaximumLength(50).WithMessage("Request type key must not exceed 50 characters");
+                .Must(key => CoreCommon.Value.Requesttype.All.Contains(key))
+                .WithMessage("Invalid or inactive request type");
 
             RuleFor(x => x.ApplicantEmployeeCode)
                 .NotEmpty().WithMessage("Applicant employee code is required")

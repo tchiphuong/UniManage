@@ -1,5 +1,7 @@
 ﻿namespace UniManage.Core.Constant
 {
+    using System.Collections.Generic;
+
     public static class CoreCommon
     {
         public static class Type
@@ -50,6 +52,15 @@
                 /// </summary>
                 public const string Inactive = "inactive";
 
+                /// <summary>
+                /// Danh sách các giá trị đang hoạt động (Status = 1)
+                /// </summary>
+                public static readonly List<string> All = new List<string> { Active, Inactive };
+
+                /// <summary>
+                /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
+                /// </summary>
+                public static readonly List<string> AllWithInactive = new List<string> { Active, Inactive };
             }
 
             public static class Invoicestatus
@@ -84,6 +95,15 @@
                 /// </summary>
                 public const string Refund = "refund";
 
+                /// <summary>
+                /// Danh sách các giá trị đang hoạt động (Status = 1)
+                /// </summary>
+                public static readonly List<string> All = new List<string> { New, Processing, Delivery, Complete, Cancel, Refund };
+
+                /// <summary>
+                /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
+                /// </summary>
+                public static readonly List<string> AllWithInactive = new List<string> { New, Processing, Delivery, Complete, Cancel, Refund };
             }
 
             public static class Language
@@ -103,6 +123,15 @@
                 /// </summary>
                 public const string Zhongwen = "zhongwen";
 
+                /// <summary>
+                /// Danh sách các giá trị đang hoạt động (Status = 1)
+                /// </summary>
+                public static readonly List<string> All = new List<string> { English, Vietnamese, Zhongwen };
+
+                /// <summary>
+                /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
+                /// </summary>
+                public static readonly List<string> AllWithInactive = new List<string> { English, Vietnamese, Zhongwen };
             }
 
             public static class Requeststatus
@@ -132,6 +161,15 @@
                 /// </summary>
                 public const string Cancelled = "cancelled";
 
+                /// <summary>
+                /// Danh sách các giá trị đang hoạt động (Status = 1)
+                /// </summary>
+                public static readonly List<string> All = new List<string> { Draft, Submitted, Approved, Rejected, Cancelled };
+
+                /// <summary>
+                /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
+                /// </summary>
+                public static readonly List<string> AllWithInactive = new List<string> { Draft, Submitted, Approved, Rejected, Cancelled };
             }
 
             public static class Requesttype
@@ -151,6 +189,15 @@
                 /// </summary>
                 public const string Businesstrip = "BusinessTrip";
 
+                /// <summary>
+                /// Danh sách các giá trị đang hoạt động (Status = 1)
+                /// </summary>
+                public static readonly List<string> All = new List<string> { Leave, Overtime, Businesstrip };
+
+                /// <summary>
+                /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
+                /// </summary>
+                public static readonly List<string> AllWithInactive = new List<string> { Leave, Overtime, Businesstrip };
             }
 
             public static class Sex
@@ -165,6 +212,15 @@
                 /// </summary>
                 public const string Male = "male";
 
+                /// <summary>
+                /// Danh sách các giá trị đang hoạt động (Status = 1)
+                /// </summary>
+                public static readonly List<string> All = new List<string> { Female, Male };
+
+                /// <summary>
+                /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
+                /// </summary>
+                public static readonly List<string> AllWithInactive = new List<string> { Female, Male };
             }
 
         }

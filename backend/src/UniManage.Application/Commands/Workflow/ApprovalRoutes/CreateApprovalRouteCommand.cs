@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -40,7 +41,8 @@ namespace UniManage.Application.Commands.Workflow.ApprovalRoutes
         {
             RuleFor(x => x.RequestTypeKey)
                 .NotEmpty().WithMessage("Request type key is required")
-                .MaximumLength(50).WithMessage("Request type key must not exceed 50 characters");
+                .Must(key => CoreCommon.Value.Requesttype.All.Contains(key))
+                .WithMessage("Invalid or inactive request type");
 
             RuleFor(x => x.RouteName)
                 .NotEmpty().WithMessage("Route name is required")

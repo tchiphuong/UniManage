@@ -11,7 +11,7 @@ using UniManage.Resource;
 
 namespace UniManage.Api.Controllers.System
 {
-    [Route("api/v1")]
+    [Route("api/v1/system")]
     [ApiController]
     public class SystemController : BaseController
     {
@@ -26,9 +26,9 @@ namespace UniManage.Api.Controllers.System
 
         #endregion
 
-        #region GET: /api/v1/system/resource
+        #region GET: /api/v1/system/resources
 
-        [HttpGet("resource")]
+        [HttpGet("resources")]
         [AllowAnonymous]
         public async Task<IActionResult> GetResources(string lang = "vi-VN")
         {

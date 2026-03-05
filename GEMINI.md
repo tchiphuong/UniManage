@@ -10,10 +10,11 @@ Sinh code cho dự án UniManage theo chuẩn CQRS, .NET 9, SQL Server, Dapper (
 **🔥 QUY TẮC QUAN TRỌNG: LUÔN SỬ DỤNG UTILITIES TRƯỚC**
 Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Utilities/ trước để sử dụng lại:
 
-- ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword()
-- ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels() (FluentValidation)
+- ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword() (Min 8 chars, complexity)
+- ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels()
 - ✅ **DatabaseHelper**: UserCodeExistsAsync(), ExecuteWithTransactionAsync(), QueryPagingAsync(), CheckTableExistsAsync()
-- ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError() - API responses chuẩn
+- ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError()
+- ✅ **Shared Validation**: Dùng `.All.Contains(status)` từ `CoreCommon.Value` auto-generated cho các danh sách giá trị.
 - ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
 - ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
 - ✅ **FileHelper**: IsValidImageFile(), ValidateFileUpload(), GetMimeType(), GetFileSizeText()
@@ -34,6 +35,8 @@ Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Util
 - Extend utilities nếu thiếu method cần thiết
 - Sử dụng ResponseHelper cho tất cả API responses
 - Dùng DatabaseHelper cho tất cả database operations có transaction
+- **Validator Resources**: LUÔN dùng `CoreResource` cho tất cả nhãn và thông báo lỗi (mẫu: `string.Format(CoreResource.validation_required, CoreResource.lbl_username)`).
+- **Logging Standard**: LUÔN dùng `nameof(request.PropertyName)` cho tên tham số trong `CoreParamModel`.
 
 Tech stack (bắt buộc)
 Backend: ASP.NET Core .NET 9
@@ -484,7 +487,9 @@ Implement stores bằng Dapper: IClientStore, IResourceStore, IPersistedGrantSto
 
 Flow mặc định: Authorization Code + PKCE (không ROPC).
 
-Dọn token: job Hangfire 15 phút xóa PersistedGrants/DeviceCodes hết hạn (SQL DELETE ... WHERE Expiration < SYSUTCDATETIME()).
+IdentityServer: job Hangfire 15 phút xóa PersistedGrants/DeviceCodes hết hạn.
+
+🔥 **Security Note**: Login handler PHẢI check `Status == "Active"` để chặn user bị vô hiệu hóa.
 
 Logging (log4net) — theo ngày & theo API
 Mỗi request gắn api = {controller}-{action} → log vào file:
@@ -582,8 +587,18 @@ Controller (mỏng):
 ```csharp
 [ApiController]
 [Route("api/v1/users")]
-public class UsersController : BaseController  // PHẢI kế thừa BaseController
+public class UsersController : BaseController
 {
+    // ...
+    [HttpPost("change-password")]
+    public async Task<ActionResult<ApiResponse<bool>>> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken ct)
+    {
+        command.HeaderInfo = HeaderInfo;
+        command.Username = this.Username; // 🔥 BẮT BUỘC: Lấy Username từ JWT để tránh IDOR
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+}
     private readonly IMediator _mediator;
 
     public UsersController(IMediator mediator)
@@ -732,24 +747,20 @@ public sealed class CreateUserValidator : AbstractValidator<CreateUserCommand>
     {
         RuleFor(x => x.Username)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Username is required")
-            .Length(3, 50).WithMessage("Username must be between 3 and 50 characters")
-            .Must(ValidationHelper.IsValidUserCode).WithMessage("Username allows only alphanumeric")
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
+            .Length(3, 50).WithMessage(string.Format(CoreResource.validation_range, CoreResource.lbl_username, 3, 50))
+            .Must(ValidationHelper.IsValidUserCode).WithMessage(CoreResource.validation_alphanumericOnly)
             .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
-            .WithMessage("Username is already taken");
+            .WithMessage(string.Format(CoreResource.validation_alreadyExists, CoreResource.lbl_username));
 
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required")
-            .EmailAddress().WithMessage("Invalid email format")
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_email))
+            .Must(ValidationHelper.IsValidEmail).WithMessage(CoreResource.validation_invalidEmail)
             .MustAsync(async (email, cancel) => !await IsEmailExistsAsync(email))
-            .WithMessage("Email is already registered");
+            .WithMessage(string.Format(CoreResource.validation_alreadyExists, CoreResource.lbl_email));
 
         RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(8)
-            .Matches(@"[A-Z]").WithMessage("Must contain uppercase")
-            .Matches(@"[a-z]").WithMessage("Must contain lowercase")
-            .Matches(@"[0-9]").WithMessage("Must contain number");
+            .Password(CoreResource.lbl_password);
     }
 
     private static async Task<bool> IsUsernameExistsAsync(string username)
@@ -1212,7 +1223,11 @@ Log per-day/per-api, có cid/user/method/path/status/ms, mask secrets
 **DbContext alias: using DbContext = UniManage.Core.Database.DbContext (tránh conflict với EF Core)**
 
 **Cleanup & Code Quality Rules (từ experience)**
-✅ **Utilities-First Approach:**
+
+- **Resource Standardization**: 100% Validators phải sử dụng `CoreResource` cho field labels và error messages.
+- **Type-safe Logging**: Luôn sử dụng `nameof(request.PropertyName)` cho `CoreParamModel`.
+- **Unified Security**: Sử dụng `.Password()` extension và check `Status == "Active"` khi login.
+  ✅ **Utilities-First Approach:**
 
 - Luôn check UniManage.Core/Utilities/ trước khi viết logic mới
 - Extend utilities thay vì duplicate code

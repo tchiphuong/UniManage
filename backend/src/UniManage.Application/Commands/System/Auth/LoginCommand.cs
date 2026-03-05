@@ -2,6 +2,7 @@ using Dapper;
 using FluentValidation;
 using MediatR;
 using UniManage.Application.Services;
+using UniManage.Application.Utilities;
 using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
@@ -71,13 +72,18 @@ namespace UniManage.Application.Commands.System.Auth
         public LoginCommandValidator()
         {
             RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required")
-                .MaximumLength(50).WithMessage("Username must not exceed 50 characters");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.Username)
+                        .MaximumLength(50)
+                        .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_username, 50));
+                });
 
-            // [SECURITY] H4 — Enforce minimum 8 chars consistent with CreateUser policy
+            // [SECURITY] H4 — Unified password policy via extension method
             RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Password is required")
-                .MinimumLength(8).WithMessage("Password must be at least 8 characters");
+                .Password(CoreResource.lbl_password);
         }
     }
 
@@ -108,43 +114,99 @@ namespace UniManage.Application.Commands.System.Auth
                 }
             };
 
+            var dbContext = new DbContext(openTransaction: true);
             try
             {
-                // 1. Authenticate via IdentityServer
-                var (success, tokenData, error) = await _identityClient.RequestTokenAsync(
-                    request.Username, request.Password, ct);
-
-                if (!success || tokenData == null)
+                using (dbContext)
                 {
-                    var errorResponse = ResponseHelper.Error<LoginCommand.Response>("Invalid username or password");
-                    log.ReturnCode = errorResponse.ReturnCode;
-                    log.Message = error;
-                    return errorResponse;
-                }
+                    // 1. Check account Lockout status
+                    var checkLockSql = @"
+                        SELECT TOP 1 [Id], [LockedUntil], [FailedLoginCount], [Status]
+                        FROM [dbo].[sy_users]
+                        WHERE [UserName] = @Username";
 
-                // 2. Get User Info from database to enrich response
-                using (var dbContext = new DbContext())
-                {
+                    var userSecurity = await dbContext.QueryFirstOrDefaultAsync<UserSecurityDto>(
+                        checkLockSql, new { request.Username });
+
+                    if (userSecurity != null)
+                    {
+                        if (userSecurity.Status != CoreCommon.Value.Commonstatus.Active)
+                        {
+                            var inactiveResponse = ResponseHelper.Error<LoginCommand.Response>("Account is inactive");
+                            log.ReturnCode = inactiveResponse.ReturnCode;
+                            log.Message = "Attempted login to inactive account";
+                            return inactiveResponse;
+                        }
+
+                        if (userSecurity.LockedUntil.HasValue && userSecurity.LockedUntil.Value > DateTime.Now)
+                        {
+                            var remainingMinutes = Math.Ceiling((userSecurity.LockedUntil.Value - DateTime.Now).TotalMinutes);
+                            var lockedResponse = ResponseHelper.Error<LoginCommand.Response>(CoreResource.auth_accountLocked);
+                            log.ReturnCode = lockedResponse.ReturnCode;
+                            log.Message = $"Account is locked until {userSecurity.LockedUntil.Value}";
+                            return lockedResponse;
+                        }
+                    }
+
+                    // 2. Authenticate via IdentityServer
+                    var (success, tokenData, error) = await _identityClient.RequestTokenAsync(
+                        request.Username, request.Password, ct);
+
+                    if (!success || tokenData == null)
+                    {
+                        // Update failed login count
+                        var updateFailedSql = @"
+                            UPDATE [dbo].[sy_users]
+                            SET [FailedLoginCount] = ISNULL([FailedLoginCount], 0) + 1,
+                                [LockedUntil] = CASE WHEN ISNULL([FailedLoginCount], 0) + 1 >= 5 
+                                                     THEN DATEADD(MINUTE, 30, GETDATE()) 
+                                                     ELSE [LockedUntil] END,
+                                [UpdatedAt] = GETDATE(),
+                                [UpdatedBy] = @Username
+                            WHERE [UserName] = @Username";
+
+                        await dbContext.ExecuteAsync(updateFailedSql, new { request.Username });
+                        await dbContext.CommitAsync();
+
+                        var errorResponse = ResponseHelper.Error<LoginCommand.Response>(CoreResource.auth_invalidLogin);
+                        log.ReturnCode = errorResponse.ReturnCode;
+                        log.Message = error;
+                        return errorResponse;
+                    }
+
+                    // 3. Login success - Reset lockout & Get User Info
                     var sql = @"
+                        UPDATE [dbo].[sy_users]
+                        SET [FailedLoginCount] = 0,
+                            [LockedUntil] = NULL,
+                            [UpdatedAt] = GETDATE(),
+                            [UpdatedBy] = @Username
+                        WHERE [UserName] = @Username;
+
                         SELECT TOP 1
                             [Id],
                             [UserName] AS UserCode,
                             [EmployeeCode],
                             [RoleCode],
-                            [Email]
+                            [Email],
+                            [Status]
                         FROM [dbo].[sy_users]
                         WHERE [UserName] = @Username";
 
                     var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
                         sql, new { request.Username });
 
-                    if (user == null)
+                    if (user == null || user.Status != CoreCommon.Value.Commonstatus.Active)
                     {
-                        var notFoundResponse = ResponseHelper.Error<LoginCommand.Response>("User data not found");
+                        await dbContext.CommitAsync();
+                        var notFoundResponse = ResponseHelper.Error<LoginCommand.Response>(
+                            user == null ? CoreResource.auth_userNotFound : CoreResource.auth_accountInactive);
                         log.ReturnCode = notFoundResponse.ReturnCode;
-                        log.Message = "User data not found in database";
+                        log.Message = user == null ? "User data not found in database" : "Inactive account login attempt";
                         return notFoundResponse;
                     }
+
+                    await dbContext.CommitAsync();
 
                     var responseData = new LoginCommand.Response
                     {
@@ -171,10 +233,11 @@ namespace UniManage.Application.Commands.System.Auth
             }
             catch (Exception ex)
             {
+                await dbContext.RollbackAsync();
                 log.IsException = 1;
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                return ResponseHelper.Error<LoginCommand.Response>("An error occurred during login");
+                return ResponseHelper.Error<LoginCommand.Response>(CoreResource.common_error);
             }
             finally
             {
@@ -189,6 +252,15 @@ namespace UniManage.Application.Commands.System.Auth
             public string? EmployeeCode { get; set; }
             public string? RoleCode { get; set; }
             public string? Email { get; set; }
+            public string Status { get; set; } = default!;
+        }
+
+        private class UserSecurityDto
+        {
+            public long Id { get; set; }
+            public string Status { get; set; } = default!;
+            public DateTime? LockedUntil { get; set; }
+            public int? FailedLoginCount { get; set; }
         }
     }
 

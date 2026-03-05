@@ -7,6 +7,7 @@ using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
 using UniManage.Resource;
+using UniManage.Application.Utilities;
 using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.System.User;
@@ -47,44 +48,42 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
     // Inject Repository ho?c Service d? check DB
     public CreateUserCommandValidator()
     {
-        // 1. Validate Username
         RuleFor(x => x.Username)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Username is required")
-            .Length(3, 50).WithMessage("Username must be between 3 and 50 characters")
-            .Must(ValidationHelper.IsValidUserCode).WithMessage(CoreResource.validation_alphanumericOnly)
-            .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
-            .WithMessage(CoreResource.validation_usernameAlreadyTaken);
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
+            .DependentRules(() =>
+            {
+                RuleFor(x => x.Username)
+                    .Length(3, 50)
+                    .WithMessage(string.Format(CoreResource.validation_length, CoreResource.lbl_username, 3, 50))
+                    .Must(ValidationHelper.IsValidUserCode)
+                    .WithMessage(CoreResource.validation_alphanumericOnly)
+                    .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
+                    .WithMessage(CoreResource.validation_usernameAlreadyTaken);
+            });
 
-        // 2. Validate Email - Removed
-        /*
-        RuleFor(x => x.Email)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Email is required")
-            .MaximumLength(100).WithMessage("Email must not exceed 100 characters")
-            .EmailAddress().WithMessage(CoreResource.validation_invalidEmail)
-            .MustAsync(async (email, cancel) => !await IsEmailExistsAsync(email))
-            .WithMessage(CoreResource.validation_emailAlreadyRegistered);
-        */
-
-        // 3. Validate Password
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password is required")
-            .MinimumLength(8).WithMessage("Password must be at least 8 characters")
-            .Matches(@"[A-Z]").WithMessage(CoreResource.validation_mustContainUppercase)
-            .Matches(@"[a-z]").WithMessage(CoreResource.validation_mustContainLowercase)
-            .Matches(@"[0-9]").WithMessage(CoreResource.validation_mustContainNumber)
-            .Matches(@"[\!\?\*\.]").WithMessage("Password must contain at least one special character (!?*.)");
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_password))
+            .DependentRules(() =>
+            {
+                RuleFor(x => x.Password)
+                    .Password(CoreResource.lbl_password);
+            });
 
-        // 4. Validate Status
         RuleFor(x => x.Status)
-            .NotEmpty().WithMessage("Status is required")
-            .Must(status => status == "Active" || status == "Inactive")
-            .WithMessage("Status must be either 'Active' or 'Inactive'");
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_status))
+            .DependentRules(() =>
+            {
+                RuleFor(x => x.Status)
+                    .Must(status => CoreCommon.Value.Commonstatus.All.Contains(status))
+                    .WithMessage(CoreResource.validation_invalidStatus);
+            });
 
-        // 5. Validate RoleCode
         RuleFor(x => x.RoleCode)
-            .NotEmpty().WithMessage("At least one role must be assigned");
+            .NotEmpty()
+            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_role));
     }
 
     private static async Task<bool> IsUsernameExistsAsync(string username)

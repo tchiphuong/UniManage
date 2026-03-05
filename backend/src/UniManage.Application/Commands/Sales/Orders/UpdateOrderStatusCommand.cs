@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -21,8 +22,6 @@ namespace UniManage.Application.Commands.Sales.Orders
 
     public sealed class UpdateOrderStatusCommandValidator : AbstractValidator<UpdateOrderStatusCommand>
     {
-        private readonly string[] _validStatuses = { "Draft", "Pending", "Processing", "Completed", "Cancelled" };
-
         public UpdateOrderStatusCommandValidator()
         {
             RuleFor(x => x.OrderCode)
@@ -30,8 +29,8 @@ namespace UniManage.Application.Commands.Sales.Orders
 
             RuleFor(x => x.Status)
                 .NotEmpty().WithMessage("Status is required")
-                .Must(status => _validStatuses.Contains(status))
-                .WithMessage($"Status must be one of: {string.Join(", ", _validStatuses)}");
+                .Must(status => CoreCommon.Value.Invoicestatus.All.Contains(status))
+                .WithMessage("Invalid order status");
         }
     }
 

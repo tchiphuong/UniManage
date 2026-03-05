@@ -1,6 +1,7 @@
 using Dapper;
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -36,8 +37,14 @@ namespace UniManage.Application.Queries.System.Auth
         public CheckUsernameExistsQueryValidator()
         {
             RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required")
-                .MaximumLength(50).WithMessage("Username must not exceed 50 characters");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.Username)
+                        .MaximumLength(50)
+                        .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_username, 50));
+                });
         }
     }
 
@@ -48,6 +55,14 @@ namespace UniManage.Application.Queries.System.Auth
     {
         public async Task<ApiResponse<CheckUsernameExistsQuery.Result>> Handle(CheckUsernameExistsQuery request, CancellationToken ct)
         {
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new CoreParamModel(nameof(request.Username), request.Username)
+                }
+            };
+
             try
             {
                 using (var dbContext = new DbContext())
@@ -66,13 +81,23 @@ namespace UniManage.Application.Queries.System.Auth
                         Exists = exists
                     };
 
-                    return ResponseHelper.Success(result);
+                    var response = ResponseHelper.Success(result);
+                    log.Result = response;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = $"Username exists check for '{request.Username}': {exists}";
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                UniLogger.Error($"[CheckUsernameExists] Error checking username: {request.Username}", ex);
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 return ResponseHelper.Error<CheckUsernameExistsQuery.Result>(CoreResource.common_exceptionOccurred);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }

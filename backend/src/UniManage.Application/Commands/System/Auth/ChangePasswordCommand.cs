@@ -1,5 +1,8 @@
 using FluentValidation;
 using MediatR;
+using Newtonsoft.Json;
+using UniManage.Application.Utilities;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -13,10 +16,6 @@ namespace UniManage.Application.Commands.System.Auth
     /// </summary>
     public sealed class ChangePasswordCommand : BaseCommand, IRequest<ApiResponse<bool>>
     {
-        /// <summary>
-        /// Username
-        /// </summary>
-        public string Username { get; set; } = string.Empty;
         /// <summary>
         /// Mật khẩu cũ
         /// </summary>
@@ -38,26 +37,33 @@ namespace UniManage.Application.Commands.System.Auth
     {
         public ChangePasswordCommandValidator()
         {
-            RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required");
+            RuleFor(x => x.HeaderInfo.Username)
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userIdentity));
 
             RuleFor(x => x.OldPassword)
-                .NotEmpty().WithMessage("Old password is required");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_oldPassword));
 
-            // [SECURITY] H4 — Enforce consistent password policy (min 8 + complexity)
+            // [SECURITY] H4 — Enforce consistent password policy via extension method
             RuleFor(x => x.NewPassword)
-                .NotEmpty().WithMessage("New password is required")
-                .MinimumLength(8).WithMessage("New password must be at least 8 characters")
-                .MaximumLength(128).WithMessage("New password must not exceed 128 characters")
-                .Must(PasswordHelper.IsValidPassword).WithMessage(
-                    "Password must contain at least one uppercase, one lowercase, one digit, and one special character");
+                .Password(CoreResource.lbl_newPassword)
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.NewPassword)
+                        .NotEqual(x => x.OldPassword)
+                        .WithMessage(CoreResource.validation_newPasswordDifferent);
+                });
 
             RuleFor(x => x.ConfirmPassword)
-                .NotEmpty().WithMessage("Confirm password is required")
-                .Equal(x => x.NewPassword).WithMessage("Confirm password does not match new password");
-
-            RuleFor(x => x.NewPassword)
-                .NotEqual(x => x.OldPassword).WithMessage("New password must be different from old password");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_confirmPassword))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.ConfirmPassword)
+                        .Equal(x => x.NewPassword)
+                        .WithMessage(CoreResource.validation_confirmPasswordMismatch);
+                });
         }
     }
 
@@ -68,78 +74,93 @@ namespace UniManage.Application.Commands.System.Auth
     {
         public async Task<ApiResponse<bool>> Handle(ChangePasswordCommand request, CancellationToken ct)
         {
+            var username = request.HeaderInfo.Username ?? string.Empty;
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new CoreParamModel(nameof(request.HeaderInfo.Username), username),
+                    new CoreParamModel(nameof(request.OldPassword), StringHelper.MaskSensitiveData(request.OldPassword))
+                }
+            };
+
+            var dbContext = new DbContext(openTransaction: true);
             try
             {
-                UniLogger.Info($"[ChangePassword] Start processing password change for user: {request.Username}");
-
-                using (var dbContext = new DbContext(openTransaction: true))
+                using (dbContext)
                 {
-                    try
+                    // Get current user with password
+                    var getUserSql = @"
+                        SELECT TOP 1
+                            [Id],
+                            [UserName],
+                            [Password]
+                        FROM [dbo].[sy_users]
+                        WHERE [UserName] = @Username";
+
+                    var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
+                        getUserSql,
+                        new { Username = username },
+                        ct);
+
+                    if (user == null)
                     {
-                        // Get current user with password
-                        var getUserSql = @"
-                            SELECT TOP 1
-                                [Id],
-                                [UserName],
-                                [Password]
-                            FROM [dbo].[sy_users]
-                            WHERE [UserName] = @Username";
-
-                        var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
-                            getUserSql,
-                            new { request.Username },
-                            ct);
-
-                        if (user == null)
-                        {
-                            UniLogger.Warn($"[ChangePassword] User not found: {request.Username}");
-                            return ResponseHelper.Error<bool>("User not found");
-                        }
-
-                        // Verify old password
-                        if (!PasswordHelper.VerifyPassword(request.OldPassword, user.Password))
-                        {
-                            UniLogger.Warn($"[ChangePassword] Invalid old password for user: {request.Username}");
-                            return ResponseHelper.Error<bool>("Old password is incorrect");
-                        }
-
-                        // Hash new password
-                        var hashedPassword = PasswordHelper.HashPassword(request.NewPassword);
-
-                        // Update password
-                        var updateSql = @"
-                            UPDATE [dbo].[sy_users]
-                            SET [Password] = @Password,
-                                [UpdatedAt] = GETDATE(),
-                                [UpdatedBy] = @UpdatedBy
-                            WHERE [Id] = @Id";
-
-                        await dbContext.ExecuteAsync(
-                            updateSql,
-                            new
-                            {
-                                Id = user.Id,
-                                Password = hashedPassword,
-                                UpdatedBy = request.Username
-                            },
-                            ct);
-
-                        await dbContext.CommitAsync();
-
-                        UniLogger.Info($"[ChangePassword] Password changed successfully for user: {request.Username}");
-                        return ResponseHelper.Success(true, CoreResource.auth_passwordChanged);
+                        var errorResponse = ResponseHelper.Error<bool>(CoreResource.auth_userNotFound);
+                        log.ReturnCode = errorResponse.ReturnCode;
+                        log.Message = "User not found in database";
+                        return errorResponse;
                     }
-                    catch
+
+                    // Verify old password
+                    if (!PasswordHelper.VerifyPassword(request.OldPassword, user.Password))
                     {
-                        await dbContext.RollbackAsync();
-                        throw;
+                        var errorResponse = ResponseHelper.Error<bool>(CoreResource.auth_oldPasswordIncorrect);
+                        log.ReturnCode = errorResponse.ReturnCode;
+                        log.Message = "Invalid old password provided";
+                        return errorResponse;
                     }
+
+                    // Hash new password
+                    var hashedPassword = PasswordHelper.HashPassword(request.NewPassword);
+
+                    // Update password
+                    var updateSql = @"
+                        UPDATE [dbo].[sy_users]
+                        SET [Password] = @Password,
+                            [UpdatedAt] = GETDATE(),
+                            [UpdatedBy] = @UpdatedBy
+                        WHERE [Id] = @Id";
+
+                    await dbContext.ExecuteAsync(
+                        updateSql,
+                        new
+                        {
+                            Id = user.Id,
+                            Password = hashedPassword,
+                            UpdatedBy = username
+                        },
+                        ct);
+
+                    await dbContext.CommitAsync();
+
+                    var response = ResponseHelper.Success(true, CoreResource.auth_passwordChanged);
+                    log.Result = response;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = response.Message;
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                UniLogger.Error($"[ChangePassword] Error changing password for user: {request.Username}", ex);
-                return ResponseHelper.Error<bool>("An error occurred while changing password");
+                await dbContext.RollbackAsync();
+                log.IsException = 1;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                return ResponseHelper.Error<bool>(CoreResource.common_error);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
 

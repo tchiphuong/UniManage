@@ -1,10 +1,12 @@
 using FluentValidation;
 using MediatR;
 using Newtonsoft.Json;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Resource;
 
 namespace UniManage.Application.Commands.System.User;
 
@@ -71,7 +73,7 @@ public sealed class RemoveUserRoleCommandHandler : IRequestHandler<RemoveUserRol
 
                 if (string.IsNullOrEmpty(username))
                 {
-                    return ResponseHelper.NotFound<RemoveUserRoleCommand.Response>("User not found");
+                    return ResponseHelper.NotFound<RemoveUserRoleCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_user));
                 }
             }
 
@@ -128,10 +130,10 @@ public sealed class RemoveUserRoleCommandHandler : IRequestHandler<RemoveUserRol
         {
             log.IsException = 1;
             log.Message = ex.Message;
-            log.ReturnCode = 500;
+            log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
             UniLogger.Error(JsonConvert.SerializeObject(log));
 
-            return ResponseHelper.Error<RemoveUserRoleCommand.Response>($"Failed to remove role: {ex.Message}");
+            return ResponseHelper.Error<RemoveUserRoleCommand.Response>(CoreResource.common_exceptionOccurred);
         }
     }
 }

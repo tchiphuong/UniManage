@@ -47,11 +47,11 @@ This skill guides you through building backend APIs for the UniManage system usi
 
 ### ❌ NEVER DO:
 
-- Write logic that already exists in utilities
 - Create response objects manually (use ResponseHelper)
 - Hash passwords outside of PasswordHelper
 - Validate email/phone manually (use ValidationHelper)
 - Write transaction logic manually (use DatabaseHelper)
+- Use hardcoded strings for validations (use `.All.Contains(status)` from auto-generated constants)
 
 ### ✅ ALWAYS DO:
 
@@ -59,6 +59,8 @@ This skill guides you through building backend APIs for the UniManage system usi
 - Extend utilities if a needed method is missing
 - Use ResponseHelper for ALL API responses
 - Use DatabaseHelper for ALL database operations with transactions
+- **Validator Resources**: ALWAYS use `CoreResource` for all labels and error messages.
+- **Logging Standard**: ALWAYS use `nameof(request.PropertyName)` for `CoreParamModel` names.
 
 ## RESTful API Standards (REQUIRED)
 
@@ -203,7 +205,16 @@ public class UsersController : BaseController
     [HttpPost]
     public async Task<ActionResult<ApiResponse<CreateUserCommand.Response>>> Create([FromBody] CreateUserCommand command, CancellationToken ct)
     {
-        command.HeaderInfo = HeaderInfo;  // MUST assign HeaderInfo
+        command.HeaderInfo = HeaderInfo;
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    [HttpPost("change-password")]
+    public async Task<ActionResult<ApiResponse<bool>>> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken ct)
+    {
+        command.HeaderInfo = HeaderInfo;
+        command.Username = this.Username; // 🔥 REQUIRED: Get Username from JWT to prevent IDOR
         var result = await _mediator.Send(command, ct);
         return Ok(result);
     }
@@ -281,23 +292,20 @@ public sealed class CreateUserValidator : AbstractValidator<CreateUserCommand>
     {
         RuleFor(x => x.Username)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Username is required")
-            .Length(3, 50).WithMessage("Username must be between 3 and 50 characters")
-            .Must(ValidationHelper.IsValidUserCode).WithMessage("Username allows only alphanumeric")
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
+            .Length(3, 50).WithMessage(string.Format(CoreResource.validation_range, CoreResource.lbl_username, 3, 50))
+            .Must(ValidationHelper.IsValidUserCode).WithMessage(CoreResource.validation_alphanumericOnly)
             .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
-            .WithMessage("Username is already taken");
+            .WithMessage(string.Format(CoreResource.validation_alreadyExists, CoreResource.lbl_username));
 
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required")
-            .Must(ValidationHelper.IsValidEmail).WithMessage("Invalid email format")
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_email))
+            .Must(ValidationHelper.IsValidEmail).WithMessage(CoreResource.validation_invalidEmail)
             .MustAsync(async (email, cancel) => !await IsEmailExistsAsync(email))
-            .WithMessage("Email is already registered");
+            .WithMessage(string.Format(CoreResource.validation_alreadyExists, CoreResource.lbl_email));
 
         RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(8)
-            .Must(PasswordHelper.IsValidPassword)
-            .WithMessage("Password must contain uppercase, lowercase, and number");
+            .Password(CoreResource.lbl_password);
     }
 
     private static Task<bool> IsUsernameExistsAsync(string username)
@@ -422,10 +430,10 @@ public sealed class GetUserListQueryValidator : AbstractValidator<GetUserListQue
     public GetUserListQueryValidator()
     {
         RuleFor(x => x.PageIndex)
-            .GreaterThan(0).WithMessage("Page index must be greater than 0");
+            .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_invalid, "PageIndex"));
 
         RuleFor(x => x.PageSize)
-            .InclusiveBetween(1, 100).WithMessage("Page size must be between 1 and 100");
+            .InclusiveBetween(1, 100).WithMessage(string.Format(CoreResource.validation_range, "PageSize", 1, 100));
     }
 }
 
@@ -648,7 +656,7 @@ var log = new CoreLogModel(request.HeaderInfo)
 {
     Parameter = new List<CoreParamModel>
     {
-        new CoreParamModel("key", "value")
+        new CoreParamModel(nameof(request.SomeProperty), request.SomeProperty)
     }
 };
 

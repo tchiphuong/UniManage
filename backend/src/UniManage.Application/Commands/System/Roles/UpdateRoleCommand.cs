@@ -27,20 +27,30 @@ namespace UniManage.Application.Commands.System.Roles
         public UpdateRoleCommandValidator()
         {
             RuleFor(x => x.RoleCode)
-                .NotEmpty().WithMessage("Role code is required");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleCode));
 
             RuleFor(x => x.RoleName)
-                .NotEmpty().WithMessage("Role name is required")
-                .Length(2, 200).WithMessage("Role name must be between 2 and 200 characters");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleName))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.RoleName)
+                        .Length(2, 200)
+                        .WithMessage(string.Format(CoreResource.validation_length, CoreResource.lbl_roleName, 2, 200));
+                });
 
             RuleFor(x => x.Description)
-                .MaximumLength(500).WithMessage("Description must not exceed 500 characters");
+                .MaximumLength(500)
+                .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_description, 500));
 
             RuleFor(x => x.IsActive)
-                .InclusiveBetween((byte)0, (byte)1).WithMessage("IsActive must be 0 or 1");
+                .InclusiveBetween((byte)0, (byte)1)
+                .WithMessage(CoreResource.validation_invalidStatus);
 
             RuleFor(x => x.DataRowVersion)
-                .NotEmpty().WithMessage("DataRowVersion is required for concurrency check");
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, "DataRowVersion"));
         }
     }
 
@@ -84,7 +94,7 @@ namespace UniManage.Application.Commands.System.Roles
                     if (rowsAffected == 0)
                     {
                         await dbContext.RollbackAsync(ct);
-                        var errorResponse = ResponseHelper.Error<UpdateRoleCommand.Response>("Role has been modified by another user or does not exist");
+                        var errorResponse = ResponseHelper.Error<UpdateRoleCommand.Response>(CoreResource.common_concurrencyError);
                         log.ReturnCode = errorResponse.ReturnCode;
                         log.Message = errorResponse.Message;
                         UniLogManager.WriteApiLog(log);
@@ -108,7 +118,7 @@ namespace UniManage.Application.Commands.System.Roles
                     await dbContext.RollbackAsync(ct);
                     UniLogger.Error($"Error updating role: {ex.Message}", ex);
 
-                    var response = ResponseHelper.Error<UpdateRoleCommand.Response>("Error occurred while updating role");
+                    var response = ResponseHelper.Error<UpdateRoleCommand.Response>(CoreResource.common_exceptionOccurred);
 
                     log.IsException = 1;
                     log.Message = ex.Message;
