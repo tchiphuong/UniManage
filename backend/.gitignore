@@ -5,5 +5,6 @@ src/UniManage.Core/Database/DatabaseModels.cs
 src/UniManage.Core/Constant/CoreCommon.cs
 src/UniManage.Core/Constant/CoreLanguage.cs
 src/UniManage.Core/Constant/CorePermission.cs
+src/UniManage.Resource/CoreResource.cs
 
 .fake

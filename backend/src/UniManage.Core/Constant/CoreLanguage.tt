@@ -36,6 +36,7 @@
         using (var cmd = new SqlCommand(@"
                 SELECT [LanguageCode], [LanguageName], [Icon], [IsDefault], [IsActive]
                 FROM [dbo].[sy_languages]
+                ORDER BY [LanguageName] ASC
             ", conn))
         using (var reader = cmd.ExecuteReader())
         {
