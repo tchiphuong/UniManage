@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.Workflow.Requests;
 using UniManage.Application.Queries.Workflow.Requests;
+using UniManage.Core.Constant;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 
@@ -19,6 +21,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpGet]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<PagedResult<GetRequestListQuery.Result>>>> GetList([FromQuery] GetRequestListQuery query, CancellationToken ct)
         {
             query ??= new GetRequestListQuery();
@@ -28,6 +31,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpGet("{id}")]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<GetRequestByIdQuery.Result>>> GetById([FromRoute] int id, CancellationToken ct)
         {
             var query = new GetRequestByIdQuery { Id = id };
@@ -37,6 +41,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpPost]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.Create)]
         public async Task<ActionResult<ApiResponse<CreateRequestCommand.Response>>> Create([FromBody] CreateRequestCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;
@@ -44,7 +49,8 @@ namespace UniManage.Api.Controllers.Workflow
             return Ok(result);
         }
 
-        [HttpPost("{id}/submit")]
+        [HttpPost("{id}/submissions")]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.Update)]
         public async Task<ActionResult<ApiResponse<SubmitRequestCommand.Response>>> Submit([FromRoute] int id, CancellationToken ct)
         {
             var command = new SubmitRequestCommand { RequestId = id };
@@ -53,7 +59,8 @@ namespace UniManage.Api.Controllers.Workflow
             return Ok(result);
         }
 
-        [HttpPost("{id}/approve")]
+        [HttpPost("{id}/approvals")]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.Update)]
         public async Task<ActionResult<ApiResponse<ApproveRequestCommand.Response>>> Approve([FromRoute] int id, [FromBody] ApproveRequestCommand command, CancellationToken ct)
         {
             if (id != command.RequestId)
@@ -65,7 +72,8 @@ namespace UniManage.Api.Controllers.Workflow
             return Ok(result);
         }
 
-        [HttpPost("{id}/reject")]
+        [HttpPost("{id}/rejections")]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.Update)]
         public async Task<ActionResult<ApiResponse<RejectRequestCommand.Response>>> Reject([FromRoute] int id, [FromBody] RejectRequestCommand command, CancellationToken ct)
         {
             if (id != command.RequestId)
@@ -78,6 +86,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpDelete]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.Delete)]
         public async Task<ActionResult<ApiResponse<DeleteRequestCommand.Response>>> Delete([FromBody] DeleteRequestCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;

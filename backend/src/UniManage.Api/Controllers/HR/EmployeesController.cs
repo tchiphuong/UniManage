@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.HR.Employees;
 using UniManage.Application.Queries.HR.Employees;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.HR;
@@ -30,6 +32,7 @@ public class EmployeesController : BaseController
     /// Get paginated list of employees
     /// </summary>
     [HttpGet]
+    [PermissionAuthorize(CoreFunction.HrEmployee, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<PagedResult<GetEmployeeListQuery.Response>>>> List([FromQuery] GetEmployeeListQuery req, CancellationToken ct)
     {
         req ??= new GetEmployeeListQuery();
@@ -46,6 +49,7 @@ public class EmployeesController : BaseController
     /// Get employee by id
     /// </summary>
     [HttpGet("{id}")]
+    [PermissionAuthorize(CoreFunction.HrEmployee, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<GetEmployeeByIdQuery.Response>>> GetById(long id, CancellationToken ct)
     {
         var query = new GetEmployeeByIdQuery
@@ -65,6 +69,7 @@ public class EmployeesController : BaseController
     /// Create new employee
     /// </summary>
     [HttpPost]
+    [PermissionAuthorize(CoreFunction.HrEmployee, CoreAction.Create)]
     public async Task<ActionResult<ApiResponse<CreateEmployeeCommand.Response>>> Create([FromBody] CreateEmployeeCommand command, CancellationToken ct)
     {
         command.HeaderInfo = HeaderInfo;
@@ -80,6 +85,7 @@ public class EmployeesController : BaseController
     /// Update employee information
     /// </summary>
     [HttpPut("{id}")]
+    [PermissionAuthorize(CoreFunction.HrEmployee, CoreAction.Update)]
     public async Task<ActionResult<ApiResponse<UpdateEmployeeCommand.Response>>> Update([FromRoute] long id, [FromBody] UpdateEmployeeCommand command, CancellationToken ct)
     {
         command.HeaderInfo = HeaderInfo;
@@ -95,6 +101,7 @@ public class EmployeesController : BaseController
     /// Delete employees (soft delete)
     /// </summary>
     [HttpDelete]
+    [PermissionAuthorize(CoreFunction.HrEmployee, CoreAction.Delete)]
     public async Task<ActionResult<ApiResponse<DeleteEmployeeCommand.Response>>> DeleteEmployee([FromBody] List<long> ids, CancellationToken ct)
     {
         var command = new DeleteEmployeeCommand

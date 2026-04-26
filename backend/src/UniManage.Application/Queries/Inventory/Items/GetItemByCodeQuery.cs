@@ -89,7 +89,7 @@ namespace UniManage.Application.Queries.Inventory.Items
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -104,7 +104,7 @@ namespace UniManage.Application.Queries.Inventory.Items
 
                     var response = ResponseHelper.Error<GetItemByCodeQuery.Result>("Error occurred while retrieving item");
 
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);

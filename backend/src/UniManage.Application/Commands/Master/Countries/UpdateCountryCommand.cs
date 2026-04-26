@@ -1,10 +1,11 @@
 using FluentValidation;
 using MediatR;
-using UniManage.Core.Database;
-using UniManage.Core.Logging;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.Master.Countries
 {
@@ -79,80 +80,42 @@ namespace UniManage.Application.Commands.Master.Countries
             CoreLogModel logData = new CoreLogModel(request.HeaderInfo)
             {
                 Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.Code), request.Code),
-                new CoreParamModel(nameof(request.NameVi), request.NameVi),
-                new CoreParamModel(nameof(request.NameEn), request.NameEn)
-            }
+                {
+                    new CoreParamModel(nameof(request.Code), request.Code),
+                    new CoreParamModel(nameof(request.NameVi), request.NameVi),
+                    new CoreParamModel(nameof(request.NameEn), request.NameEn)
+                }
             };
 
-            using (DbContext dbContext = new DbContext(openTransaction: true))
+            using var dbContext = new DbContext(openTransaction: true);
+            var country = await dbContext.Set<ad_countries>()
+                .FirstOrDefaultAsync(x => x.Code == request.Code, ct);
+
+            if (country == null)
             {
-                try
-                {
-                    var codeName = StringHelper.ToSlug(request.NameEn);
-
-                    var rowsAffected = await dbContext.ExecuteAsync(
-                        @"UPDATE ad_countries
-                      SET NameVi = @NameVi,
-                          NameEn = @NameEn,
-                          FullNameVi = @FullNameVi,
-                          FullNameEn = @FullNameEn,
-                          CodeName = @CodeName,
-                          PhoneCode = @PhoneCode,
-                          SortOrder = @SortOrder,
-                          IsActive = @IsActive,
-                          UpdatedAt = GETDATE()
-                      WHERE Code = @Code",
-                        new
-                        {
-                            request.Code,
-                            request.NameVi,
-                            request.NameEn,
-                            request.FullNameVi,
-                            request.FullNameEn,
-                            CodeName = codeName,
-                            request.PhoneCode,
-                            request.SortOrder,
-                            request.IsActive
-                        },
-                        ct);
-
-                    if (rowsAffected == 0)
-                    {
-                        await dbContext.RollbackAsync();
-                        var notFoundResponse = ResponseHelper.NotFound<UpdateCountryCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_country));
-                        logData.ReturnCode = notFoundResponse.ReturnCode;
-                        logData.Message = notFoundResponse.Message;
-                        UniLogManager.WriteApiLog(logData);
-                        return notFoundResponse;
-                    }
-
-                    await dbContext.CommitAsync();
-
-                    var responseData = new UpdateCountryCommand.Response { Success = true, Code = request.Code };
-                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_country));
-                    logData.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(logData);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error updating country: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateCountryCommand.Response>(CoreResource.common_exceptionOccurred);
-                    logData.Message = ex.ToString();
-                    logData.IsException = 1;
-                    logData.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(logData);
-
-                    return response;
-                }
+                return ResponseHelper.NotFound<UpdateCountryCommand.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_country));
             }
+
+            country.NameVi = request.NameVi;
+            country.NameEn = request.NameEn;
+            country.FullNameVi = request.FullNameVi;
+            country.FullNameEn = request.FullNameEn;
+            country.CodeName = StringHelper.ToSlug(request.NameEn);
+            country.PhoneCode = request.PhoneCode;
+            country.SortOrder = request.SortOrder;
+            country.IsActive = request.IsActive;
+            country.UpdatedAt = DateTimeHelper.Now;
+
+            await dbContext.SaveChangesAsync(ct);
+            await dbContext.CommitAsync();
+
+            var responseData = new UpdateCountryCommand.Response { Success = true, Code = request.Code };
+            var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_country));
+            logData.ReturnCode = response.ReturnCode;
+            return response;
         }
     }
 
     #endregion
 }
+

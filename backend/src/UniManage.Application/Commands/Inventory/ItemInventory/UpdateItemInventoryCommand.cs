@@ -40,20 +40,9 @@ namespace UniManage.Application.Commands.Inventory.ItemInventory
     {
         public async Task<ApiResponse<UpdateItemInventoryCommand.Response>> Handle(UpdateItemInventoryCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Id), request.Id.ToString()),
-                    new CoreParamModel(nameof(request.Quantity), request.Quantity.ToString()),
-                    new CoreParamModel(nameof(request.WarehouseLocation), request.WarehouseLocation)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         UPDATE it_item_inventory
                         SET Quantity = @Quantity,
@@ -72,39 +61,16 @@ namespace UniManage.Application.Commands.Inventory.ItemInventory
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<UpdateItemInventoryCommand.Response>("Item inventory not found");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new UpdateItemInventoryCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error updating item inventory: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateItemInventoryCommand.Response>("Error occurred while updating item inventory");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 }
+
+

@@ -6,8 +6,15 @@ using UniManage.Core.Logging;
 
 namespace UniManage.IdentityServer.Services
 {
+    /// <summary>
+    /// Store quản lý các tài nguyên (Identity, API Resources, Scopes) trong IdentityServer sử dụng Dapper.
+    /// </summary>
     public class DapperResourceStore : IResourceStore
     {
+        /// <summary>
+        /// Lấy tất cả các tài nguyên có trong hệ thống.
+        /// </summary>
+        /// <returns>Đối tượng Resources chứa tất cả Identity và API resources.</returns>
         public async Task<Resources> GetAllResourcesAsync()
         {
             try
@@ -25,6 +32,11 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Tìm kiếm các tài nguyên API dựa trên tên resource.
+        /// </summary>
+        /// <param name="apiResourceNames">Danh sách tên các API resource cần tìm.</param>
+        /// <returns>Danh sách các ApiResource tìm thấy.</returns>
         public async Task<IEnumerable<ApiResource>> FindApiResourcesByNameAsync(IEnumerable<string> apiResourceNames)
         {
             try
@@ -39,6 +51,11 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Tìm kiếm các tài nguyên API dựa trên tên scope.
+        /// </summary>
+        /// <param name="scopeNames">Danh sách tên các scope cần tìm.</param>
+        /// <returns>Danh sách các ApiResource tìm thấy.</returns>
         public async Task<IEnumerable<ApiResource>> FindApiResourcesByScopeNameAsync(IEnumerable<string> scopeNames)
         {
             try
@@ -53,6 +70,11 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Tìm kiếm API Scope dựa trên tên.
+        /// </summary>
+        /// <param name="scopeNames">Danh sách tên các scope cần tìm.</param>
+        /// <returns>Danh sách các ApiScope tìm thấy.</returns>
         public async Task<IEnumerable<ApiScope>> FindApiScopesByNameAsync(IEnumerable<string> scopeNames)
         {
             try
@@ -67,6 +89,11 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Tìm kiếm các tài nguyên Identity dựa trên tên scope.
+        /// </summary>
+        /// <param name="scopeNames">Danh sách tên các scope cần tìm.</param>
+        /// <returns>Danh sách các IdentityResource tìm thấy.</returns>
         public async Task<IEnumerable<IdentityResource>> FindIdentityResourcesByScopeNameAsync(IEnumerable<string> scopeNames)
         {
             try
@@ -81,10 +108,13 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Truy vấn danh sách Identity Resource từ database.
+        /// </summary>
         private async Task<List<IdentityResource>> GetIdentityResourcesFromDbAsync()
         {
             using var dbContext = new DbContext();
-            var sql = "SELECT [Name], [DisplayName], [Description], [Required], [Emphasize], [ShowInDiscoveryDocument] FROM [dbo].[sy_is_identity_resources]";
+            var sql = "SELECT [Name], [DisplayName], [Description], [Required], [Emphasize], [ShowInDiscoveryDocument] FROM [dbo].[is_identity_resources]";
             var dtoList = await dbContext.QueryAsync<IdentityResourceDto>(sql);
             
             return dtoList.Select(dto => new IdentityResource
@@ -98,14 +128,16 @@ namespace UniManage.IdentityServer.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// Truy vấn danh sách API Resource từ database.
+        /// </summary>
         private async Task<List<ApiResource>> GetApiResourcesFromDbAsync()
         {
             using var dbContext = new DbContext();
-            var sql = "SELECT [Name], [DisplayName], [Description], [ShowInDiscoveryDocument], [AllowedAccessTokenSigningAlgorithms] FROM [dbo].[sy_is_api_resources]";
+            var sql = "SELECT [Name], [DisplayName], [Description], [ShowInDiscoveryDocument], [AllowedAccessTokenSigningAlgorithms] FROM [dbo].[is_api_resources]";
             var dtoList = await dbContext.QueryAsync<ApiResourceDto>(sql);
             
-            // Lấy scopes (giả định map 1-1 cho đơn giản giống Config.cs hiện tại)
-            var scopeSql = "SELECT [Name] FROM [dbo].[sy_is_api_scopes]";
+            var scopeSql = "SELECT [Name] FROM [dbo].[is_api_scopes]";
             var allScopes = (await dbContext.QueryAsync<string>(scopeSql)).ToList();
 
             return dtoList.Select(dto => new ApiResource(dto.Name, dto.DisplayName)
@@ -113,14 +145,17 @@ namespace UniManage.IdentityServer.Services
                 Description = dto.Description,
                 ShowInDiscoveryDocument = dto.ShowInDiscoveryDocument,
                 AllowedAccessTokenSigningAlgorithms = dto.AllowedAccessTokenSigningAlgorithms?.Split(',').ToList() ?? new List<string>(),
-                Scopes = allScopes // Add all scopes locally for this API demo
+                Scopes = allScopes
             }).ToList();
         }
 
+        /// <summary>
+        /// Truy vấn danh sách API Scope từ database.
+        /// </summary>
         private async Task<List<ApiScope>> GetApiScopesFromDbAsync()
         {
             using var dbContext = new DbContext();
-            var sql = "SELECT [Name], [DisplayName], [Description], [Required], [Emphasize], [ShowInDiscoveryDocument] FROM [dbo].[sy_is_api_scopes]";
+            var sql = "SELECT [Name], [DisplayName], [Description], [Required], [Emphasize], [ShowInDiscoveryDocument] FROM [dbo].[is_api_scopes]";
             var dtoList = await dbContext.QueryAsync<ApiScopeDto>(sql);
             
             return dtoList.Select(dto => new ApiScope(dto.Name, dto.DisplayName)
@@ -132,6 +167,9 @@ namespace UniManage.IdentityServer.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// DTO cho IdentityResource.
+        /// </summary>
         private class IdentityResourceDto
         {
             public string Name { get; set; } = default!;
@@ -142,6 +180,9 @@ namespace UniManage.IdentityServer.Services
             public bool ShowInDiscoveryDocument { get; set; }
         }
 
+        /// <summary>
+        /// DTO cho ApiResource.
+        /// </summary>
         private class ApiResourceDto
         {
             public string Name { get; set; } = default!;
@@ -151,6 +192,9 @@ namespace UniManage.IdentityServer.Services
             public string? AllowedAccessTokenSigningAlgorithms { get; set; }
         }
 
+        /// <summary>
+        /// DTO cho ApiScope.
+        /// </summary>
         private class ApiScopeDto
         {
             public string Name { get; set; } = default!;

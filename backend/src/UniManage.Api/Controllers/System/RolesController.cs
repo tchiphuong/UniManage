@@ -31,7 +31,7 @@ namespace UniManage.Api.Controllers.System
         /// </summary>
         [HttpGet("combobox")]
         [PermissionAuthorize(CoreFunction.SyRole, CoreAction.View)]
-        public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox([FromQuery] GetRoleComboboxQuery query, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox([FromQuery] GetRoleComboboxQuery query, CancellationToken ct)
         {
             query ??= new GetRoleComboboxQuery();
             query.HeaderInfo = HeaderInfo;

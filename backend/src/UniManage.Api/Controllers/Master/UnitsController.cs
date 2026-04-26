@@ -1,14 +1,14 @@
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Api.Controllers;
 using UniManage.Application.Commands.Master.Units;
 using UniManage.Application.Queries.Master.Units;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.Master;
 
-[Authorize]
 [ApiController]
 [Route("api/v1/units")]
 public class UnitsController : BaseController
@@ -27,7 +27,8 @@ public class UnitsController : BaseController
     #region GET: /api/v1/units/combobox
 
     [HttpGet("combobox")]
-    public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox([FromQuery] GetUnitComboboxQuery query, CancellationToken ct)
+    [PermissionAuthorize(CoreFunction.Main, CoreAction.View)]
+    public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox([FromQuery] GetUnitComboboxQuery query, CancellationToken ct)
     {
         query ??= new GetUnitComboboxQuery();
         query.HeaderInfo = HeaderInfo;
@@ -40,6 +41,7 @@ public class UnitsController : BaseController
     #region GET: /api/v1/units
 
     [HttpGet]
+    [PermissionAuthorize(CoreFunction.Main, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<PagedResult<GetUnitListQuery.Response>>>> GetList([FromQuery] GetUnitListQuery query, CancellationToken ct)
     {
         query ??= new GetUnitListQuery();
@@ -53,6 +55,7 @@ public class UnitsController : BaseController
     #region GET: /api/v1/units/{code}
 
     [HttpGet("{code}")]
+    [PermissionAuthorize(CoreFunction.Main, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<GetUnitByCodeQuery.Response?>>> GetByCode(string code, CancellationToken ct)
     {
         var query = new GetUnitByCodeQuery { Code = code, HeaderInfo = HeaderInfo };
@@ -65,6 +68,7 @@ public class UnitsController : BaseController
     #region POST: /api/v1/units
 
     [HttpPost]
+    [PermissionAuthorize(CoreFunction.Main, CoreAction.Create)]
     public async Task<ActionResult<ApiResponse<CreateUnitCommand.Response>>> Create([FromBody] CreateUnitCommand command, CancellationToken ct)
     {
         command.HeaderInfo = HeaderInfo;
@@ -77,6 +81,7 @@ public class UnitsController : BaseController
     #region PUT: /api/v1/units/{code}
 
     [HttpPut("{code}")]
+    [PermissionAuthorize(CoreFunction.Main, CoreAction.Update)]
     public async Task<ActionResult<ApiResponse<UpdateUnitCommand.Response>>> Update([FromRoute] string code, [FromBody] UpdateUnitCommand command, CancellationToken ct)
     {
         command ??= new UpdateUnitCommand();
@@ -91,6 +96,7 @@ public class UnitsController : BaseController
     #region DELETE: /api/v1/units
 
     [HttpDelete]
+    [PermissionAuthorize(CoreFunction.Main, CoreAction.Delete)]
     public async Task<ActionResult<ApiResponse<DeleteUnitCommand.Response>>> Delete([FromBody] DeleteUnitCommand command, CancellationToken ct)
     {
         command.HeaderInfo = HeaderInfo;

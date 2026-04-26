@@ -89,7 +89,7 @@ namespace UniManage.Application.Queries.HR.Salaries
 
                     var result = await dbContext.QueryPagingAsync<GetSalaryListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -103,7 +103,7 @@ namespace UniManage.Application.Queries.HR.Salaries
                     var response = ResponseHelper.Error<PagedResult<GetSalaryListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
 

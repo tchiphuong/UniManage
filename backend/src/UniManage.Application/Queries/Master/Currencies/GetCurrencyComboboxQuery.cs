@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.Master.Currencies
 {
     #region Query
 
-    public sealed class GetCurrencyComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetCurrencyComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
     {
         public string? Keyword { get; set; }
     }
@@ -20,9 +20,9 @@ namespace UniManage.Application.Queries.Master.Currencies
 
     #region Handler
 
-    public sealed class GetCurrencyComboboxQueryHandler : IRequestHandler<GetCurrencyComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetCurrencyComboboxQueryHandler : IRequestHandler<GetCurrencyComboboxQuery, ApiResponse<List<ComboboxModel>>>
     {
-        public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetCurrencyComboboxQuery request, CancellationToken ct)
+        public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetCurrencyComboboxQuery request, CancellationToken ct)
         {
             var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
             {
@@ -60,12 +60,12 @@ namespace UniManage.Application.Queries.Master.Currencies
                         new { Keyword = string.IsNullOrEmpty(request.Keyword) ? null : $"%{request.Keyword}%" },
                         ct);
 
-                    var items = currencies.Select(c => new ComboboxItemDto
+                    var items = currencies.Select(c => new ComboboxModel
                     {
-                        Value = c.Code,
-                        Label = c.Symbol != null ? $"{c.Name} ({c.Symbol})" : c.Name,
+                        Code = c.Code,
+                        Name = c.Symbol != null ? $"{c.Name} ({c.Symbol})" : c.Name,
                         Status = 1,
-                        Metadata = new Dictionary<string, object>
+                        ExtData = new Dictionary<string, object>
                         {
                             ["Symbol"] = c.Symbol ?? ""
                         }
@@ -82,13 +82,13 @@ namespace UniManage.Application.Queries.Master.Currencies
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.ToString();
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting currency combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxModel>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

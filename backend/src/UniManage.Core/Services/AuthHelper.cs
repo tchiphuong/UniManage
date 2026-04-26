@@ -1,34 +1,40 @@
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using UniManage.Core.Constant;
-using DbContext = UniManage.Core.Database.DbContext;
-using UniManage.Core.Utilities;
-using UniManage.Model.Entities;
-using UniManage.Model.Common;
-using UniManage.Resource;
+using System.Threading;
+using System.Threading.Tasks;
 using Dapper;
+using Microsoft.EntityFrameworkCore;
+using UniManage.Core.Constant;
+using UniManage.Core.Database;
+using UniManage.Core.Utilities;
+using UniManage.Model.Common;
+using UniManage.Model.Entities;
+using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Core.Services
 {
     /// <summary>
-    /// Helper cung cấp các hàm xử lý xác thực và quản lý trạng thái tài khoản (Static để tối ưu performance).
+    /// Helper providing authentication and account status management functions (Static for performance).
     /// </summary>
     public static class AuthHelper
     {
         /// <summary>
-        /// Kiểm tra trạng thái tài khoản (Active/Locked).
+        /// Validates user account status (Active/Locked).
         /// </summary>
-        /// <param name="username">Tên đăng nhập.</param>
-        /// <param name="log">Đối tượng log từ API truyền vào.</param>
-        /// <param name="ct">Token hủy bỏ tác vụ.</param>
-        /// <returns>Kết quả kiểm tra kèm thông tin bảo mật của người dùng.</returns>
+        /// <param name="username">Login username.</param>
+        /// <param name="log">Log object from the calling API.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>Validation result along with user's security information.</returns>
         public static async Task<(bool Success, string? Error, UserSecurityDto? User)> ValidateUserStatusAsync(string username, CoreLogModel log, CancellationToken ct = default)
         {
             log.Parameter.Add(new CoreParamModel(nameof(username), username));
             using var dbContext = new DbContext();
             
-            // Sử dụng EF Core LINQ để tìm người dùng (Type-safe)
+            // Use EF Core LINQ to find user (Type-safe)
             var userEntity = await dbContext.Set<sy_users>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Username == username, ct);
@@ -60,17 +66,17 @@ namespace UniManage.Core.Services
         }
 
         /// <summary>
-        /// Xử lý khi đăng nhập thành công (Reset số lần sai, mở khóa).
+        /// Processes successful login (Resets failure count, unlocks account).
         /// </summary>
-        /// <param name="username">Tên đăng nhập.</param>
-        /// <param name="log">Đối tượng log từ API truyền vào.</param>
-        /// <param name="ct">Token hủy bỏ tác vụ.</param>
+        /// <param name="username">Login username.</param>
+        /// <param name="log">Log object from the calling API.</param>
+        /// <param name="ct">Cancellation token.</param>
         public static async Task HandleLoginSuccessAsync(string username, CoreLogModel log, CancellationToken ct = default)
         {
             log.Parameter.Add(new CoreParamModel(nameof(username), username));
             using var dbContext = new DbContext(openTransaction: true);
             
-            // Sử dụng EF Core để cập nhật (Dễ bảo trì)
+            // Use EF Core to update (Maintainable)
             var user = await dbContext.Set<sy_users>()
                 .FirstOrDefaultAsync(u => u.Username == username, ct);
 
@@ -87,17 +93,17 @@ namespace UniManage.Core.Services
         }
 
         /// <summary>
-        /// Xử lý khi đăng nhập thất bại (Tăng số lần sai, khóa tài khoản nếu cần).
+        /// Processes failed login (Increments failure count, locks account if needed).
         /// </summary>
-        /// <param name="username">Tên đăng nhập.</param>
-        /// <param name="log">Đối tượng log từ API truyền vào.</param>
-        /// <param name="ct">Token hủy bỏ tác vụ.</param>
+        /// <param name="username">Login username.</param>
+        /// <param name="log">Log object from the calling API.</param>
+        /// <param name="ct">Cancellation token.</param>
         public static async Task HandleLoginFailureAsync(string username, CoreLogModel log, CancellationToken ct = default)
         {
             log.Parameter.Add(new CoreParamModel(nameof(username), username));
             using var dbContext = new DbContext(openTransaction: true);
             
-            // Sử dụng EF Core cho logic nghiệp vụ tăng số lần sai
+            // Use EF Core for increment business logic
             var user = await dbContext.Set<sy_users>()
                 .FirstOrDefaultAsync(u => u.Username == username, ct);
 
@@ -119,14 +125,14 @@ namespace UniManage.Core.Services
         }
 
         /// <summary>
-        /// Cập nhật hoặc đăng ký mới thiết bị và FCM Token cho người dùng.
+        /// Updates or registers a new device and FCM Token for a user.
         /// </summary>
-        /// <param name="userId">ID người dùng.</param>
-        /// <param name="deviceId">ID thiết bị.</param>
-        /// <param name="fcmToken">Token từ Firebase.</param>
-        /// <param name="deviceType">Loại thiết bị (iOS, Android, Web).</param>
-        /// <param name="log">Đối tượng log từ API truyền vào.</param>
-        /// <param name="ct">Token hủy bỏ tác vụ.</param>
+        /// <param name="userId">User ID.</param>
+        /// <param name="deviceId">Device unique ID.</param>
+        /// <param name="fcmToken">Firebase FCM Token.</param>
+        /// <param name="deviceType">Device type (iOS, Android, Web).</param>
+        /// <param name="log">Log object from the calling API.</param>
+        /// <param name="ct">Cancellation token.</param>
         public static async Task UpdateDeviceTokenAsync(long userId, string? deviceId, string? fcmToken, string? deviceType, CoreLogModel log, CancellationToken ct = default)
         {
             log.Parameter.Add(new CoreParamModel(nameof(userId), userId));
@@ -155,7 +161,7 @@ namespace UniManage.Core.Services
         }
 
         /// <summary>
-        /// Đăng ký Public Key sinh trắc học cho thiết bị.
+        /// Registers a biometric Public Key for a specific device.
         /// </summary>
         public static async Task RegisterBiometricKeyAsync(long userId, string deviceId, string publicKey, string? deviceName, CoreLogModel log, CancellationToken ct = default)
         {
@@ -182,7 +188,7 @@ namespace UniManage.Core.Services
         }
 
         /// <summary>
-        /// Xác thực chữ ký sinh trắc học từ thiết bị.
+        /// Verifies a biometric signature from a device.
         /// </summary>
         public static async Task<bool> VerifyBiometricSignatureAsync(long userId, string deviceId, string challenge, string signature, CoreLogModel log, CancellationToken ct = default)
         {
@@ -191,7 +197,7 @@ namespace UniManage.Core.Services
 
             using var dbContext = new DbContext();
             
-            // Sử dụng EF Core LINQ để lấy Public Key
+            // Use EF Core LINQ to fetch Public Key
             var publicKey = await dbContext.Set<sy_user_biometrics>()
                 .AsNoTracking()
                 .Where(b => b.UserId == userId && b.DeviceId == deviceId)
@@ -204,14 +210,14 @@ namespace UniManage.Core.Services
             {
                 using var rsa = RSA.Create();
                 
-                // Giả định PublicKey được lưu dưới dạng Base64 của SubjectPublicKeyInfo (SPKI)
+                // Assume PublicKey is stored as Base64 of SubjectPublicKeyInfo (SPKI)
                 byte[] publicKeyBytes = Convert.FromBase64String(publicKey);
                 rsa.ImportSubjectPublicKeyInfo(publicKeyBytes, out _);
 
                 byte[] challengeBytes = Encoding.UTF8.GetBytes(challenge);
                 byte[] signatureBytes = Convert.FromBase64String(signature);
 
-                // Xác thực chữ ký dùng SHA256 và PKCS1 Padding
+                // Verify signature using SHA256 and PKCS1 Padding
                 return rsa.VerifyData(challengeBytes, signatureBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             }
             catch (Exception ex)
@@ -223,25 +229,25 @@ namespace UniManage.Core.Services
         }
 
         /// <summary>
-        /// Tìm hoặc tạo mới người dùng từ thông tin Social Profile.
+        /// Retrieves or creates a new user from Social Profile information.
         /// </summary>
         public static async Task<sy_users?> GetOrCreateSocialUserAsync(UniManage.Core.Services.Social.SocialUserProfile profile, string internalSecret, CoreLogModel log, CancellationToken ct = default)
         {
             using var dbContext = new DbContext(openTransaction: true);
             
-            // 1. Tìm theo Email hoặc Provider Id
+            // 1. Search by Email or Provider Id
             var user = await dbContext.Set<sy_users>()
                 .FirstOrDefaultAsync(u => u.Email == profile.Email || u.SocialProviderId == profile.ProviderUserId, ct);
 
             if (user != null)
             {
-                // Cập nhật thông tin nếu cần
+                // Update profile info if needed
                 user.SocialProvider = profile.Provider;
                 user.SocialProviderId = profile.ProviderUserId;
                 user.UpdatedAt = DateTimeHelper.Now;
                 user.UpdatedBy = "SYSTEM_SOCIAL";
                 
-                // Đồng bộ mật khẩu nội bộ để đảm bảo login được
+                // Sync internal secret hash to ensure standard login works
                 user.Password = PasswordHelper.HashPassword(internalSecret);
                 
                 await dbContext.SaveChangesAsync(ct);
@@ -249,13 +255,13 @@ namespace UniManage.Core.Services
                 return user;
             }
 
-            // 2. Tạo mới nếu chưa có
+            // 2. Create new user if not found
             user = new sy_users
             {
                 Username = profile.Email.Split('@')[0] + "_" + Guid.NewGuid().ToString("N").Substring(0, 4),
                 Email = profile.Email,
                 Status = CoreCommon.Value.Commonstatus.Active,
-                Password = PasswordHelper.HashPassword(internalSecret), // Đặt mật khẩu bí mật
+                Password = PasswordHelper.HashPassword(internalSecret), // Set a secret password
                 SocialProvider = profile.Provider,
                 SocialProviderId = profile.ProviderUserId,
                 CreatedAt = DateTimeHelper.Now,
@@ -271,7 +277,7 @@ namespace UniManage.Core.Services
     }
 
     /// <summary>
-    /// DTO chứa thông tin bảo mật của người dùng.
+    /// DTO containing user's security status information.
     /// </summary>
     public class UserSecurityDto
     {

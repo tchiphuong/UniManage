@@ -2,167 +2,177 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Constant;
-using DbContext = UniManage.Core.Database.DbContext;
-using UniManage.Core.Logging;
-using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
+using UniManage.Core.Logging;
+using UniManage.Core.Utilities;
 
-namespace UniManage.Application.Commands.System.User;
-
-#region Command
-
-/// <summary>
-/// Command to update user information
-/// </summary>
-public sealed class UpdateUserCommand : BaseCommand, IRequest<ApiResponse<UpdateUserCommand.Response>>
+namespace UniManage.Application.Commands.System.User
 {
-    public long Id { get; set; }
-    public string Email { get; init; } = default!;
-    public string? EmployeeCode { get; init; }
-    public string Status { get; init; } = default!;
-    public byte[]? RowVersion { get; init; }
+    #region Command
 
-    // Note: DisplayName and PhoneNumber should be stored in hr_employees table if needed
-    // They don't exist in sy_users table schema
-
-    public sealed class Response
+    /// <summary>
+    /// Command to update user information
+    /// </summary>
+    public sealed class UpdateUserCommand : BaseCommand, IRequest<ApiResponse<UpdateUserCommand.Response>>
     {
-        public long Id { get; init; }
+        public long Id { get; set; }
+        public string Email { get; init; } = default!;
+        public string? EmployeeCode { get; init; }
+        public string Status { get; init; } = default!;
+        public byte[]? RowVersion { get; init; }
+
+        public sealed class Response
+        {
+            public long Id { get; init; }
+        }
     }
-}
 
-#endregion
+    #endregion
 
-#region Validator
+    #region Validator
 
-/// <summary>
-/// Validator for UpdateUserCommand
-/// </summary>
-public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
-{
-    public UpdateUserCommandValidator()
+    /// <summary>
+    /// Validator for UpdateUserCommand
+    /// </summary>
+    public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
     {
-        RuleFor(x => x.Id)
-            .NotEmpty()
-            .WithMessage(string.Format(CoreResource.validation_required, "Id"));
+        public UpdateUserCommandValidator()
+        {
+            RuleFor(x => x.Id)
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.user_userIdentity))
+                .MustAsync(async (id, cancel) => await IsUserExistsAsync(id))
+                .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
 
-        /*
-        RuleFor(x => x.Email)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Email is required")
-            .MaximumLength(100).WithMessage("Email must not exceed 100 characters")
-            .EmailAddress().WithMessage(CoreResource.validation_invalidEmail)
-            .MustAsync(async (cmd, email, cancel) => !await IsEmailExistsByOtherUserAsync(cmd.Id, email))
-            .WithMessage(CoreResource.validation_emailAlreadyRegisteredByOther);
-        */
+            RuleFor(x => x.EmployeeCode)
+                .MaximumLength(50)
+                .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.user_employeeCode, 50));
 
-        RuleFor(x => x.EmployeeCode)
-            .MaximumLength(50)
-            .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_employeeCode, 50));
-
-        RuleFor(x => x.Status)
-            .NotEmpty()
-            .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_status))
-            .DependentRules(() =>
+            When(x => !string.IsNullOrEmpty(x.EmployeeCode), () =>
             {
-                RuleFor(x => x.Status)
-                    .Must(status => CoreCommon.Value.Commonstatus.All.Contains(status))
-                    .WithMessage(CoreResource.validation_invalidStatus);
+                RuleFor(x => x.EmployeeCode)
+                    .MustAsync(async (code, cancel) => await IsEmployeeExistsAsync(code!))
+                    .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_employee));
             });
 
-        RuleFor(x => x.RowVersion)
-            .NotEmpty()
-            .WithMessage(string.Format(CoreResource.validation_required, "RowVersion"));
-    }
-
-    // private static async Task<bool> IsEmailExistsByOtherUserAsync... Removed
-}
-
-#endregion
-
-#region Handler
-
-/// <summary>
-/// Handler for UpdateUserCommand
-/// </summary>
-public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, ApiResponse<UpdateUserCommand.Response>>
-{
-    public async Task<ApiResponse<UpdateUserCommand.Response>> Handle(UpdateUserCommand request, CancellationToken ct)
-    {
-        var log = new CoreLogModel(request.HeaderInfo)
-        {
-            Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.Id), request.Id),
-                new CoreParamModel(nameof(request.Id), request.Id),
-                // new CoreParamModel(nameof(request.Email), request.Email),
-                new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
-                new CoreParamModel(nameof(request.Status), request.Status)
-            }
-        };
-
-        using (var dbContext = new DbContext(openTransaction: true))
-        {
-            try
-            {
-                // Find user by Id with RowVersion for optimistic concurrency
-                var user = await dbContext.Set<sy_users>()
-                    .FirstOrDefaultAsync(u => u.Id == request.Id, ct);
-
-                if (user == null)
+            RuleFor(x => x.Status)
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.user_status))
+                .DependentRules(() =>
                 {
-                    await dbContext.RollbackAsync(ct);
-                    return ResponseHelper.NotFound<UpdateUserCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_user));
-                }
+                    RuleFor(x => x.Status)
+                        .Must(status => CoreCommon.Value.Commonstatus.All.Contains(status))
+                        .WithMessage(CoreResource.validation_invalidStatus);
+                });
 
-                // Check RowVersion for optimistic concurrency
-                if (request.RowVersion != null && !user.RowVersion.SequenceEqual(request.RowVersion))
-                {
-                    await dbContext.RollbackAsync(ct);
-                    return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_concurrencyError);
-                }
+            RuleFor(x => x.RowVersion)
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, "RowVersion"));
+        }
 
-                // Update properties
-                // user.Email = request.Email; // Removed
-                user.EmployeeCode = request.EmployeeCode;
-                user.Status = request.Status;
-                user.UpdatedBy = request.HeaderInfo?.Username ?? ApplicationConstants.Defaults.SystemUser;
-                user.UpdatedAt = DateTime.Now;
-
-                // Save changes - EF Core will handle RowVersion concurrency check
-                await dbContext.SaveChangesAsync(ct);
-                await dbContext.CommitAsync(ct);
-
-                var response = ResponseHelper.Success(new UpdateUserCommand.Response { Id = user.Id }, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_user));
-                log.ReturnCode = response.ReturnCode;
-                log.Message = response.Message;
-                log.Result = response;
-                UniLogManager.WriteApiLog(log);
-
-                return response;
-            }
-            catch (DbUpdateConcurrencyException)
+        private static async Task<bool> IsUserExistsAsync(long id)
+        {
+            using (var dbContext = new DbContext())
             {
-                await dbContext.RollbackAsync(ct);
-                log.IsException = 1;
-                log.Message = "Concurrency conflict";
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                UniLogManager.WriteApiLog(log);
-                return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_concurrencyError);
+                return await dbContext.Set<sy_users>().AnyAsync(x => x.Id == id);
             }
-            catch (Exception ex)
+        }
+
+        private static async Task<bool> IsEmployeeExistsAsync(string employeeCode)
+        {
+            using (var dbContext = new DbContext())
             {
-                await dbContext.RollbackAsync(ct);
-                log.IsException = 1;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                UniLogManager.WriteApiLog(log);
-                return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_exceptionOccurred);
+                return await dbContext.Set<hr_employees>().AnyAsync(x => x.EmployeeCode == employeeCode);
             }
         }
     }
-}
 
-#endregion
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Handler for UpdateUserCommand
+    /// </summary>
+    public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, ApiResponse<UpdateUserCommand.Response>>
+    {
+        public async Task<ApiResponse<UpdateUserCommand.Response>> Handle(UpdateUserCommand request, CancellationToken ct)
+        {
+            var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new(nameof(request.Id), request.Id),
+                    new(nameof(request.Email), request.Email),
+                    new(nameof(request.EmployeeCode), request.EmployeeCode),
+                    new(nameof(request.Status), request.Status),
+                    new(nameof(request.RowVersion), request.RowVersion != null ? Convert.ToBase64String(request.RowVersion) : string.Empty)
+                }
+            };
+
+            try
+            {
+                using (var dbContext = new DbContext(openTransaction: true))
+                {
+                    try
+                    {
+                        var user = await dbContext.Set<sy_users>()
+                            .FirstOrDefaultAsync(u => u.Id == request.Id, ct);
+
+                        if (user == null)
+                        {
+                            var notFoundResponse = ResponseHelper.NotFound<UpdateUserCommand.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+                            log.Message = notFoundResponse.Message;
+                            log.ReturnCode = notFoundResponse.ReturnCode;
+                            return notFoundResponse;
+                        }
+
+                        // Check RowVersion for optimistic concurrency
+                        if (request.RowVersion != null && !user.RowVersion.SequenceEqual(request.RowVersion))
+                        {
+                            var concurrencyResponse = ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_concurrencyError);
+                            log.Message = concurrencyResponse.Message;
+                            log.ReturnCode = concurrencyResponse.ReturnCode;
+                            return concurrencyResponse;
+                        }
+
+                        user.EmployeeCode = request.EmployeeCode;
+                        user.Status = request.Status;
+                        user.Email = request.Email;
+                        user.UpdatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser;
+                        user.UpdatedAt = DateTimeHelper.Now;
+
+                        await dbContext.SaveChangesAsync(ct);
+                        await dbContext.CommitAsync();
+
+                        var responseData = new UpdateUserCommand.Response { Id = user.Id };
+                        var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_user));
+
+                        log.Result = responseData;
+                        log.Message = response.Message;
+                        log.ReturnCode = response.ReturnCode;
+
+                        return response;
+                    }
+                    catch (Exception ex)
+                    {
+                        await dbContext.RollbackAsync();
+                        log.IsException = true;
+                        log.Message = ex.Message;
+                        log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                        return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_error);
+                    }
+                }
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
+            }
+        }
+    }
+
+    #endregion
+}

@@ -1,139 +1,161 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
-namespace UniManage.Application.Commands.System.User;
-
-/// <summary>
-/// Command to remove a role from a user
-/// </summary>
-public sealed class RemoveUserRoleCommand : BaseCommand, IRequest<ApiResponse<RemoveUserRoleCommand.Response>>
+namespace UniManage.Application.Commands.System.User
 {
-    public long UserId { get; init; }
-    public string RoleCode { get; init; } = default!;
+    #region Command
 
-    // Internal - set by controller from token
-    internal string RemovedBy { get; init; } = default!;
-
-    public sealed class Response
+    /// <summary>
+    /// Lệnh gỡ bỏ một vai trò (Role) khỏi người dùng
+    /// </summary>
+    public sealed class RemoveUserRoleCommand : BaseCommand, IRequest<ApiResponse<RemoveUserRoleCommand.Response>>
     {
+        /// <summary>
+        /// ID của người dùng cần gỡ bỏ vai trò
+        /// </summary>
         public long UserId { get; init; }
+
+        /// <summary>
+        /// Mã vai trò cần gỡ bỏ
+        /// </summary>
         public string RoleCode { get; init; } = default!;
-    }
-}
 
-/// <summary>
-/// Validator for RemoveUserRoleCommand
-/// </summary>
-public sealed class RemoveUserRoleCommandValidator : AbstractValidator<RemoveUserRoleCommand>
-{
-    public RemoveUserRoleCommandValidator()
-    {
-        RuleFor(x => x.UserId)
-            .GreaterThan(0).WithMessage("UserId must be greater than 0");
-
-        RuleFor(x => x.RoleCode)
-            .NotEmpty().WithMessage("Role code is required")
-            .MaximumLength(50).WithMessage("Role code must not exceed 50 characters");
-    }
-}
-
-/// <summary>
-/// Handler for RemoveUserRoleCommand
-/// </summary>
-public sealed class RemoveUserRoleCommandHandler : IRequestHandler<RemoveUserRoleCommand, ApiResponse<RemoveUserRoleCommand.Response>>
-{
-    public async Task<ApiResponse<RemoveUserRoleCommand.Response>> Handle(RemoveUserRoleCommand request, CancellationToken ct)
-    {
-        var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
+        public sealed class Response
         {
-            Parameter = new List<CoreParamModel>
-            {
-                new() { Name = nameof(request.UserId), Value = request.UserId.ToString() },
-                new() { Name = nameof(request.RoleCode), Value = request.RoleCode }
-            }
-        };
+            public long UserId { get; init; }
+            public string RoleCode { get; init; } = default!;
+        }
+    }
 
-        try
+    #endregion
+
+    #region Validator
+
+    /// <summary>
+    /// Bộ kiểm tra dữ liệu cho lệnh gỡ bỏ vai trò người dùng
+    /// </summary>
+    public sealed class RemoveUserRoleCommandValidator : AbstractValidator<RemoveUserRoleCommand>
+    {
+        public RemoveUserRoleCommandValidator()
         {
-            // Check if user exists and get username
-            string username;
-            using (var checkDb = new DbContext())
-            {
-                username = await checkDb.ExecuteScalarAsync<string>(
-                    "SELECT Username FROM sy_users WHERE Id = @UserId",
-                    new { request.UserId },
-                    ct);
+            RuleFor(x => x.UserId)
+                .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username));
 
-                if (string.IsNullOrEmpty(username))
+            RuleFor(x => x.RoleCode)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleCode));
+        }
+    }
+
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Bộ xử lý lệnh gỡ bỏ vai trò người dùng
+    /// </summary>
+    public sealed class RemoveUserRoleCommandHandler : IRequestHandler<RemoveUserRoleCommand, ApiResponse<RemoveUserRoleCommand.Response>>
+    {
+        public async Task<ApiResponse<RemoveUserRoleCommand.Response>> Handle(RemoveUserRoleCommand request, CancellationToken ct)
+        {
+            // Khởi tạo log nghiệp vụ
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
                 {
-                    return ResponseHelper.NotFound<RemoveUserRoleCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_user));
+                    new(nameof(request.UserId), request.UserId),
+                    new(nameof(request.RoleCode), request.RoleCode)
                 }
-            }
+            };
 
-            // Check if user has this role
-            using (var checkDb = new DbContext())
+            try
             {
-                var hasRole = await checkDb.ExecuteScalarAsync<bool>(
-                    "SELECT CASE WHEN EXISTS(SELECT 1 FROM sy_user_roles WHERE Username = @Username AND RoleCode = @RoleCode) THEN 1 ELSE 0 END",
-                    new { Username = username, request.RoleCode },
-                    ct);
-
-                if (!hasRole)
+                using (var dbContext = new DbContext(openTransaction: true))
                 {
-                    return ResponseHelper.NotFound<RemoveUserRoleCommand.Response>("User does not have this role");
-                }
-            }
-
-            using (var db = new DbContext(openTransaction: true))
-            {
-                try
-                {
-                    var rowsAffected = await db.ExecuteAsync(
-                        """
-                        DELETE FROM sy_user_roles
-                        WHERE Username = @Username AND RoleCode = @RoleCode
-                        """,
-                        new { Username = username, request.RoleCode },
-                        ct);
-
-                    if (rowsAffected == 0)
+                    try
                     {
-                        await db.RollbackAsync(ct);
-                        return ResponseHelper.NotFound<RemoveUserRoleCommand.Response>("User role not found");
+                        // 1. Tìm thông tin người dùng bằng EF Core
+                        var user = await dbContext.Set<sy_users>()
+                            .FirstOrDefaultAsync(u => u.Id == request.UserId, ct);
+
+                        if (user == null)
+                        {
+                            var notFoundResponse = ResponseHelper.NotFound<RemoveUserRoleCommand.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+                            log.Message = "User not found";
+                            log.ReturnCode = notFoundResponse.ReturnCode;
+                            return notFoundResponse;
+                        }
+
+                        // 2. Kiểm tra vai trò có tồn tại không
+                        var role = await dbContext.Set<sy_roles>()
+                            .FirstOrDefaultAsync(r => r.Code == request.RoleCode, ct);
+
+                        if (role == null)
+                        {
+                            var notFoundResponse = ResponseHelper.NotFound<RemoveUserRoleCommand.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_role));
+                            log.Message = "Role not found";
+                            log.ReturnCode = notFoundResponse.ReturnCode;
+                            return notFoundResponse;
+                        }
+
+                        // 3. Xóa bản ghi trong sy_user_roles
+                        var userRole = await dbContext.Set<sy_user_roles>()
+                            .FirstOrDefaultAsync(ur => ur.Username == user.Username && ur.RoleCode == request.RoleCode, ct);
+
+                        if (userRole != null)
+                        {
+                            dbContext.Set<sy_user_roles>().Remove(userRole);
+                        }
+
+                        // 4. Nếu vai trò bị xóa trùng với vai trò mặc định của user, xóa vai trò mặc định đó
+                        if (user.RoleCode == request.RoleCode)
+                        {
+                            user.RoleCode = null;
+                            user.UpdatedAt = DateTimeHelper.Now;
+                            user.UpdatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser;
+                        }
+
+                        await dbContext.SaveChangesAsync(ct);
+                        await dbContext.CommitAsync();
+
+                        var responseData = new RemoveUserRoleCommand.Response { UserId = request.UserId, RoleCode = request.RoleCode };
+                        var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_deleteSuccess, CoreResource.entity_role));
+
+                        log.Result = responseData;
+                        log.Message = "Remove user role success";
+                        log.ReturnCode = response.ReturnCode;
+
+                        return response;
                     }
-
-                    await db.CommitAsync(ct);
-
-                    var responseData = new RemoveUserRoleCommand.Response { UserId = request.UserId, RoleCode = request.RoleCode };
-                    var response = ResponseHelper.Success(responseData, "Role removed successfully");
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogger.Info(JsonConvert.SerializeObject(log));
-
-                    return response;
-                }
-                catch
-                {
-                    await db.RollbackAsync(ct);
-                    throw;
+                    catch (Exception)
+                    {
+                        await dbContext.RollbackAsync();
+                        throw;
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            log.IsException = 1;
-            log.Message = ex.Message;
-            log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-            UniLogger.Error(JsonConvert.SerializeObject(log));
-
-            return ResponseHelper.Error<RemoveUserRoleCommand.Response>(CoreResource.common_exceptionOccurred);
+            catch (Exception ex)
+            {
+                log.IsException = true;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                
+                return ResponseHelper.Error<RemoveUserRoleCommand.Response>(CoreResource.common_error);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
+            }
         }
     }
+
+    #endregion
 }

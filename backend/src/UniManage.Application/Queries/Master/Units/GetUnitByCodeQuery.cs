@@ -77,7 +77,7 @@ public sealed class GetUnitByCodeQueryHandler : IRequestHandler<GetUnitByCodeQue
                     return notFoundResponse;
                 }
 
-                var response = ResponseHelper.Success(unit, CoreResource.crud_getSuccess);
+                var response = ResponseHelper.Success(unit, CoreResource.common_getSuccess);
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;
@@ -90,7 +90,7 @@ public sealed class GetUnitByCodeQueryHandler : IRequestHandler<GetUnitByCodeQue
                 UniLogger.Error($"Error retrieving unit by code: {ex.Message}", ex);
 
                 var response = ResponseHelper.Error<GetUnitByCodeQuery.Response?>(CoreResource.common_exceptionOccurred);
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(log);

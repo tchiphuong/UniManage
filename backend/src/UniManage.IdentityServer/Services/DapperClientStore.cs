@@ -6,8 +6,16 @@ using UniManage.Core.Logging;
 
 namespace UniManage.IdentityServer.Services
 {
+    /// <summary>
+    /// Store quản lý Client trong IdentityServer sử dụng Dapper.
+    /// </summary>
     public class DapperClientStore : IClientStore
     {
+        /// <summary>
+        /// Tìm kiếm thông tin Client dựa trên ClientId.
+        /// </summary>
+        /// <param name="clientId">Mã định danh của Client.</param>
+        /// <returns>Thông tin Client nếu tìm thấy, ngược lại trả về null.</returns>
         public async Task<Client?> FindClientByIdAsync(string clientId)
         {
             try
@@ -21,7 +29,7 @@ namespace UniManage.IdentityServer.Services
                         [IdentityTokenLifetime], [AuthorizationCodeLifetime],
                         [AbsoluteRefreshTokenLifetime], [SlidingRefreshTokenLifetime],
                         [RefreshTokenUsage], [RefreshTokenExpiration], [RequireClientSecret], [Description]
-                    FROM [dbo].[sy_is_clients]
+                    FROM [dbo].[is_clients]
                     WHERE [ClientId] = @ClientId";
 
                 var clientDto = await dbContext.QueryFirstOrDefaultAsync<ClientDto>(sql, new { ClientId = clientId });
@@ -60,6 +68,9 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// DTO thu gọn để map dữ liệu từ bảng is_clients.
+        /// </summary>
         private class ClientDto
         {
             public string ClientId { get; set; } = default!;

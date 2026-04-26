@@ -7,4 +7,23 @@ src/UniManage.Core/Constant/CoreLanguage.cs
 src/UniManage.Core/Constant/CorePermission.cs
 src/UniManage.Resource/CoreResource.cs
 
+## .NET Ignore
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Logging
+logs/
+*.log
+
+## Configuration
+appsettings.Development.json
+appsettings.Test.json
+
+## Other
 .fake
+.DS_Store

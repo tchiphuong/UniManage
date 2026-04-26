@@ -79,7 +79,7 @@ namespace UniManage.Application.Queries.System.Roles
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -94,7 +94,7 @@ namespace UniManage.Application.Queries.System.Roles
 
                     var response = ResponseHelper.Error<GetRoleByCodeQuery.Result>("Error occurred while retrieving role");
 
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);

@@ -34,18 +34,9 @@ namespace UniManage.Application.Commands.Sales.Orders
     {
         public async Task<ApiResponse<DeleteOrderCommand.Response>> Handle(DeleteOrderCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.OrderCodes), string.Join(",", request.OrderCodes))
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var deleteItemsSql = @"
                         DELETE FROM sa_order_items
                         WHERE OrderCode IN @OrderCodes";
@@ -58,33 +49,13 @@ namespace UniManage.Application.Commands.Sales.Orders
 
                     var deletedCount = await dbContext.ExecuteAsync(deleteOrderSql, new { OrderCodes = request.OrderCodes }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new DeleteOrderCommand.Response { DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_deleteSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error deleting orders: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<DeleteOrderCommand.Response>("Error occurred while deleting orders");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_deleteSuccess);
+return response;
         }
     }
 }
+
+

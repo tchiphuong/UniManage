@@ -60,20 +60,9 @@ namespace UniManage.Application.Commands.Inventory.ItemDetails
     {
         public async Task<ApiResponse<CreateItemDetailCommand.Response>> Handle(CreateItemDetailCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.ItemCode), request.ItemCode),
-                    new CoreParamModel(nameof(request.Key), request.Key),
-                    new CoreParamModel(nameof(request.Type), request.Type?.ToString())
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         INSERT INTO it_item_details (ItemCode, Type, [Key], ValueVi, ValueEn, InsertBy, InsertOn)
                         VALUES (@ItemCode, @Type, @Key, @ValueVi, @ValueEn, @InsertBy, GETDATE());
@@ -89,33 +78,13 @@ namespace UniManage.Application.Commands.Inventory.ItemDetails
                         InsertBy = request.HeaderInfo!.Username
                     }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateItemDetailCommand.Response { Id = id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating item detail: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateItemDetailCommand.Response>("Error occurred while creating item detail");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

@@ -34,51 +34,22 @@ namespace UniManage.Application.Commands.Inventory.Items
     {
         public async Task<ApiResponse<DeleteItemCommand.Response>> Handle(DeleteItemCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Codes), string.Join(",", request.Codes))
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         DELETE FROM it_items
                         WHERE Code IN @Codes";
 
                     var deletedCount = await dbContext.ExecuteAsync(sql, new { Codes = request.Codes }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new DeleteItemCommand.Response { DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_deleteSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error deleting items: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<DeleteItemCommand.Response>("Error occurred while deleting items");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_deleteSuccess);
+return response;
         }
     }
 }
+
+

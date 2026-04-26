@@ -1,56 +1,87 @@
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using UniManage.Core.Logging;
 
 namespace UniManage.Application.Services
 {
     /// <summary>
-    /// Response model for IdentityServer token endpoint
+    /// Response model from IdentityServer token endpoint.
     /// </summary>
     public class IdentityTokenResponse
     {
+        /// <summary>
+        /// Access token for resource access.
+        /// </summary>
         public string access_token { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Token lifetime in seconds.
+        /// </summary>
         public int expires_in { get; set; }
+
+        /// <summary>
+        /// Token type (usually Bearer).
+        /// </summary>
         public string token_type { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Refresh token to renew access token.
+        /// </summary>
         public string refresh_token { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Granted scopes.
+        /// </summary>
         public string scope { get; set; } = string.Empty;
     }
 
     /// <summary>
-    /// Shared interface for all IdentityServer HTTP operations.
-    /// Eliminates duplicate code across LoginCommand, RefreshTokenCommand, LogoutCommand.
+    /// Shared interface for IdentityServer HTTP operations.
+    /// Eliminates duplicate code in LoginCommand, RefreshTokenCommand, and LogoutCommand.
     /// </summary>
     public interface IIdentityServerClient
     {
         /// <summary>
-        /// Request token from IdentityServer using ROPC grant.
+        /// Requests a token from IdentityServer using password grant (ROPC).
         /// </summary>
+        /// <param name="username">Login username.</param>
+        /// <param name="password">Login password.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>Result containing success status, token data, or error message.</returns>
         Task<(bool Success, IdentityTokenResponse? Token, string? Error)> RequestTokenAsync(
             string username, string password, CancellationToken ct = default);
 
         /// <summary>
-        /// Refresh token from IdentityServer.
+        /// Refreshes an Access Token using a Refresh Token.
         /// </summary>
+        /// <param name="refreshToken">Current refresh token.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>Result containing success status, new token data, or error message.</returns>
         Task<(bool Success, IdentityTokenResponse? Token, string? Error)> RefreshTokenAsync(
             string refreshToken, CancellationToken ct = default);
 
         /// <summary>
-        /// Revoke refresh token from IdentityServer.
+        /// Revokes (invalidates) a Refresh Token upon logout.
         /// </summary>
+        /// <param name="refreshToken">Refresh token to revoke.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>Success status and optional error message.</returns>
         Task<(bool Success, string? Error)> RevokeTokenAsync(
             string refreshToken, CancellationToken ct = default);
     }
 
     /// <summary>
-    /// Centralized IdentityServer HTTP client.
+    /// Centralized HTTP client for interacting with IdentityServer.
     /// 
-    /// [SECURITY] Design decisions:
-    /// - Uses IHttpClientFactory named client "IdentityServer" (H1)
-    /// - Reads config from injected IConfiguration (H2)
-    /// - NO SSL bypass in any environment (C3)
-    /// - Generic error messages returned to caller (Domain 9)
-    /// 
-    /// SECURITY-TODO (C2): This class will be replaced when migrating
-    /// from ROPC to Authorization Code + PKCE flow.
+    /// [SECURITY] Design Decisions:
+    /// - Uses IHttpClientFactory named client "IdentityServer" (H1).
+    /// - Configuration loaded from injected IConfiguration (H2).
+    /// - NO SSL bypass in any environment (C3).
+    /// - Generic error messages returned to callers (Domain 9).
     /// </summary>
     public class IdentityServerClient : IIdentityServerClient
     {
@@ -60,6 +91,9 @@ namespace UniManage.Application.Services
         private readonly string _clientSecret;
         private readonly string _scope;
 
+        /// <summary>
+        /// Initializes the IdentityServerClient with required configuration.
+        /// </summary>
         public IdentityServerClient(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
@@ -140,8 +174,8 @@ namespace UniManage.Application.Services
         }
 
         /// <summary>
-        /// Parse IdentityServer token response.
-        /// [SECURITY] Domain 9 — Never expose raw IdentityServer errors to client.
+        /// Parses IdentityServer token response.
+        /// [SECURITY] Domain 9 — Raw IdentityServer errors are never exposed to clients.
         /// </summary>
         private static async Task<(bool Success, IdentityTokenResponse? Token, string? Error)> ParseTokenResponseAsync(
             HttpResponseMessage response, CancellationToken ct)

@@ -90,7 +90,7 @@ public sealed class GetDepartmentListQueryHandler : IRequestHandler<GetDepartmen
                 UniLogger.Error($"Error retrieving departments: {ex.Message}", ex);
                 var response = ResponseHelper.Error<PagedResult<GetDepartmentListQuery.Response>>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
-                logData.IsException = 1;
+                logData.IsException = true;
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
                 return response;

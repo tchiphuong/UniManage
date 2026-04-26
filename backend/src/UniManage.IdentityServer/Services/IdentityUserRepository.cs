@@ -21,6 +21,8 @@ namespace UniManage.IdentityServer.Services
         Task<IdentityUserDto?> FindByUsernameAsync(string username);
         Task<IdentityUserDto?> FindByIdAsync(int userId);
         Task<bool> IsUserActiveAsync(int userId);
+        Task<IdentityUserDto?> FindByExternalProviderAsync(string provider, string providerKey);
+        Task LinkExternalLoginAsync(long userId, string provider, string providerKey, string? displayName);
     }
 
     public class IdentityUserRepository : IIdentityUserRepository
@@ -89,6 +91,51 @@ namespace UniManage.IdentityServer.Services
             {
                 UniLogger.Error($"Error checking if user {userId} is active", ex);
                 return false;
+            }
+        }
+
+        public async Task<IdentityUserDto?> FindByExternalProviderAsync(string provider, string providerKey)
+        {
+            try
+            {
+                using var dbContext = new DbContext();
+                var sql = @"
+                    SELECT u.[Id], u.[UserName], u.[Password], u.[EmployeeCode], u.[RoleCode], u.[Email], u.[Status]
+                    FROM [dbo].[sy_users] u
+                    INNER JOIN [dbo].[sy_user_logins] l ON u.[Id] = l.[UserId]
+                    WHERE l.[LoginProvider] = @Provider AND l.[ProviderKey] = @ProviderKey 
+                    AND u.[Status] = @ActiveStatus";
+
+                return await dbContext.QueryFirstOrDefaultAsync<IdentityUserDto>(
+                    sql,
+                    new { Provider = provider, ProviderKey = providerKey, ActiveStatus = CoreCommon.Value.Commonstatus.Active });
+            }
+            catch (Exception ex)
+            {
+                UniLogger.Error($"Error finding user by external provider {provider}:{providerKey}", ex);
+                return null;
+            }
+        }
+
+        public async Task LinkExternalLoginAsync(long userId, string provider, string providerKey, string? displayName)
+        {
+            try
+            {
+                using var dbContext = new DbContext(openTransaction: true);
+                var sql = @"
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[sy_user_logins] WHERE [LoginProvider] = @Provider AND [ProviderKey] = @ProviderKey)
+                    BEGIN
+                        INSERT INTO [dbo].[sy_user_logins] ([UserId], [LoginProvider], [ProviderKey], [ProviderDisplayName], [CreatedAt])
+                        VALUES (@UserId, @Provider, @ProviderKey, @DisplayName, GETDATE())
+                    END";
+
+                await dbContext.ExecuteAsync(sql, new { UserId = userId, Provider = provider, ProviderKey = providerKey, DisplayName = displayName });
+                await dbContext.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                UniLogger.Error($"Error linking external login {provider} for user {userId}", ex);
+                throw;
             }
         }
     }

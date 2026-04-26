@@ -43,6 +43,23 @@ public class UsersController : BaseController
 
     #endregion
 
+    #region GET: /api/v1/users/combobox
+
+    /// <summary>
+    /// Get users for combobox
+    /// </summary>
+    [HttpGet("combobox")]
+    [PermissionAuthorize(CoreFunction.SyUser, CoreAction.View)]
+    public async Task<ActionResult<ApiResponse<List<ComboboxModel<long>>>>> GetCombobox([FromQuery] GetUserComboboxQuery query, CancellationToken ct)
+    {
+        query ??= new GetUserComboboxQuery();
+        query.HeaderInfo = HeaderInfo;
+        var result = await _mediator.Send(query, ct);
+        return Ok(result);
+    }
+
+    #endregion
+
     #region GET: /api/v1/users/{id}
 
     /// <summary>
@@ -91,6 +108,22 @@ public class UsersController : BaseController
 
     #endregion
 
+    #region POST: /api/v1/users/change-password
+
+    /// <summary>
+    /// Change current user password
+    /// </summary>
+    [HttpPost("change-password")]
+    public async Task<ActionResult<ApiResponse<bool>>> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken ct)
+    {
+        command.HeaderInfo = HeaderInfo;
+        command.Username = this.Username; // [SECURITY] REQUIRED: Lấy username từ Token để tránh IDOR
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    #endregion
+
     #region PUT: /api/v1/users/{id}
 
     /// <summary>
@@ -118,12 +151,7 @@ public class UsersController : BaseController
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.Delete)]
     public async Task<ActionResult<ApiResponse<DeleteUserCommand.Response>>> DeleteUser([FromBody] List<long> ids, CancellationToken ct)
     {
-        // [SECURITY] H6 — Always assign HeaderInfo for audit trail
-        var command = new DeleteUserCommand
-        {
-            Ids = ids,
-            HeaderInfo = HeaderInfo,
-        };
+        var command = new DeleteUserCommand { Ids = ids, HeaderInfo = HeaderInfo };
         var result = await _mediator.Send(command, ct);
         return Ok(result);
     }
@@ -139,6 +167,7 @@ public class UsersController : BaseController
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.Update)]
     public async Task<ActionResult<ApiResponse<AssignUserRoleCommand.Response>>> AssignRole([FromRoute] long id, [FromBody] AssignUserRoleCommand command, CancellationToken ct)
     {
+        command.UserId = id;
         command.HeaderInfo = HeaderInfo;
         var result = await _mediator.Send(command, ct);
         return Ok(result);
@@ -155,13 +184,7 @@ public class UsersController : BaseController
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.Update)]
     public async Task<ActionResult<ApiResponse<RemoveUserRoleCommand.Response>>> RemoveRole(long id, string roleCode, CancellationToken ct)
     {
-        var command = new RemoveUserRoleCommand
-        {
-            UserId = id,
-            RoleCode = roleCode,
-            HeaderInfo = HeaderInfo
-        };
-
+        var command = new RemoveUserRoleCommand { UserId = id, RoleCode = roleCode, HeaderInfo = HeaderInfo };
         var result = await _mediator.Send(command, ct);
         return Ok(result);
     }

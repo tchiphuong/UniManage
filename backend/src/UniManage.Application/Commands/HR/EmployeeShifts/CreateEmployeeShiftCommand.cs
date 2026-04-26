@@ -77,20 +77,9 @@ namespace UniManage.Application.Commands.HR.EmployeeShifts
     {
         public async Task<ApiResponse<CreateEmployeeShiftCommand.Response>> Handle(CreateEmployeeShiftCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
-                    new CoreParamModel(nameof(request.WorkShiftCode), request.WorkShiftCode),
-                    new CoreParamModel(nameof(request.WorkDate), request.WorkDate.ToString("yyyy-MM-dd"))
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         INSERT INTO hr_employee_shifts (EmployeeCode, WorkShiftCode, WorkDate, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt)
                         VALUES (@EmployeeCode, @WorkShiftCode, @WorkDate, @CreatedBy, GETDATE(), @CreatedBy, GETDATE());
@@ -104,33 +93,11 @@ namespace UniManage.Application.Commands.HR.EmployeeShifts
                         CreatedBy = request.HeaderInfo!.Username
                     }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateEmployeeShiftCommand.Response { Id = id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating employee shift: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateEmployeeShiftCommand.Response>("Error occurred while creating employee shift");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_employeeShift));
+return response;
         }
     }
 }

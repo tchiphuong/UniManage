@@ -1,0 +1,262 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Microsoft (R) Visual C# Compiler",
+        "version": "5.0.0.0",
+        "fileVersion": "5.0.0-2.25523.111 (b0f34d51)",
+        "semanticVersion": "5.0.0",
+        "language": "en-US"
+      },
+      "results": [
+        {
+          "ruleId": "CS0234",
+          "level": "error",
+          "message": "The type or namespace name 'Resource' does not exist in the namespace 'UniManage' (are you missing an assembly reference?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Services/AuthHelper.cs",
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 17,
+                  "endLine": 4,
+                  "endColumn": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS8625",
+          "level": "warning",
+          "message": "Cannot convert null literal to non-nullable reference type.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/IDbContext.cs",
+                "region": {
+                  "startLine": 57,
+                  "startColumn": 62,
+                  "endLine": 57,
+                  "endColumn": 66
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8625",
+          "level": "warning",
+          "message": "Cannot convert null literal to non-nullable reference type.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/IDbContext.cs",
+                "region": {
+                  "startLine": 62,
+                  "startColumn": 55,
+                  "endLine": 62,
+                  "endColumn": 59
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8625",
+          "level": "warning",
+          "message": "Cannot convert null literal to non-nullable reference type.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/IDbContext.cs",
+                "region": {
+                  "startLine": 67,
+                  "startColumn": 67,
+                  "endLine": 67,
+                  "endColumn": 71
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8625",
+          "level": "warning",
+          "message": "Cannot convert null literal to non-nullable reference type.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/IDbContext.cs",
+                "region": {
+                  "startLine": 72,
+                  "startColumn": 69,
+                  "endLine": 72,
+                  "endColumn": 73
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS0108",
+          "level": "warning",
+          "message": "'IHybridDbContext.QueryAsync<T>(string, object?, CancellationToken)' hides inherited member 'IDbContext.QueryAsync<T>(string, object, CancellationToken)'. Use the new keyword if hiding was intended.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/IDbContext.cs",
+                "region": {
+                  "startLine": 87,
+                  "startColumn": 26,
+                  "endLine": 87,
+                  "endColumn": 36
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 2
+          }
+        },
+        {
+          "ruleId": "CS0108",
+          "level": "warning",
+          "message": "'IHybridDbContext.ExecuteAsync(string, object?, CancellationToken)' hides inherited member 'IDbContext.ExecuteAsync(string, object, CancellationToken)'. Use the new keyword if hiding was intended.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/IDbContext.cs",
+                "region": {
+                  "startLine": 92,
+                  "startColumn": 15,
+                  "endLine": 92,
+                  "endColumn": 27
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 2
+          }
+        },
+        {
+          "ruleId": "CS0108",
+          "level": "warning",
+          "message": "'IHybridDbContext.ExecuteScalarAsync<T>(string, object?, CancellationToken)' hides inherited member 'IDbContext.ExecuteScalarAsync<T>(string, object, CancellationToken)'. Use the new keyword if hiding was intended.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/IDbContext.cs",
+                "region": {
+                  "startLine": 97,
+                  "startColumn": 13,
+                  "endLine": 97,
+                  "endColumn": 31
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 2
+          }
+        },
+        {
+          "ruleId": "CS8981",
+          "level": "warning",
+          "message": "The type name 'sysdiagrams' only contains lower-cased ascii characters. Such names may become reserved for the language.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///D:/Coding/dot_NET/UniManage/backend/src/UniManage.Core/Database/DatabaseModels.cs",
+                "region": {
+                  "startLine": 4748,
+                  "startColumn": 18,
+                  "endLine": 4748,
+                  "endColumn": 29
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 7
+          }
+        }
+      ],
+      "rules": {
+        "CS0108": {
+          "id": "CS0108",
+          "shortDescription": "Member hides inherited member; missing new keyword",
+          "fullDescription": "A variable was declared with the same name as a variable in a base type. However, the new keyword was not used. This warning informs you that you should use new; the variable is declared as if new had been used in the declaration.",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS0108)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        },
+        "CS0234": {
+          "id": "CS0234",
+          "defaultLevel": "error",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS0234)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry",
+              "NotConfigurable"
+            ]
+          }
+        },
+        "CS8625": {
+          "id": "CS8625",
+          "shortDescription": "Cannot convert null literal to non-nullable reference type.",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8625)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        },
+        "CS8981": {
+          "id": "CS8981",
+          "shortDescription": "The type name only contains lower-cased ascii characters. Such names may become reserved for the language.",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8981)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

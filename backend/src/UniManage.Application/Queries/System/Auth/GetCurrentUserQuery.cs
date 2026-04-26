@@ -1,68 +1,60 @@
-using Dapper;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Queries.System.Auth
 {
+    #region Query
+
     /// <summary>
-    /// Get Current User Query - Lấy thông tin user hiện tại
+    /// Truy vấn lấy thông tin chi tiết của người dùng hiện tại đang đăng nhập
     /// </summary>
     public sealed class GetCurrentUserQuery : BaseQuery, IRequest<ApiResponse<GetCurrentUserQuery.Result>>
     {
-
+        /// <summary>
+        /// Kết quả trả về chứa thông tin cơ bản của người dùng
+        /// </summary>
         public class Result
         {
-            /// <summary>
-            /// User ID
-            /// </summary>
             public long Id { get; set; }
-            /// <summary>
-            /// User Code
-            /// </summary>
             public string UserCode { get; set; } = string.Empty;
-            /// <summary>
-            /// Display Name
-            /// </summary>
             public string DisplayName { get; set; } = string.Empty;
-            /// <summary>
-            /// Email
-            /// </summary>
             public string? Email { get; set; }
-            /// <summary>
-            /// Role Code
-            /// </summary>
             public string? RoleCode { get; set; }
-            /// <summary>
-            /// Employee Code
-            /// </summary>
             public string? EmployeeCode { get; set; }
-            /// <summary>
-            /// Created At
-            /// </summary>
             public DateTime CreatedAt { get; set; }
         }
     }
 
+    #endregion
+
+    #region Validator
+
     /// <summary>
-    /// Get Current User Query Validator
+    /// Bộ kiểm tra dữ liệu cho truy vấn lấy thông tin người dùng hiện tại
     /// </summary>
     public sealed class GetCurrentUserQueryValidator : AbstractValidator<GetCurrentUserQuery>
     {
         public GetCurrentUserQueryValidator()
         {
             RuleFor(x => x.HeaderInfo.Username)
-                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userIdentity));
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username));
         }
     }
 
+    #endregion
+
+    #region Handler
+
     /// <summary>
-    /// Get Current User Query Handler
+    /// Bộ xử lý truy vấn lấy thông tin người dùng hiện tại
     /// </summary>
     public sealed class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, ApiResponse<GetCurrentUserQuery.Result>>
     {
@@ -73,7 +65,7 @@ namespace UniManage.Application.Queries.System.Auth
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new CoreParamModel(nameof(request.HeaderInfo.Username), username)
+                    new(nameof(request.HeaderInfo.Username), username)
                 }
             };
 
@@ -81,43 +73,45 @@ namespace UniManage.Application.Queries.System.Auth
             {
                 using (var dbContext = new DbContext())
                 {
-                    var sql = @"
-                        SELECT TOP 1
-                            [Id],
-                            [UserName] AS UserCode,
-                            [EmployeeCode],
-                            COALESCE([EmployeeCode], [UserName]) AS DisplayName,
-                            [RoleCode],
-                            [Email],
-                            [CreatedAt]
-                        FROM [dbo].[sy_users]
-                        WHERE [UserName] = @Username";
-
-                    var user = await dbContext.QueryFirstOrDefaultAsync<GetCurrentUserQuery.Result>(
-                        sql,
-                        new { Username = username });
+                    // Sử dụng EF Core với Entity sy_users để lấy thông tin
+                    var user = await dbContext.Set<sy_users>()
+                        .Where(u => u.Username == username)
+                        .Select(u => new GetCurrentUserQuery.Result
+                        {
+                            Id = u.Id,
+                            UserCode = u.Username,
+                            EmployeeCode = u.EmployeeCode,
+                            DisplayName = u.EmployeeCode ?? u.Username, // Ưu tiên hiển thị mã nhân viên
+                            RoleCode = u.RoleCode,
+                            Email = u.Email,
+                            CreatedAt = u.CreatedAt
+                        })
+                        .FirstOrDefaultAsync(ct);
 
                     if (user == null)
                     {
-                        var errorResponse = ResponseHelper.NotFound<GetCurrentUserQuery.Result>("User not found");
+                        var errorResponse = ResponseHelper.NotFound<GetCurrentUserQuery.Result>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+                        log.Message = "Current user not found in database";
                         log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = $"User not found in database: {username}";
                         return errorResponse;
                     }
 
-                    var response = ResponseHelper.Success(user, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_user));
-                    log.Result = response;
+                    var response = ResponseHelper.Success(user, string.Format(CoreResource.common_getSuccess, CoreResource.entity_user));
+                    
+                    log.Result = user;
                     log.ReturnCode = response.ReturnCode;
-                    log.Message = $"Retrieved user info successfully for: {username}";
+                    log.Message = "Get current user profile success";
+
                     return response;
                 }
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                return ResponseHelper.Error<GetCurrentUserQuery.Result>(CoreResource.common_exceptionOccurred);
+                
+                return ResponseHelper.Error<GetCurrentUserQuery.Result>(CoreResource.common_error);
             }
             finally
             {
@@ -125,4 +119,6 @@ namespace UniManage.Application.Queries.System.Auth
             }
         }
     }
+
+    #endregion
 }

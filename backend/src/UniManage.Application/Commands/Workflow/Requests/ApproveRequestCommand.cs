@@ -35,19 +35,9 @@ namespace UniManage.Application.Commands.Workflow.Requests
     {
         public async Task<ApiResponse<ApproveRequestCommand.Response>> Handle(ApproveRequestCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.RequestId), request.RequestId),
-                    new CoreParamModel(nameof(request.ApprovalComment), request.ApprovalComment)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var currentUsername = request.HeaderInfo!.Username;
 
                     var getPendingApprovalSql = @"
@@ -68,10 +58,7 @@ namespace UniManage.Application.Commands.Workflow.Requests
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<ApproveRequestCommand.Response>("No pending approval found for this user");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
                     var updateApprovalSql = @"
@@ -158,33 +145,13 @@ namespace UniManage.Application.Commands.Workflow.Requests
                         }
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new ApproveRequestCommand.Response { Success = true, Message = "Request approved successfully" };
                     var response = ResponseHelper.Success(responseData, "Request approved successfully");
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error approving request: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<ApproveRequestCommand.Response>("Error occurred while approving request");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+return response;
         }
     }
 }
+
+

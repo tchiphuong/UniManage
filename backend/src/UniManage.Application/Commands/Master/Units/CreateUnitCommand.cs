@@ -1,11 +1,12 @@
-using Dapper;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using MediatR;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
+using DbContext = UniManage.Core.Database.DbContext;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
 
 namespace UniManage.Application.Commands.Master.Units;
@@ -40,11 +41,11 @@ public sealed class CreateUnitCommandValidator : AbstractValidator<CreateUnitCom
         RuleFor(x => x.NameEn).NotEmpty().WithMessage("English name is required").Length(1, 100).WithMessage("English name must be between 1 and 100 characters");
     }
 
-    private static Task<bool> IsCodeExistsAsync(string code)
+    private static async Task<bool> IsCodeExistsAsync(string code)
     {
         using (var dbContext = new DbContext())
         {
-            return dbContext.ExecuteScalarAsync<bool>("SELECT CASE WHEN EXISTS(SELECT 1 FROM ms_units WHERE Code = @Code) THEN 1 ELSE 0 END", new { Code = code });
+            return await dbContext.Set<ms_units>().AnyAsync(x => x.Code == code);
         }
     }
 }
@@ -57,55 +58,27 @@ public sealed class CreateUnitCommandHandler : IRequestHandler<CreateUnitCommand
 {
     public async Task<ApiResponse<CreateUnitCommand.Response>> Handle(CreateUnitCommand request, CancellationToken ct)
     {
-        var log = new CoreLogModel(request.HeaderInfo)
+        using var dbContext = new DbContext(openTransaction: true);
+        
+        var unit = new ms_units
         {
-            Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.Code), request.Code),
-                new CoreParamModel(nameof(request.NameVi), request.NameVi),
-                new CoreParamModel(nameof(request.NameEn), request.NameEn)
-            }
+            Code = request.Code,
+            NameVi = request.NameVi,
+            NameEn = request.NameEn,
+            CreatedBy = request.HeaderInfo!.Username,
+            CreatedAt = DateTimeHelper.Now
         };
 
-        using (var dbContext = new DbContext(openTransaction: true))
-        {
-            try
-            {
-                var id = await dbContext.ExecuteScalarAsync<long>(@"INSERT INTO ms_units (Code, NameVi, NameEn, CreatedBy, CreatedAt)
-                      VALUES (@Code, @NameVi, @NameEn, @CreatedBy, GETDATE());
-                      SELECT SCOPE_IDENTITY();", new
-                {
-                    request.Code,
-                    request.NameVi,
-                    request.NameEn,
-                    CreatedBy = request.HeaderInfo!.Username
-                }, ct);
+        dbContext.Set<ms_units>().Add(unit);
+        await dbContext.SaveChangesAsync(ct);
+        await dbContext.CommitAsync();
 
-                await dbContext.transaction.CommitAsync(ct);
-
-                var responseData = new CreateUnitCommand.Response { Id = id, Code = request.Code };
-                var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                log.Result = response;
-                log.ReturnCode = response.ReturnCode;
-                log.Message = response.Message;
-                UniLogManager.WriteApiLog(log);
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                await dbContext.transaction.RollbackAsync(ct);
-
-                log.IsException = 1;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                UniLogManager.WriteApiLog(log);
-
-                return ResponseHelper.Error<CreateUnitCommand.Response>(CoreResource.common_exceptionOccurred);
-            }
-        }
+        var responseData = new CreateUnitCommand.Response { Id = unit.Id, Code = unit.Code };
+        var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+        return response;
     }
 }
 
 #endregion
+
+

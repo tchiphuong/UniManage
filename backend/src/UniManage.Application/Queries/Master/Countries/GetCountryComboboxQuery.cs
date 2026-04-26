@@ -1,16 +1,21 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Queries.Master.Countries
 {
     #region Query
 
-    public sealed class GetCountryComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+    /// <summary>
+    /// Truy vấn lấy danh sách các quốc gia dưới dạng Combobox (Code, Name)
+    /// </summary>
+    public sealed class GetCountryComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
     {
     }
 
@@ -18,65 +23,70 @@ namespace UniManage.Application.Queries.Master.Countries
 
     #region Handler
 
-    public sealed class GetCountryComboboxQueryHandler : IRequestHandler<GetCountryComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+    /// <summary>
+    /// Bộ xử lý truy vấn lấy danh sách quốc gia cho Combobox
+    /// </summary>
+    public sealed class GetCountryComboboxQueryHandler : IRequestHandler<GetCountryComboboxQuery, ApiResponse<List<ComboboxModel>>>
     {
-        public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetCountryComboboxQuery request, CancellationToken ct)
+        public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetCountryComboboxQuery request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
+            // Khởi tạo log nghiệp vụ
+            var log = new CoreLogModel(request.HeaderInfo)
             {
                 Parameter = new List<CoreParamModel>()
             };
 
             try
             {
-                using (var db = new DbContext())
+                using (var dbContext = new DbContext())
                 {
-                    var isEnglish = request.HeaderInfo?.Language?.StartsWith("en", StringComparison.OrdinalIgnoreCase) == true;
+                    // Xác định tên cột đa ngôn ngữ an toàn (Zero Hardcode)
+                    var propertyName = TranslateHelper.GetSafeLocalizedColumnName<ad_countries>(dbContext, CoreConstant.Column.Name, request.HeaderInfo?.Language);
 
-                    var countries = await db.QueryAsync<dynamic>(
-                        $"""
-                    SELECT 
-                        Code, 
-                        {(isEnglish ? "NameEn" : "NameVi")} AS Name,
-                        PhoneCode
-                    FROM ad_countries
-                    WHERE IsActive = 1
-                    ORDER BY SortOrder, {(isEnglish ? "NameEn" : "NameVi")}
-                    """,
-                        cancellationToken: ct);
+                    // Truy vấn và sắp xếp động tại SQL Side bằng EF.Property
+                    var query = dbContext.Set<ad_countries>()
+                        .Where(c => c.IsActive)
+                        .OrderBy(c => c.SortOrder)
+                        .ThenBy(c => EF.Property<string>(c, propertyName));
 
-                    var items = countries.Select(c => new ComboboxItemDto
+                    // Lấy dữ liệu thô về bộ nhớ
+                    var rawItems = await query.ToListAsync(ct);
+
+                    // Chuyển đổi sang ComboboxModel (Memory Side) bằng Helper
+                    var items = rawItems.Select(c => new ComboboxModel
                     {
-                        Value = c.Code,
-                        Label = c.Name,
+                        Code = c.Code,
+                        Name = TranslateHelper.GetLocalizedValue(c, "Name", request.HeaderInfo?.Language),
                         Status = 1,
-                        Metadata = new Dictionary<string, object>
+                        ExtData = new Dictionary<string, object>
                         {
-                            ["PhoneCode"] = c.PhoneCode ?? ""
+                            ["PhoneCode"] = c.PhoneCode ?? string.Empty
                         }
                     }).ToList();
 
-                    var response = ResponseHelper.Success(items);
+                    var response = ResponseHelper.Success(items, string.Format(CoreResource.common_listSuccess, CoreResource.entity_country));
+                    
                     log.Result = new { Count = items.Count };
                     log.ReturnCode = response.ReturnCode;
                     log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
 
                     return response;
                 }
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
-                log.Message = ex.ToString();
+                // Ghi nhận lỗi hệ thống
+                log.IsException = true;
+                log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                
+                return ResponseHelper.Error<List<ComboboxModel>>(CoreResource.common_error);
+            }
+            finally
+            {
                 UniLogManager.WriteApiLog(log);
-
-                UniLogger.Error($"Error getting country combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
             }
         }
-
     }
 
     #endregion

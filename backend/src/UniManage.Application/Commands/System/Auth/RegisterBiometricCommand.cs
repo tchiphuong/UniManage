@@ -12,29 +12,42 @@ namespace UniManage.Application.Commands.System.Auth
     #region Command
 
     /// <summary>
-    /// Command đăng ký thông tin sinh trắc học cho thiết bị.
+    /// Lệnh đăng ký thông tin sinh trắc học (Public Key) cho thiết bị người dùng
     /// </summary>
     public sealed class RegisterBiometricCommand : BaseCommand, IRequest<ApiResponse<bool>>
     {
-        public string DeviceId { get; set; } = default!;
-        public string PublicKey { get; set; } = default!; // Base64 Public Key
+        /// <summary>
+        /// Mã định danh duy nhất của thiết bị
+        /// </summary>
+        public string DeviceId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Mã khóa công khai (Public Key) do thiết bị tạo ra (Định dạng Base64)
+        /// </summary>
+        public string PublicKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Tên thiết bị (ví dụ: iPhone 15 Pro, Samsung S24 Ultra)
+        /// </summary>
         public string? DeviceName { get; set; }
-        public long UserId { get; set; } // Lấy từ context/token
     }
 
     #endregion
 
     #region Validator
 
-    public sealed class RegisterBiometricValidator : AbstractValidator<RegisterBiometricCommand>
+    /// <summary>
+    /// Bộ kiểm tra dữ liệu cho lệnh đăng ký sinh trắc học
+    /// </summary>
+    public sealed class RegisterBiometricCommandValidator : AbstractValidator<RegisterBiometricCommand>
     {
-        public RegisterBiometricValidator()
+        public RegisterBiometricCommandValidator()
         {
             RuleFor(x => x.DeviceId)
-                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, "DeviceId"));
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_deviceId));
 
             RuleFor(x => x.PublicKey)
-                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, "PublicKey"));
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_publicKey));
         }
     }
 
@@ -42,37 +55,62 @@ namespace UniManage.Application.Commands.System.Auth
 
     #region Handler
 
+    /// <summary>
+    /// Bộ xử lý lưu trữ mã khóa sinh trắc học vào hệ thống
+    /// </summary>
     public sealed class RegisterBiometricCommandHandler : IRequestHandler<RegisterBiometricCommand, ApiResponse<bool>>
     {
+        /// <summary>
+        /// Xử lý yêu cầu đăng ký sinh trắc học
+        /// </summary>
         public async Task<ApiResponse<bool>> Handle(RegisterBiometricCommand request, CancellationToken ct)
         {
+            // Khởi tạo log nghiệp vụ với thông tin thiết bị
             var log = new CoreLogModel(request.HeaderInfo)
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new CoreParamModel(nameof(request.DeviceId), request.DeviceId),
-                    new CoreParamModel(nameof(request.DeviceName), request.DeviceName)
+                    new(nameof(request.DeviceId), request.DeviceId),
+                    new(nameof(request.DeviceName), request.DeviceName ?? "Unknown")
                 }
             };
 
             try
             {
-                await AuthHelper.RegisterBiometricKeyAsync(request.UserId, request.DeviceId, request.PublicKey, request.DeviceName, log, ct);
+                // BƯỚC 1: Kiểm tra trạng thái tài khoản người dùng (Phải Active mới được đăng ký)
+                var (statusSuccess, statusError, user) = await AuthHelper.ValidateUserStatusAsync(request.HeaderInfo?.Username ?? string.Empty, log, ct);
                 
-                var response = ResponseHelper.Success(true, CoreResource.common_success);
-                log.Result = response;
-                log.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(log);
+                if (!statusSuccess)
+                {
+                    var errorResponse = ResponseHelper.Error<bool>(statusError ?? CoreResource.common_error);
+                    log.Message = statusError;
+                    log.ReturnCode = errorResponse.ReturnCode;
+                    return errorResponse;
+                }
 
+                // BƯỚC 2: Lưu trữ hoặc cập nhật Khóa Sinh trắc học cho thiết bị này
+                await AuthHelper.RegisterBiometricKeyAsync(user!.Id, request.DeviceId, request.PublicKey, request.DeviceName, log, ct);
+                
+                var response = ResponseHelper.Success(true, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_biometric));
+                
+                log.Result = response.Data;
+                log.Message = response.Message;
+                log.ReturnCode = response.ReturnCode;
+                
                 return response;
             }
             catch (Exception ex)
             {
+                // Ghi nhận lỗi ngoại lệ
                 log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                UniLogManager.WriteApiLog(log);
+                
                 return ResponseHelper.Error<bool>(CoreResource.common_error);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }

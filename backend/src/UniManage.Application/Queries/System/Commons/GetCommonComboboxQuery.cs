@@ -12,7 +12,7 @@ namespace UniManage.Application.Queries.System.Commons
 {
     #region Query
 
-    public sealed class GetCommonComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetCommonComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
     {
         public string TypeKey { get; init; } = default!;
         public string? Keyword { get; set; }
@@ -35,9 +35,9 @@ namespace UniManage.Application.Queries.System.Commons
 
     #region Handler
 
-    public sealed class GetCommonComboboxQueryHandler : IRequestHandler<GetCommonComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetCommonComboboxQueryHandler : IRequestHandler<GetCommonComboboxQuery, ApiResponse<List<ComboboxModel>>>
     {
-        public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetCommonComboboxQuery request, CancellationToken ct)
+        public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetCommonComboboxQuery request, CancellationToken ct)
         {
             var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
             {
@@ -81,12 +81,12 @@ namespace UniManage.Application.Queries.System.Commons
                         },
                         ct);
 
-                    var items = commons.Select(c => new ComboboxItemDto
+                    var items = commons.Select(c => new ComboboxModel
                     {
-                        Value = c.ValueKey,
-                        Label = c.ValueName,
+                        Code = c.ValueKey,
+                        Name = c.ValueName,
                         Status = 1,
-                        Metadata = new Dictionary<string, object>
+                        ExtData = new Dictionary<string, object>
                         {
                             ["Sort"] = c.Sort
                         }
@@ -103,13 +103,13 @@ namespace UniManage.Application.Queries.System.Commons
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.ToString();
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting common combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxModel>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

@@ -42,20 +42,9 @@ namespace UniManage.Application.Commands.Inventory.ItemImages
     {
         public async Task<ApiResponse<UpdateItemImageCommand.Response>> Handle(UpdateItemImageCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Id), request.Id.ToString()),
-                    new CoreParamModel(nameof(request.ImageUrl), request.ImageUrl),
-                    new CoreParamModel(nameof(request.IsThumbnail), request.IsThumbnail.ToString())
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         UPDATE it_item_image
                         SET ImageUrl = @ImageUrl,
@@ -75,39 +64,16 @@ namespace UniManage.Application.Commands.Inventory.ItemImages
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<UpdateItemImageCommand.Response>("Item image not found");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new UpdateItemImageCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error updating item image: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateItemImageCommand.Response>("Error occurred while updating item image");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 }
+
+

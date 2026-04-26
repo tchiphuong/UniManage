@@ -4,6 +4,7 @@ using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
 
 namespace UniManage.Application.Commands.HR.Departments;
@@ -81,57 +82,56 @@ public sealed class CreateDepartmentCommandHandler : IRequestHandler<CreateDepar
 {
     public async Task<ApiResponse<CreateDepartmentCommand.Response>> Handle(CreateDepartmentCommand request, CancellationToken ct)
     {
-        CoreLogModel logData = new CoreLogModel(request.HeaderInfo)
+        var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
         {
             Parameter = new List<CoreParamModel>
             {
-                new CoreParamModel(nameof(request.Code), request.Code),
-                new CoreParamModel(nameof(request.NameVi), request.NameVi),
-                new CoreParamModel(nameof(request.NameEn), request.NameEn)
+                new(nameof(request.Code), request.Code),
+                new(nameof(request.NameVi), request.NameVi)
             }
         };
 
-        using (DbContext dbContext = new DbContext(openTransaction: true))
+        try
         {
-            try
+            using (var dbContext = new UniManage.Core.Database.DbContext(openTransaction: true))
             {
-                var id = await dbContext.ExecuteScalarAsync<int>(
-                    @"INSERT INTO hr_departments (Code, NameVi, NameEn, Description, CreatedBy, CreatedAt)
-                      VALUES (@Code, @NameVi, @NameEn, @Description, @CreatedBy, GETDATE());
-                      SELECT SCOPE_IDENTITY();",
-                    new
-                    {
-                        request.Code,
-                        request.NameVi,
-                        request.NameEn,
-                        request.Description,
-                        CreatedBy = request.HeaderInfo!.Username
-                    },
-                    ct);
+                var department = new hr_departments
+                {
+                    Code = request.Code,
+                    NameVi = request.NameVi,
+                    NameEn = request.NameEn,
+                    Description = request.Description ?? string.Empty,
+                    CreatedBy = request.HeaderInfo?.Username ?? "SYSTEM",
+                    CreatedAt = DateTimeHelper.Now,
+                    DataRowVersion = new byte[8]
+                };
 
-                await dbContext.CommitAsync();
+                dbContext.Set<hr_departments>().Add(department);
+                await dbContext.SaveChangesAsync(ct);
+                await dbContext.CommitAsync(ct);
 
-                var response = ResponseHelper.Success(new CreateDepartmentCommand.Response { Id = id, Code = request.Code }, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_department));
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
+                var responseData = new CreateDepartmentCommand.Response { Id = department.Id, Code = department.Code };
+                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_department));
+
+                log.Result = responseData;
+                log.ReturnCode = response.ReturnCode;
+                log.Message = response.Message;
 
                 return response;
             }
-            catch (Exception ex)
-            {
-                await dbContext.RollbackAsync();
-                UniLogger.Error($"Error creating department: {ex.Message}", ex);
-
-                var response = ResponseHelper.Error<CreateDepartmentCommand.Response>(CoreResource.common_exceptionOccurred);
-                logData.Message = ex.ToString();
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
-
-                return response;
-            }
+        }
+        catch (Exception ex)
+        {
+            log.IsException = true;
+            log.Message = ex.Message;
+            return ResponseHelper.Error<CreateDepartmentCommand.Response>(CoreResource.common_error);
+        }
+        finally
+        {
+            UniLogManager.WriteApiLog(log);
         }
     }
 }
 
 #endregion
+

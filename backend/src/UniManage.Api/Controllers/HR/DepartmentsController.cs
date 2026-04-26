@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.HR.Departments;
 using UniManage.Application.Queries.HR.Departments;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.HR;
@@ -30,7 +32,8 @@ public class DepartmentsController : BaseController
     /// Get list of departments for combobox
     /// </summary>
     [HttpGet("combobox")]
-    public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox(
+    [PermissionAuthorize(CoreFunction.HrDepartment, CoreAction.View)]
+    public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox(
         CancellationToken ct)
     {
         var query = new GetDepartmentComboboxQuery { HeaderInfo = HeaderInfo };
@@ -46,6 +49,7 @@ public class DepartmentsController : BaseController
     /// Get list of departments for page
     /// </summary>
     [HttpGet]
+    [PermissionAuthorize(CoreFunction.HrDepartment, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<PagedResult<GetDepartmentListQuery.Response>>>> GetList(
         [FromQuery] GetDepartmentListQuery query,
         CancellationToken ct)
@@ -64,6 +68,7 @@ public class DepartmentsController : BaseController
     /// Get department by id
     /// </summary>
     [HttpGet("{id}")]
+    [PermissionAuthorize(CoreFunction.HrDepartment, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<GetDepartmentByIdQuery.Response>>> GetById(int id, CancellationToken ct)
     {
         var query = new GetDepartmentByIdQuery { Id = id, HeaderInfo = HeaderInfo };
@@ -79,6 +84,7 @@ public class DepartmentsController : BaseController
     /// Create new department
     /// </summary>
     [HttpPost]
+    [PermissionAuthorize(CoreFunction.HrDepartment, CoreAction.Create)]
     public async Task<ActionResult<ApiResponse<CreateDepartmentCommand.Response>>> Create(
         [FromBody] CreateDepartmentCommand command, CancellationToken ct)
     {
@@ -95,6 +101,7 @@ public class DepartmentsController : BaseController
     /// Update department
     /// </summary>
     [HttpPut("{id}")]
+    [PermissionAuthorize(CoreFunction.HrDepartment, CoreAction.Update)]
     public async Task<ActionResult<ApiResponse<UpdateDepartmentCommand.Response>>> Update(
         [FromRoute] int id, [FromBody] UpdateDepartmentCommand command, CancellationToken ct)
     {
@@ -112,6 +119,7 @@ public class DepartmentsController : BaseController
     /// Delete departments
     /// </summary>
     [HttpDelete]
+    [PermissionAuthorize(CoreFunction.HrDepartment, CoreAction.Delete)]
     public async Task<ActionResult<ApiResponse<DeleteDepartmentCommand.Response>>> Delete(
         [FromBody] List<int> ids, CancellationToken ct)
     {

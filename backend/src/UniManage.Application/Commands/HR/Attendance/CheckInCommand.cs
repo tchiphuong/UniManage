@@ -58,22 +58,11 @@ namespace UniManage.Application.Commands.HR.Attendance
     {
         public async Task<ApiResponse<CheckInCommand.Response>> Handle(CheckInCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
-                    new CoreParamModel(nameof(request.AttendanceDate), request.AttendanceDate),
-                    new CoreParamModel(nameof(request.CheckInTime), request.CheckInTime)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var attendanceDate = request.AttendanceDate ?? DateTime.Today;
-                    var checkInTime = request.CheckInTime ?? DateTime.Now.TimeOfDay;
+                    var checkInTime = request.CheckInTime ?? DateTimeHelper.Now.TimeOfDay;
 
                     var existingId = await dbContext.ExecuteScalarAsync<int?>(
                         @"SELECT Id FROM hr_attendance 
@@ -116,33 +105,15 @@ namespace UniManage.Application.Commands.HR.Attendance
                             ct);
                     }
 
-                    await dbContext.CommitAsync();
+                    
 
                     var responseData = new CheckInCommand.Response { Id = id, CheckInTime = checkInTime };
                     var response = ResponseHelper.Success(responseData, "Check-in successful");
-
-                    log.Result = response.Data;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error checking in: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CheckInCommand.Response>(CoreResource.common_exceptionOccurred);
-                    log.Message = ex.ToString();
-                    log.IsException = 1;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+return response;
         }
     }
 
     #endregion
 }
+
+

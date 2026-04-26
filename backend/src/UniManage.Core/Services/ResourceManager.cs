@@ -8,10 +8,17 @@ using UniManage.Core.Models.Resources;
 
 namespace UniManage.Core.Services
 {
+    /// <summary>
+    /// Quản lý tài nguyên đa ngôn ngữ (Localization) từ Database SQL Server.
+    /// Hỗ trợ nạp dữ liệu vào bộ nhớ đệm (Hashtable) và tự động dịch nếu thiếu tài nguyên.
+    /// </summary>
     public class ResourceManager
     {
         private Hashtable? _Table;
 
+        /// <summary>
+        /// Lấy giá trị văn bản của một tài nguyên dựa trên mã khóa và ngôn ngữ.
+        /// </summary>
         public string GetString(string resourceName, CultureInfo? culture = null)
         {
             if (_Table == null || _Table.Count == 0)
@@ -33,11 +40,15 @@ namespace UniManage.Core.Services
                 return langData;
             }
 
+            // Nếu không tìm thấy, thực hiện dịch từ ngôn ngữ mặc định
             langData = TranslateResource(resourceName, langCode);
 
             return langData ?? string.Empty;
         }
 
+        /// <summary>
+        /// Lấy toàn bộ danh sách tài nguyên cho một ngôn ngữ cụ thể.
+        /// </summary>
         public Dictionary<string, string?> GetResources(CultureInfo? culture = null)
         {
             if (_Table == null || _Table.Count == 0)
@@ -78,6 +89,9 @@ namespace UniManage.Core.Services
             return result.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
         }
 
+        /// <summary>
+        /// Nạp dữ liệu tài nguyên từ bảng sy_resources vào bộ nhớ đệm.
+        /// </summary>
         public void SetResourceStore()
         {
             _Table = new Hashtable();
@@ -121,6 +135,9 @@ namespace UniManage.Core.Services
             }
         }
 
+        /// <summary>
+        /// Lấy mã ngôn ngữ mặc định của hệ thống (IsDefault = 1).
+        /// </summary>
         public static string GetDefaultLanguage()
         {
             using (DbContext dbContext = new DbContext())
@@ -129,6 +146,9 @@ namespace UniManage.Core.Services
             }
         }
 
+        /// <summary>
+        /// Thực hiện dịch tài nguyên bằng TranslateHelper và lưu kết quả vào Database.
+        /// </summary>
         private string TranslateResource(string resourceName, string langShortName)
         {
             string translatedData = string.Empty;
@@ -159,9 +179,9 @@ namespace UniManage.Core.Services
                                 ResourceValue = translatedData,
                                 SourceLanguage = defaultLang,
                                 LanguageCode = langShortName,
-                                CreatedBy = ApplicationConstants.Defaults.SystemUser,
+                                CreatedBy = CoreConstant.SystemUser,
                                 CreatedAt = now,
-                                UpdatedBy = ApplicationConstants.Defaults.SystemUser,
+                                UpdatedBy = CoreConstant.SystemUser,
                                 UpdatedAt = now
                             }).GetAwaiter().GetResult();
                         }

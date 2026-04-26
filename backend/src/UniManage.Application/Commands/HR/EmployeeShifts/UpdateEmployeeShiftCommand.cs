@@ -85,21 +85,9 @@ namespace UniManage.Application.Commands.HR.EmployeeShifts
     {
         public async Task<ApiResponse<UpdateEmployeeShiftCommand.Response>> Handle(UpdateEmployeeShiftCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Id), request.Id),
-                    new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
-                    new CoreParamModel(nameof(request.WorkShiftCode), request.WorkShiftCode),
-                    new CoreParamModel(nameof(request.WorkDate), request.WorkDate.ToString("yyyy-MM-dd"))
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         UPDATE hr_employee_shifts
                         SET EmployeeCode = @EmployeeCode,
@@ -123,39 +111,16 @@ namespace UniManage.Application.Commands.HR.EmployeeShifts
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<UpdateEmployeeShiftCommand.Response>("Employee shift has been modified by another user or does not exist");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new UpdateEmployeeShiftCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error updating employee shift: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateEmployeeShiftCommand.Response>("Error occurred while updating employee shift");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 }
+
+

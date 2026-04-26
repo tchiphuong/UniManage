@@ -123,21 +123,9 @@ namespace UniManage.Application.Commands.Inventory.Items
     {
         public async Task<ApiResponse<CreateItemCommand.Response>> Handle(CreateItemCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Code), request.Code),
-                    new CoreParamModel(nameof(request.Name), request.Name),
-                    new CoreParamModel(nameof(request.BrandCode), request.BrandCode),
-                    new CoreParamModel(nameof(request.CategoryCode), request.CategoryCode)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         INSERT INTO it_items (Code, Name, Description, BrandCode, CategoryCode, ColorCode, SizeCode, CreatedAt)
                         VALUES (@Code, @Name, @Description, @BrandCode, @CategoryCode, @ColorCode, @SizeCode, GETDATE());
@@ -154,33 +142,13 @@ namespace UniManage.Application.Commands.Inventory.Items
                         request.SizeCode
                     }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateItemCommand.Response { Id = id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating item: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateItemCommand.Response>("Error occurred while creating item");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

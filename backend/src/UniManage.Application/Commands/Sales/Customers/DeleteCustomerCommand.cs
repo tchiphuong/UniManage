@@ -47,51 +47,22 @@ namespace UniManage.Application.Commands.Sales.Customers
     {
         public async Task<ApiResponse<DeleteCustomerCommand.Response>> Handle(DeleteCustomerCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Codes), string.Join(",", request.Codes))
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         DELETE FROM sa_customers
                         WHERE Code IN @Codes";
 
                     var deletedCount = await dbContext.ExecuteAsync(sql, new { Codes = request.Codes }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new DeleteCustomerCommand.Response { DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_deleteSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error deleting customers: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<DeleteCustomerCommand.Response>("Error occurred while deleting customers");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_deleteSuccess);
+return response;
         }
     }
 }
+
+

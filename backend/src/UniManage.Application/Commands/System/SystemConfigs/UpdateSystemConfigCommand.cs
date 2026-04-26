@@ -1,7 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using MediatR;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
+using DbContext = UniManage.Core.Database.DbContext;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
@@ -42,69 +43,70 @@ namespace UniManage.Application.Commands.System.SystemConfigs
         {
             var log = new CoreLogModel(request.HeaderInfo)
             {
-                Method = nameof(UpdateSystemConfigCommandHandler),
-                Path = "SystemConfig",
-                Parameter = new List<CoreParamModel>
+                Parameters = new List<CoreParamModel>
                 {
-                    new CoreParamModel(nameof(request.Id), request.Id),
-                    new CoreParamModel(nameof(request.ConfigValue), request.ConfigValue)
+                    new(nameof(request.Id), request.Id),
+                    new(nameof(request.ConfigValue), request.ConfigValue)
                 }
             };
 
-            using (var dbContext = new DbContext(openTransaction: true))
+            try
             {
-                try
+                using var dbContext = new DbContext(openTransaction: true);
+
+                var config = await dbContext.Set<sy_configs>()
+                    .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+
+                if (config == null)
                 {
-                    // 1. Get current
-                    var sqlGet = "SELECT Id, DataType FROM sy_configs WHERE Id = @Id";
-                    var current = await dbContext.QueryFirstOrDefaultAsync<SystemConfig>(sqlGet, new { request.Id });
-
-                    if (current == null)
-                        return ResponseHelper.NotFound<bool>(string.Format(CoreResource.crud_notFound, CoreResource.lbl_config));
-
-                    // 2. Validate Data Type
-                    if (current.DataType == "BOOL" && request.ConfigValue != "true" && request.ConfigValue != "false")
-                        return ResponseHelper.Error<bool>(string.Format(CoreResource.validation_invalidFormat, CoreResource.lbl_configValue));
-
-                    if (current.DataType == "INT" && !int.TryParse(request.ConfigValue, out _))
-                        return ResponseHelper.Error<bool>(string.Format(CoreResource.validation_invalidFormat, CoreResource.lbl_configValue));
-
-                    // 3. Update
-                    var sqlUpdate = @"
-                        UPDATE sy_configs 
-                        SET ConfigValue = @ConfigValue, 
-                            UpdatedBy = @UpdatedBy, 
-                            UpdatedAt = SYSUTCDATETIME() 
-                        WHERE Id = @Id";
-
-                    await dbContext.ExecuteAsync(sqlUpdate, new
-                    {
-                        request.ConfigValue,
-                        request.Id,
-                        UpdatedBy = request.HeaderInfo?.Username
-                    });
-
-                    await dbContext.CommitAsync(ct);
-
-                    var response = ResponseHelper.Success(true, string.Format(CoreResource.crud_updateSuccess, CoreResource.lbl_config));
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
+                    var notFoundResponse = ResponseHelper.NotFound<bool>(string.Format(CoreResource.common_notFound, CoreResource.lbl_config));
+                    log.Message = notFoundResponse.Message;
+                    log.ReturnCode = notFoundResponse.ReturnCode;
+                    return notFoundResponse;
                 }
-                catch (Exception ex)
+
+                // Validate Data Type
+                if (config.DataType == "BOOL" && request.ConfigValue != "true" && request.ConfigValue != "false")
                 {
-                    await dbContext.RollbackAsync(ct);
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                    UniLogManager.WriteApiLog(log);
-
-                    return ResponseHelper.Error<bool>(CoreResource.common_exceptionOccurred);
+                    var errorResponse = ResponseHelper.Error<bool>(string.Format(CoreResource.validation_invalidFormat, CoreResource.lbl_configValue));
+                    log.Message = errorResponse.Message;
+                    log.ReturnCode = errorResponse.ReturnCode;
+                    return errorResponse;
                 }
+
+                if (config.DataType == "INT" && !int.TryParse(request.ConfigValue, out _))
+                {
+                    var errorResponse = ResponseHelper.Error<bool>(string.Format(CoreResource.validation_invalidFormat, CoreResource.lbl_configValue));
+                    log.Message = errorResponse.Message;
+                    log.ReturnCode = errorResponse.ReturnCode;
+                    return errorResponse;
+                }
+
+                config.ConfigValue = request.ConfigValue;
+                config.UpdatedBy = request.HeaderInfo?.Username;
+                config.UpdatedAt = DateTimeHelper.Now;
+
+                await dbContext.SaveChangesAsync(ct);
+                await dbContext.CommitAsync();
+
+                var response = ResponseHelper.Success(true, string.Format(CoreResource.common_updateSuccess, CoreResource.lbl_config));
+
+                log.Result = response.Data;
+                log.Message = response.Message;
+                log.ReturnCode = response.ReturnCode;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                log.IsException = true;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                throw;
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }

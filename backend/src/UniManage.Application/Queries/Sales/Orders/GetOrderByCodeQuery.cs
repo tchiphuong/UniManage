@@ -106,7 +106,7 @@ namespace UniManage.Application.Queries.Sales.Orders
                     var items = await dbContext.QueryAsync<GetOrderByCodeQuery.OrderItemDto>(itemsSql, new { OrderCode = request.OrderCode }, ct);
                     order.Items = items.ToList();
 
-                    var response = ResponseHelper.Success(order, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(order, CoreResource.common_getSuccess);
 
                     log.Result = order;
                     log.ReturnCode = response.ReturnCode;
@@ -121,7 +121,7 @@ namespace UniManage.Application.Queries.Sales.Orders
 
                     var response = ResponseHelper.Error<GetOrderByCodeQuery.Result>("Error occurred while retrieving order");
 
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);

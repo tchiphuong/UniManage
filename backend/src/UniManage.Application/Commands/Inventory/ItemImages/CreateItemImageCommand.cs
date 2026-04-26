@@ -53,20 +53,9 @@ namespace UniManage.Application.Commands.Inventory.ItemImages
     {
         public async Task<ApiResponse<CreateItemImageCommand.Response>> Handle(CreateItemImageCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.ItemCode), request.ItemCode),
-                    new CoreParamModel(nameof(request.ImageUrl), request.ImageUrl),
-                    new CoreParamModel(nameof(request.IsThumbnail), request.IsThumbnail.ToString())
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         INSERT INTO it_item_image (ItemCode, ImageUrl, IsThumbnail, SortOrder, CreatedAt)
                         VALUES (@ItemCode, @ImageUrl, @IsThumbnail, @SortOrder, GETDATE());
@@ -80,33 +69,13 @@ namespace UniManage.Application.Commands.Inventory.ItemImages
                         request.SortOrder
                     }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateItemImageCommand.Response { Id = id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating item image: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateItemImageCommand.Response>("Error occurred while creating item image");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

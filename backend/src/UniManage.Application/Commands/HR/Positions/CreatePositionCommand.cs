@@ -1,117 +1,142 @@
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using MediatR;
-using UniManage.Core.Database;
+using DbContext = UniManage.Core.Database.DbContext;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
 
-namespace UniManage.Application.Commands.HR.Positions;
-
-#region Command
-
-public sealed class CreatePositionCommand : BaseCommand, IRequest<ApiResponse<CreatePositionCommand.Response>>
+namespace UniManage.Application.Commands.HR.Positions
 {
-    public string PositionCode { get; init; } = default!;
-    public string NameVi { get; init; } = default!;
-    public string NameEn { get; init; } = default!;
-    public string? Description { get; init; }
+    #region Command
 
-    public sealed class Response
+    /// <summary>
+    /// Lệnh tạo mới chức vụ
+    /// </summary>
+    public sealed class CreatePositionCommand : BaseCommand, IRequest<ApiResponse<CreatePositionCommand.Response>>
     {
-        public bool Success => Id > 0;
-        public int Id { get; init; }
         public string PositionCode { get; init; } = default!;
-    }
-}
+        public string NameVi { get; init; } = default!;
+        public string NameEn { get; init; } = default!;
+        public string? Description { get; init; }
 
-#endregion
-
-#region Validator
-
-public sealed class CreatePositionCommandValidator : AbstractValidator<CreatePositionCommand>
-{
-    public CreatePositionCommandValidator()
-    {
-        RuleFor(x => x.PositionCode)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage(CoreResource.validation_required)
-            .MaximumLength(50).WithMessage(string.Format(CoreResource.validation_maxLength, 50))
-            .Matches("^[A-Z0-9]+$").WithMessage(CoreResource.validation_onlyNumbers)
-            .MustAsync(async (code, cancel) => !await IsCodeExistsAsync(code))
-            .WithMessage(CoreResource.validation_alreadyExists);
-
-        RuleFor(x => x.NameVi).NotEmpty().WithMessage(CoreResource.validation_required).MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
-        RuleFor(x => x.NameEn).NotEmpty().WithMessage(CoreResource.validation_required).MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, 200));
-        RuleFor(x => x.Description).MaximumLength(500).WithMessage(string.Format(CoreResource.validation_maxLength, 500));
-    }
-
-    private static async Task<bool> IsCodeExistsAsync(string code)
-    {
-        using (var dbContext = new DbContext())
+        public sealed class Response
         {
-            return await dbContext.ExecuteScalarAsync<bool>(
-                "SELECT CASE WHEN EXISTS(SELECT 1 FROM hr_positions WHERE PositionCode = @Code) THEN 1 ELSE 0 END",
-                new { Code = code });
+            public bool Success => Id > 0;
+            public int Id { get; init; }
+            public string PositionCode { get; init; } = default!;
         }
     }
-}
 
-#endregion
+    #endregion
 
-#region Handler
+    #region Validator
 
-public sealed class CreatePositionCommandHandler : IRequestHandler<CreatePositionCommand, ApiResponse<CreatePositionCommand.Response>>
-{
-    public async Task<ApiResponse<CreatePositionCommand.Response>> Handle(CreatePositionCommand request, CancellationToken ct)
+    /// <summary>
+    /// Bộ kiểm tra dữ liệu cho lệnh tạo chức vụ
+    /// </summary>
+    public sealed class CreatePositionCommandValidator : AbstractValidator<CreatePositionCommand>
     {
-        CoreLogModel logData = new CoreLogModel(request.HeaderInfo)
+        public CreatePositionCommandValidator()
         {
-            Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.PositionCode), request.PositionCode),
-                new CoreParamModel(nameof(request.NameVi), request.NameVi)
-            }
-        };
+            RuleFor(x => x.PositionCode)
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_code))
+                .MaximumLength(50).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_code, 50))
+                .Matches("^[A-Z0-9_]+$").WithMessage(CoreResource.validation_alphanumericOnly)
+                .MustAsync(async (code, cancel) => !await IsCodeExistsAsync(code))
+                .WithMessage(CoreResource.validation_alreadyExists);
 
-        using (DbContext dbContext = new DbContext(openTransaction: true))
+            RuleFor(x => x.NameVi)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_name))
+                .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_name, 200));
+
+            RuleFor(x => x.NameEn)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_name))
+                .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_name, 200));
+
+            RuleFor(x => x.Description)
+                .MaximumLength(500).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.common_description, 500));
+        }
+
+        private static async Task<bool> IsCodeExistsAsync(string code)
         {
+            using (var dbContext = new DbContext())
+            {
+                return await dbContext.Set<hr_positions>().AnyAsync(x => x.Code == code);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Bộ xử lý lệnh tạo mới chức vụ
+    /// </summary>
+    public sealed class CreatePositionCommandHandler : IRequestHandler<CreatePositionCommand, ApiResponse<CreatePositionCommand.Response>>
+    {
+        public async Task<ApiResponse<CreatePositionCommand.Response>> Handle(CreatePositionCommand request, CancellationToken ct)
+        {
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new(nameof(request.PositionCode), request.PositionCode),
+                    new(nameof(request.NameVi), request.NameVi),
+                    new(nameof(request.NameEn), request.NameEn)
+                }
+            };
+
             try
             {
-                var id = await dbContext.ExecuteScalarAsync<int>(
-                    @"INSERT INTO hr_positions (PositionCode, NameVi, NameEn, Description, CreatedBy, CreatedAt)
-                      VALUES (@PositionCode, @NameVi, @NameEn, @Description, @CreatedBy, GETDATE());
-                      SELECT SCOPE_IDENTITY();",
-                    new
-                    {
-                        request.PositionCode,
-                        request.NameVi,
-                        request.NameEn,
-                        request.Description,
-                        CreatedBy = request.HeaderInfo!.Username
-                    },
-                    ct);
+                using var dbContext = new DbContext(openTransaction: true);
 
+                var position = new hr_positions
+                {
+                    Code = request.PositionCode,
+                    NameVi = request.NameVi,
+                    NameEn = request.NameEn,
+                    Description = request.Description ?? string.Empty,
+                    CreatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser,
+                    CreatedAt = DateTimeHelper.Now
+                };
+
+                dbContext.Set<hr_positions>().Add(position);
+                await dbContext.SaveChangesAsync(ct);
                 await dbContext.CommitAsync();
 
-                var response = ResponseHelper.Success(new CreatePositionCommand.Response { Id = id, PositionCode = request.PositionCode }, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_position));
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
+                var responseData = new CreatePositionCommand.Response
+                {
+                    Id = position.Id,
+                    PositionCode = position.Code
+                };
+
+                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_position));
+                
+                log.Result = responseData;
+                log.Message = response.Message;
+                log.ReturnCode = response.ReturnCode;
+
                 return response;
             }
             catch (Exception ex)
             {
-                await dbContext.RollbackAsync();
-                UniLogger.Error($"Error creating position: {ex.Message}", ex);
-                var response = ResponseHelper.Error<CreatePositionCommand.Response>(CoreResource.common_exceptionOccurred);
-                logData.Message = ex.ToString();
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
-                return response;
+                log.IsException = true;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                return ResponseHelper.Error<CreatePositionCommand.Response>(CoreResource.common_error);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }
-}
 
-#endregion
+    #endregion
+}

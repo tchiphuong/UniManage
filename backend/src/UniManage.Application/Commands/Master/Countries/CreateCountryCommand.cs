@@ -1,10 +1,13 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.Master.Countries
 {
@@ -72,9 +75,7 @@ namespace UniManage.Application.Commands.Master.Countries
         {
             using (var dbContext = new DbContext())
             {
-                return await dbContext.ExecuteScalarAsync<bool>(
-                    "SELECT CASE WHEN EXISTS(SELECT 1 FROM ad_countries WHERE Code = @Code) THEN 1 ELSE 0 END",
-                    new { Code = code });
+                return await dbContext.Set<ad_countries>().AnyAsync(x => x.Code == code);
             }
         }
     }
@@ -93,58 +94,35 @@ namespace UniManage.Application.Commands.Master.Countries
             CoreLogModel logData = new CoreLogModel(request.HeaderInfo)
             {
                 Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.Code), request.Code),
-                new CoreParamModel(nameof(request.NameVi), request.NameVi),
-                new CoreParamModel(nameof(request.NameEn), request.NameEn)
-            }
+                {
+                    new CoreParamModel(nameof(request.Code), request.Code),
+                    new CoreParamModel(nameof(request.NameVi), request.NameVi),
+                    new CoreParamModel(nameof(request.NameEn), request.NameEn)
+                }
             };
 
-            using (DbContext dbContext = new DbContext(openTransaction: true))
+            using var dbContext = new DbContext(openTransaction: true);
+            var country = new ad_countries
             {
-                try
-                {
-                    var codeName = StringHelper.ToSlug(request.NameEn);
+                Code = request.Code,
+                NameVi = request.NameVi,
+                NameEn = request.NameEn,
+                FullNameVi = request.FullNameVi,
+                FullNameEn = request.FullNameEn,
+                CodeName = StringHelper.ToSlug(request.NameEn),
+                PhoneCode = request.PhoneCode,
+                SortOrder = request.SortOrder,
+                IsActive = request.IsActive,
+                CreatedAt = DateTimeHelper.Now
+            };
 
-                    await dbContext.ExecuteAsync(
-                        @"INSERT INTO ad_countries (Code, NameVi, NameEn, FullNameVi, FullNameEn, CodeName, PhoneCode, SortOrder, IsActive, CreatedAt)
-                      VALUES (@Code, @NameVi, @NameEn, @FullNameVi, @FullNameEn, @CodeName, @PhoneCode, @SortOrder, @IsActive, GETDATE())",
-                        new
-                        {
-                            request.Code,
-                            request.NameVi,
-                            request.NameEn,
-                            request.FullNameVi,
-                            request.FullNameEn,
-                            CodeName = codeName,
-                            request.PhoneCode,
-                            request.SortOrder,
-                            request.IsActive
-                        },
-                        ct);
+            dbContext.Set<ad_countries>().Add(country);
+            await dbContext.SaveChangesAsync(ct);
+            await dbContext.CommitAsync();
 
-                    await dbContext.CommitAsync();
-
-                    var response = ResponseHelper.Success(new CreateCountryCommand.Response { Code = request.Code }, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_country));
-                    logData.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(logData);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error creating country: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateCountryCommand.Response>(CoreResource.common_exceptionOccurred);
-                    logData.Message = ex.ToString();
-                    logData.IsException = 1;
-                    logData.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(logData);
-
-                    return response;
-                }
-            }
+            var response = ResponseHelper.Success(new CreateCountryCommand.Response { Code = country.Code }, string.Format(CoreResource.common_createSuccess, CoreResource.entity_country));
+            logData.ReturnCode = response.ReturnCode;
+            return response;
         }
     }
 

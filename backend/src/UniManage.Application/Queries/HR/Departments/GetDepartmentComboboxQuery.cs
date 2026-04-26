@@ -13,7 +13,7 @@ namespace UniManage.Application.Queries.HR.Departments;
 /// <summary>
 /// Query to get list of departments for dropdown
 /// </summary>
-public sealed class GetDepartmentComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+public sealed class GetDepartmentComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
 {
 }
 
@@ -24,9 +24,9 @@ public sealed class GetDepartmentComboboxQuery : BaseQuery, IRequest<ApiResponse
 /// <summary>
 /// Handler for GetDepartmentComboboxQuery
 /// </summary>
-public sealed class GetDepartmentComboboxQueryHandler : IRequestHandler<GetDepartmentComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+public sealed class GetDepartmentComboboxQueryHandler : IRequestHandler<GetDepartmentComboboxQuery, ApiResponse<List<ComboboxModel>>>
 {
-    public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetDepartmentComboboxQuery request, CancellationToken ct)
+    public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetDepartmentComboboxQuery request, CancellationToken ct)
     {
         var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
         {
@@ -50,12 +50,12 @@ public sealed class GetDepartmentComboboxQueryHandler : IRequestHandler<GetDepar
                     """,
                     cancellationToken: ct);
 
-                var items = departments.Select(d => new ComboboxItemDto
+                var items = departments.Select(d => new ComboboxModel
                 {
-                    Value = d.Code,
-                    Label = d.Name,
+                    Code = d.Code,
+                    Name = d.Name,
                     Status = 1, // Default active
-                    Metadata = new Dictionary<string, object>
+                    ExtData = new Dictionary<string, object>
                     {
                         ["Description"] = d.Description ?? ""
                     }
@@ -72,12 +72,12 @@ public sealed class GetDepartmentComboboxQueryHandler : IRequestHandler<GetDepar
         }
         catch (Exception ex)
         {
-            log.IsException = 1;
+            log.IsException = true;
             log.Message = ex.Message;
             log.ReturnCode = 500;
             UniLogger.Error(JsonConvert.SerializeObject(log));
 
-            return ResponseHelper.Error<List<ComboboxItemDto>>($"Failed to get departments: {ex.Message}");
+            return ResponseHelper.Error<List<ComboboxModel>>($"Failed to get departments: {ex.Message}");
         }
     }
 }

@@ -36,7 +36,7 @@ namespace UniManage.Application.Commands.System.Auth
             RuleFor(x => x.Provider)
                 .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, "Provider"))
                 .Must(p => p.ToLower() == "google" || p.ToLower() == "facebook")
-                .WithMessage(CoreResource.auth_invalidProvider);
+                .WithMessage(CoreResource.auth_invalidLogin);
 
             RuleFor(x => x.AccessToken)
                 .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, "AccessToken"));
@@ -62,29 +62,19 @@ namespace UniManage.Application.Commands.System.Auth
 
         public async Task<ApiResponse<LoginCommand.Response>> Handle(SocialLoginCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Provider), request.Provider),
-                    new CoreParamModel(nameof(request.DeviceId), request.DeviceId)
-                }
-            };
-
-            try
-            {
+            var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo());
                 // 1. Lấy Provider từ Factory
                 var provider = _socialProviderFactory.GetProvider(request.Provider);
                 if (provider == null)
                 {
-                    return ReturnError(CoreResource.auth_invalidProvider, $"Unsupported social provider: {request.Provider}");
+                    return ReturnError(CoreResource.auth_invalidLogin, $"Unsupported social provider: {request.Provider}");
                 }
 
                 // 2. Xác thực Social Token
                 var socialProfile = await provider.VerifyTokenAsync(request.AccessToken, ct);
                 if (socialProfile == null || string.IsNullOrEmpty(socialProfile.Email))
                 {
-                    return ReturnError(CoreResource.auth_invalidSocialToken, "Failed to verify social token or email not found");
+                    return ReturnError(CoreResource.auth_invalidLogin, "Failed to verify social token or email not found");
                 }
 
                 // 3. Tìm hoặc tạo người dùng
@@ -120,38 +110,24 @@ namespace UniManage.Application.Commands.System.Auth
                     { 
                         Id = user.Id, 
                         UserCode = user.Username!, 
-                        DisplayName = user.DisplayName ?? user.Username!,
+                        DisplayName = user.EmployeeCode ?? user.Username!,
                         Email = user.Email,
                         RoleCode = user.RoleCode
                     }
                 };
 
                 var response = ResponseHelper.Success(responseData, CoreResource.auth_loginSuccess);
-                log.Result = response;
-                log.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(log);
-
                 return response;
-            }
-            catch (Exception ex)
-            {
-                log.IsException = true;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                UniLogManager.WriteApiLog(log);
-                return ResponseHelper.Error<LoginCommand.Response>(CoreResource.common_error);
-            }
 
             ApiResponse<LoginCommand.Response> ReturnError(string userMsg, string logMsg)
             {
                 var errorResponse = ResponseHelper.Error<LoginCommand.Response>(userMsg);
-                log.ReturnCode = errorResponse.ReturnCode;
-                log.Message = logMsg;
-                UniLogManager.WriteApiLog(log);
-                return errorResponse;
+return errorResponse;
             }
         }
     }
 
     #endregion
 }
+
+

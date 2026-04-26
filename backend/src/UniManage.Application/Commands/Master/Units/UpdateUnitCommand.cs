@@ -1,11 +1,12 @@
-using Dapper;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using MediatR;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
+using DbContext = UniManage.Core.Database.DbContext;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
 
 namespace UniManage.Application.Commands.Master.Units;
@@ -51,71 +52,36 @@ public sealed class UpdateUnitCommandHandler : IRequestHandler<UpdateUnitCommand
 {
     public async Task<ApiResponse<UpdateUnitCommand.Response>> Handle(UpdateUnitCommand request, CancellationToken ct)
     {
-        var log = new CoreLogModel(request.HeaderInfo)
+        using var dbContext = new DbContext(openTransaction: true);
+        
+        var unit = await dbContext.Set<ms_units>()
+            .FirstOrDefaultAsync(x => x.Code == request.Code, ct);
+
+        if (unit == null)
         {
-            Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.Code), request.Code),
-                new CoreParamModel(nameof(request.NameVi), request.NameVi),
-                new CoreParamModel(nameof(request.NameEn), request.NameEn)
-            }
-        };
-
-        using (var dbContext = new DbContext(openTransaction: true))
-        {
-            try
-            {
-                var rows = await dbContext.ExecuteAsync(@"UPDATE ms_units
-                        SET NameVi = @NameVi,
-                            NameEn = @NameEn,
-                            UpdatedBy = @UpdatedBy,
-                            UpdatedAt = GETDATE()
-                        WHERE Code = @Code
-                        AND DataRowVersion = @DataRowVersion", new
-                {
-                    request.Code,
-                    request.NameVi,
-                    request.NameEn,
-                    UpdatedBy = request.HeaderInfo!.Username,
-                    request.DataRowVersion
-                }, ct);
-
-                if (rows == 0)
-                {
-                    await dbContext.transaction.RollbackAsync(ct);
-
-                    var notFoundResponse = ResponseHelper.NotFound<UpdateUnitCommand.Response>(CoreResource.common_notFound);
-                    log.Result = notFoundResponse;
-                    log.ReturnCode = notFoundResponse.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-                    return notFoundResponse;
-                }
-
-                await dbContext.transaction.CommitAsync(ct);
-
-                var responseData = new UpdateUnitCommand.Response { Success = true };
-                var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                log.Result = response;
-                log.ReturnCode = response.ReturnCode;
-                log.Message = response.Message;
-                UniLogManager.WriteApiLog(log);
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                await dbContext.transaction.RollbackAsync(ct);
-
-                log.IsException = 1;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                UniLogManager.WriteApiLog(log);
-
-                return ResponseHelper.Error<UpdateUnitCommand.Response>(CoreResource.common_exceptionOccurred);
-            }
+            return ResponseHelper.NotFound<UpdateUnitCommand.Response>(CoreResource.common_notFound);
         }
+
+        // Optimistic concurrency check
+        if (request.DataRowVersion != null && !unit.DataRowVersion.SequenceEqual(request.DataRowVersion))
+        {
+            return ResponseHelper.Error<UpdateUnitCommand.Response>(CoreResource.common_concurrencyError);
+        }
+
+        unit.NameVi = request.NameVi;
+        unit.NameEn = request.NameEn;
+        unit.UpdatedBy = request.HeaderInfo!.Username;
+        unit.UpdatedAt = DateTimeHelper.Now;
+
+        await dbContext.SaveChangesAsync(ct);
+        await dbContext.CommitAsync();
+
+        var responseData = new UpdateUnitCommand.Response { Success = true };
+        var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+        return response;
     }
 }
 
 #endregion
+
+

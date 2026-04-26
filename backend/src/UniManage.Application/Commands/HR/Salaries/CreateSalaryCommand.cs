@@ -71,19 +71,9 @@ namespace UniManage.Application.Commands.HR.Salaries
     {
         public async Task<ApiResponse<CreateSalaryCommand.Response>> Handle(CreateSalaryCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
-                    new CoreParamModel(nameof(request.SalaryAmount), request.SalaryAmount)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var id = await dbContext.ExecuteScalarAsync<int>(
                         @"INSERT INTO hr_salaries (EmployeeCode, SalaryAmount, CreatedBy, CreatedAt, DataRowVersion)
                           VALUES (@EmployeeCode, @SalaryAmount, @CreatedBy, GETDATE(), 0x00000000000000000001);
@@ -107,32 +97,14 @@ namespace UniManage.Application.Commands.HR.Salaries
                         },
                         ct);
 
-                    await dbContext.CommitAsync();
+                    
 
-                    var response = ResponseHelper.Success(new CreateSalaryCommand.Response { Id = id }, CoreResource.crud_createSuccess);
-
-                    log.Result = response.Data;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error creating salary: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateSalaryCommand.Response>(CoreResource.common_exceptionOccurred);
-                    log.Message = ex.ToString();
-                    log.IsException = 1;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(new CreateSalaryCommand.Response { Id = id }, CoreResource.common_createSuccess);
+return response;
         }
     }
 
     #endregion
 }
+
+

@@ -80,20 +80,9 @@ namespace UniManage.Application.Commands.Workflow.ApprovalRoutes
     {
         public async Task<ApiResponse<CreateApprovalRouteCommand.Response>> Handle(CreateApprovalRouteCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.RequestTypeKey), request.RequestTypeKey),
-                    new CoreParamModel(nameof(request.RouteName), request.RouteName),
-                    new CoreParamModel("LevelCount", request.Levels.Count)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var routeSql = @"
                         INSERT INTO wf_approval_route (RequestTypeKey, RouteName, Description, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt)
                         VALUES (@RequestTypeKey, @RouteName, @Description, @CreatedBy, GETDATE(), @CreatedBy, GETDATE());
@@ -138,33 +127,13 @@ namespace UniManage.Application.Commands.Workflow.ApprovalRoutes
                         }
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateApprovalRouteCommand.Response { Id = routeId };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating approval route: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateApprovalRouteCommand.Response>("Error occurred while creating approval route");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

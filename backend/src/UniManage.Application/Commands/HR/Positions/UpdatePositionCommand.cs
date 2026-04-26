@@ -1,10 +1,13 @@
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using MediatR;
-using UniManage.Core.Database;
+using DbContext = UniManage.Core.Database.DbContext;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using UniManage.Core.Constant;
 
 namespace UniManage.Application.Commands.HR.Positions;
 
@@ -17,6 +20,7 @@ public sealed class UpdatePositionCommand : BaseCommand, IRequest<ApiResponse<Up
     public string NameVi { get; init; } = default!;
     public string NameEn { get; init; } = default!;
     public string? Description { get; init; }
+    public byte[] DataRowVersion { get; init; } = default!;
 
     public sealed class Response
     {
@@ -33,11 +37,36 @@ public sealed class UpdatePositionCommandValidator : AbstractValidator<UpdatePos
 {
     public UpdatePositionCommandValidator()
     {
-        RuleFor(x => x.Id).GreaterThan(0);
-        RuleFor(x => x.PositionCode).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.NameVi).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.NameEn).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Description).MaximumLength(500);
+        RuleFor(x => x.Id)
+            .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_required, "Id"))
+            .MustAsync(async (id, cancel) => await IsPositionExistsByIdAsync(id))
+            .WithMessage(string.Format(CoreResource.validation_notFound, CoreResource.entity_position));
+
+        RuleFor(x => x.PositionCode)
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_positionCode))
+            .MaximumLength(50).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_positionCode, 50));
+
+        RuleFor(x => x.NameVi)
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_name_vi))
+            .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_name_vi, 200));
+
+        RuleFor(x => x.NameEn)
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_name_en))
+            .MaximumLength(200).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_name_en, 200));
+
+        RuleFor(x => x.Description)
+            .MaximumLength(500).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.common_description, 500));
+
+        RuleFor(x => x.DataRowVersion)
+            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, "DataRowVersion"));
+    }
+
+    private static async Task<bool> IsPositionExistsByIdAsync(int id)
+    {
+        using (var dbContext = new DbContext())
+        {
+            return await dbContext.Set<hr_positions>().AnyAsync(x => x.Id == id);
+        }
     }
 }
 
@@ -49,62 +78,74 @@ public sealed class UpdatePositionCommandHandler : IRequestHandler<UpdatePositio
 {
     public async Task<ApiResponse<UpdatePositionCommand.Response>> Handle(UpdatePositionCommand request, CancellationToken ct)
     {
-        CoreLogModel logData = new CoreLogModel(request.HeaderInfo)
+        var log = new CoreLogModel(request.HeaderInfo)
         {
-            Parameter = new List<CoreParamModel>
+            Parameters = new List<CoreParamModel>
             {
-                new CoreParamModel(nameof(request.Id), request.Id),
-                new CoreParamModel(nameof(request.PositionCode), request.PositionCode)
+                new(nameof(request.Id), request.Id),
+                new(nameof(request.PositionCode), request.PositionCode),
+                new(nameof(request.NameVi), request.NameVi),
+                new(nameof(request.NameEn), request.NameEn),
+                new(nameof(request.DataRowVersion), request.DataRowVersion != null ? Convert.ToBase64String(request.DataRowVersion) : string.Empty)
             }
         };
 
-        using (DbContext dbContext = new DbContext(openTransaction: true))
+        try
         {
-            try
+            using var dbContext = new DbContext(openTransaction: true);
+
+            var position = await dbContext.Set<hr_positions>()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+
+            if (position == null)
             {
-                var rowsAffected = await dbContext.ExecuteAsync(
-                    @"UPDATE hr_positions 
-                      SET PositionCode = @PositionCode, NameVi = @NameVi, NameEn = @NameEn, Description = @Description,
-                          UpdatedBy = @UpdatedBy, UpdatedAt = GETDATE()
-                      WHERE Id = @Id",
-                    new
-                    {
-                        request.Id,
-                        request.PositionCode,
-                        request.NameVi,
-                        request.NameEn,
-                        request.Description,
-                        UpdatedBy = request.HeaderInfo!.Username
-                    },
-                    ct);
-
-                await dbContext.CommitAsync();
-
-                if (rowsAffected == 0)
-                {
-                    return ResponseHelper.NotFound<UpdatePositionCommand.Response>(CoreResource.common_notFound);
-                }
-
-                var responseData = new UpdatePositionCommand.Response { Success = true, Id = request.Id };
-                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_updateSuccess, CoreResource.entity_position));
-
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
-                return response;
+                var notFoundResponse = ResponseHelper.NotFound<UpdatePositionCommand.Response>(CoreResource.common_notFound);
+                log.Message = notFoundResponse.Message;
+                log.ReturnCode = notFoundResponse.ReturnCode;
+                return notFoundResponse;
             }
-            catch (Exception ex)
+
+            // Concurrency check
+            if (request.DataRowVersion != null && !position.DataRowVersion.SequenceEqual(request.DataRowVersion))
             {
-                await dbContext.RollbackAsync();
-                UniLogger.Error($"Error updating position: {ex.Message}", ex);
-                var response = ResponseHelper.Error<UpdatePositionCommand.Response>(CoreResource.common_exceptionOccurred);
-                logData.Message = ex.ToString();
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
-                return response;
+                var concurrencyResponse = ResponseHelper.Error<UpdatePositionCommand.Response>(CoreResource.common_concurrencyError);
+                log.Message = concurrencyResponse.Message;
+                log.ReturnCode = concurrencyResponse.ReturnCode;
+                return concurrencyResponse;
             }
+
+            position.Code = request.PositionCode;
+            position.NameVi = request.NameVi;
+            position.NameEn = request.NameEn;
+            position.Description = request.Description ?? string.Empty;
+            position.UpdatedBy = request.HeaderInfo!.Username;
+            position.UpdatedAt = DateTimeHelper.Now;
+
+            await dbContext.SaveChangesAsync(ct);
+            await dbContext.CommitAsync();
+
+            var responseData = new UpdatePositionCommand.Response { Success = true, Id = request.Id };
+            var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_position));
+            
+            log.Result = responseData;
+            log.Message = response.Message;
+            log.ReturnCode = response.ReturnCode;
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            log.IsException = true;
+            log.Message = ex.Message;
+            log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+            throw;
+        }
+        finally
+        {
+            UniLogManager.WriteApiLog(log);
         }
     }
 }
 
 #endregion
+

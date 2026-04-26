@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
@@ -84,28 +85,28 @@ namespace UniManage.Application.Queries.Master.Countries
 
                     if (country == null)
                     {
-                        var notFoundResponse = ResponseHelper.NotFound<GetCountryByCodeQuery.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_country));
+                        var notFoundResponse = ResponseHelper.NotFound<GetCountryByCodeQuery.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_country));
+                        logData.Message = "Country not found";
                         logData.ReturnCode = notFoundResponse.ReturnCode;
-                        logData.Message = notFoundResponse.Message;
-                        UniLogManager.WriteApiLog(logData);
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(country, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_country));
+                    var response = ResponseHelper.Success(country, string.Format(CoreResource.common_getSuccess, CoreResource.entity_country));
                     logData.Result = country;
                     logData.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(logData);
+                    logData.Message = "Get country success";
                     return response;
                 }
                 catch (Exception ex)
                 {
-                    UniLogger.Error($"Error retrieving country: {ex.Message}", ex);
-                    var response = ResponseHelper.Error<GetCountryByCodeQuery.Response>(CoreResource.common_exceptionOccurred);
-                    logData.Message = ex.ToString();
-                    logData.IsException = 1;
-                    logData.ReturnCode = response.ReturnCode;
+                    logData.Message = ex.Message;
+                    logData.IsException = true;
+                    logData.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                    return ResponseHelper.Error<GetCountryByCodeQuery.Response>(CoreResource.common_error);
+                }
+                finally
+                {
                     UniLogManager.WriteApiLog(logData);
-                    return response;
                 }
             }
         }

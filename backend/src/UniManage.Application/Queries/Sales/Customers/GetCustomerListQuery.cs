@@ -115,7 +115,7 @@ namespace UniManage.Application.Queries.Sales.Customers
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -130,7 +130,7 @@ namespace UniManage.Application.Queries.Sales.Customers
 
                     var response = ResponseHelper.Error<PagedResult<GetCustomerListQuery.Result>>("Error occurred while retrieving customers");
 
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);

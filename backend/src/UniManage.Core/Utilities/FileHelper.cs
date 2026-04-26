@@ -1,3 +1,4 @@
+using UniManage.Core.Utilities;
 using System.Text;
 
 namespace UniManage.Core.Utilities
@@ -8,36 +9,56 @@ namespace UniManage.Core.Utilities
     public static class FileHelper
     {
         /// <summary>
+        /// Root upload directory name (from config)
+        /// </summary>
+        public static string UploadPath => ConfigHelper.Configuration["FileSettings:UploadPath"] ?? "uploads";
+
+        /// <summary>
+        /// Temporary directory name (from config)
+        /// </summary>
+        public static string TempPath => ConfigHelper.Configuration["FileSettings:TempPath"] ?? "temp";
+
+        /// <summary>
+        /// Date format for folders (from config)
+        /// </summary>
+        public static string FolderDateFormat => ConfigHelper.Configuration["FileSettings:FolderDateFormat"] ?? "yyyy/MM/dd";
+
+        /// <summary>
         /// Allowed image file extensions
         /// </summary>
-        public static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+        public static string[] ImageExtensions => ConfigHelper.Configuration["FileSettings:AllowedImages"]?.Split(',') ?? new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
 
         /// <summary>
         /// Allowed document file extensions
         /// </summary>
-        public static readonly string[] DocumentExtensions = { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt" };
+        public static string[] DocumentExtensions => ConfigHelper.Configuration["FileSettings:AllowedDocuments"]?.Split(',') ?? new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt" };
 
         /// <summary>
         /// Allowed video file extensions
         /// </summary>
-        public static readonly string[] VideoExtensions = { ".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm" };
+        public static string[] VideoExtensions => ConfigHelper.Configuration["FileSettings:AllowedVideos"]?.Split(',') ?? new[] { ".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm" };
 
         /// <summary>
         /// Allowed audio file extensions
         /// </summary>
-        public static readonly string[] AudioExtensions = { ".mp3", ".wav", ".flac", ".aac", ".ogg" };
+        public static string[] AudioExtensions => ConfigHelper.Configuration["FileSettings:AllowedAudios"]?.Split(',') ?? new[] { ".mp3", ".wav", ".flac", ".aac", ".ogg" };
 
         /// <summary>
-        /// Maximum file size constants
+        /// Maximum file size constants (in Bytes)
         /// </summary>
         public static class MaxFileSizes
         {
-            public const long Image = 5 * 1024 * 1024; // 5MB
-            public const long Document = 10 * 1024 * 1024; // 10MB
-            public const long Video = 100 * 1024 * 1024; // 100MB
-            public const long Audio = 20 * 1024 * 1024; // 20MB
-            public const long General = 50 * 1024 * 1024; // 50MB
+            public static long Image => long.Parse(ConfigHelper.Configuration["FileSettings:MaxImageSizeKB"] ?? "5120") * 1024;
+            public static long Document => long.Parse(ConfigHelper.Configuration["FileSettings:MaxDocumentSizeKB"] ?? "10240") * 1024;
+            public static long Video => long.Parse(ConfigHelper.Configuration["FileSettings:MaxVideoSizeKB"] ?? "102400") * 1024;
+            public static long Audio => long.Parse(ConfigHelper.Configuration["FileSettings:MaxAudioSizeKB"] ?? "20480") * 1024;
+            public static long General = 50 * 1024 * 1024; // 50MB
         }
+
+        /// <summary>
+        /// Maximum video duration in seconds
+        /// </summary>
+        public static int MaxVideoDurationSeconds => int.Parse(ConfigHelper.Configuration["FileSettings:MaxVideoDurationSeconds"] ?? "60");
 
         /// <summary>
         /// Validates if file extension is allowed for images
@@ -185,7 +206,7 @@ namespace UniManage.Core.Utilities
 
             var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
             var extension = Path.GetExtension(fileName);
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var timestamp = DateTimeHelper.Now.ToString("yyyyMMdd_HHmmss");
 
             return $"{nameWithoutExtension}_{timestamp}{extension}";
         }
@@ -367,6 +388,42 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
+        /// Moves file from source to destination, ensures destination directory exists
+        /// </summary>
+        /// <param name="sourceFilePath">Source absolute path</param>
+        /// <param name="destFilePath">Destination absolute path</param>
+        /// <returns>True if success</returns>
+        public static bool MoveFile(string sourceFilePath, string destFilePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(sourceFilePath) || string.IsNullOrWhiteSpace(destFilePath))
+                    return false;
+
+                if (!File.Exists(sourceFilePath))
+                    return false;
+
+                var destDir = Path.GetDirectoryName(destFilePath);
+                if (!string.IsNullOrEmpty(destDir))
+                {
+                    EnsureDirectoryExists(destDir);
+                }
+
+                if (File.Exists(destFilePath))
+                {
+                    File.Delete(destFilePath);
+                }
+
+                File.Move(sourceFilePath, destFilePath);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Checks if file exists
         /// </summary>
         /// <param name="filePath">File path</param>
@@ -374,6 +431,45 @@ namespace UniManage.Core.Utilities
         public static bool FileExists(string filePath)
         {
             return !string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath);
+        }
+
+        /// <summary>
+        /// Validates file signature (Magic Numbers) to prevent disguised executable files
+        /// </summary>
+        public static bool IsValidFileSignature(Stream fileStream, string fileName)
+        {
+            try
+            {
+                using var reader = new BinaryReader(fileStream, Encoding.UTF8, true);
+                var headerBytes = reader.ReadBytes(4);
+                if (headerBytes.Length < 2) return false;
+
+                var hexSignature = BitConverter.ToString(headerBytes).Replace("-", "");
+
+                // Chặn file thực thi (EXE, DLL...) - Signature: 4D-5A (MZ)
+                if (hexSignature.StartsWith("4D5A")) return false;
+
+                var ext = Path.GetExtension(fileName).ToLowerInvariant();
+
+                // Kiểm tra chéo với extension
+                return ext switch
+                {
+                    ".jpg" or ".jpeg" => hexSignature.StartsWith("FFD8"),
+                    ".png" => hexSignature.StartsWith("89504E47"),
+                    ".gif" => hexSignature.StartsWith("47494638"),
+                    ".pdf" => hexSignature.StartsWith("25504446"),
+                    ".zip" or ".docx" or ".xlsx" => hexSignature.StartsWith("504B0304"), // ZIP/Office formats
+                    _ => true // Các loại khác cho phép qua (hoặc bổ sung thêm tùy nhu cầu)
+                };
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                fileStream.Position = 0; // Luôn reset stream để các logic sau đọc được tiếp
+            }
         }
 
         /// <summary>

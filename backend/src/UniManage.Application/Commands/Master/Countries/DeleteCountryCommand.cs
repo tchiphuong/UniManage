@@ -1,10 +1,11 @@
 using FluentValidation;
 using MediatR;
-using UniManage.Core.Database;
-using UniManage.Core.Logging;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.Master.Countries
 {
@@ -56,47 +57,34 @@ namespace UniManage.Application.Commands.Master.Countries
             CoreLogModel logData = new CoreLogModel(request.HeaderInfo)
             {
                 Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.Codes), string.Join(", ", request.Codes))
-            }
+                {
+                    new CoreParamModel(nameof(request.Codes), string.Join(", ", request.Codes))
+                }
             };
 
-            using (DbContext dbContext = new DbContext(openTransaction: true))
+            using var dbContext = new DbContext(openTransaction: true);
+            var countriesToDelete = await dbContext.Set<ad_countries>()
+                .Where(x => request.Codes.Contains(x.Code))
+                .ToListAsync(ct);
+
+            var deletedCount = countriesToDelete.Count;
+            if (deletedCount > 0)
             {
-                try
-                {
-                    var deletedCount = await dbContext.ExecuteAsync(
-                        "DELETE FROM ad_countries WHERE Code IN @Codes",
-                        new { Codes = request.Codes },
-                        ct);
-
-                    await dbContext.CommitAsync();
-
-                    var responseData = new DeleteCountryCommand.Response { Success = true, DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, string.Format(string.Format(CoreResource.crud_deleteSuccess, CoreResource.entity_country), deletedCount));
-
-                    logData.Result = response.Data;
-                    logData.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(logData);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error deleting countries: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<DeleteCountryCommand.Response>(CoreResource.common_exceptionOccurred);
-                    logData.Message = ex.ToString();
-                    logData.IsException = 1;
-                    logData.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(logData);
-
-                    return response;
-                }
+                dbContext.Set<ad_countries>().RemoveRange(countriesToDelete);
+                await dbContext.SaveChangesAsync(ct);
             }
+
+            await dbContext.CommitAsync();
+
+            var responseData = new DeleteCountryCommand.Response { Success = true, DeletedCount = deletedCount };
+            var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_deleteSuccess, CoreResource.entity_country, deletedCount));
+
+            logData.Result = response.Data;
+            logData.ReturnCode = response.ReturnCode;
+            return response;
         }
     }
 
     #endregion
 }
+

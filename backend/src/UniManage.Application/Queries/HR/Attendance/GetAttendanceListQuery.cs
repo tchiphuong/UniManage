@@ -110,7 +110,7 @@ namespace UniManage.Application.Queries.HR.Attendance
 
                     var result = await dbContext.QueryPagingAsync<GetAttendanceListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -124,7 +124,7 @@ namespace UniManage.Application.Queries.HR.Attendance
                     var response = ResponseHelper.Error<PagedResult<GetAttendanceListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
 

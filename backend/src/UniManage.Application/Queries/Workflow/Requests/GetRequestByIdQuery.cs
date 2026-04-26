@@ -120,7 +120,7 @@ namespace UniManage.Application.Queries.Workflow.Requests
                     var history = await dbContext.QueryAsync<GetRequestByIdQuery.ApprovalHistory>(historySql, new { RequestId = request.Id }, ct);
                     result.ApprovalHistory = history.ToList();
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -135,7 +135,7 @@ namespace UniManage.Application.Queries.Workflow.Requests
 
                     var response = ResponseHelper.Error<GetRequestByIdQuery.Result>("Error occurred while retrieving request");
 
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);

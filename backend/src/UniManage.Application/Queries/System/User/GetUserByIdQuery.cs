@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
 using UniManage.Resource;
@@ -96,24 +97,25 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
                     return notFoundResponse;
                 }
 
-                var response = ResponseHelper.Success(user, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_user));
-                logData.Result = new { user.Username };
+                var response = ResponseHelper.Success(user, string.Format(CoreResource.common_getSuccess, CoreResource.entity_user));
+
+                logData.Result = user;
                 logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
+                logData.Message = "Get user by ID success";
 
                 return response;
             }
             catch (Exception ex)
             {
-                UniLogger.Error($"Error retrieving user by id {request.Id}: {ex.Message}", ex);
-                
-                var response = ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.common_exceptionOccurred);
+                logData.IsException = true;
                 logData.Message = ex.Message;
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
+                logData.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
 
-                return response;
+                return ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.common_error);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(logData);
             }
         }
     }

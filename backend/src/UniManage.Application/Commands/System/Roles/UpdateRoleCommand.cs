@@ -1,13 +1,21 @@
 using FluentValidation;
 using MediatR;
-using UniManage.Core.Database;
+using Microsoft.EntityFrameworkCore;
+using UniManage.Core.Constant;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.System.Roles
 {
+    #region Command
+
+    /// <summary>
+    /// Command to update an existing role
+    /// </summary>
     public sealed class UpdateRoleCommand : BaseCommand, IRequest<ApiResponse<UpdateRoleCommand.Response>>
     {
         public string RoleCode { get; init; } = default!;
@@ -22,6 +30,13 @@ namespace UniManage.Application.Commands.System.Roles
         }
     }
 
+    #endregion
+
+    #region Validator
+
+    /// <summary>
+    /// Validator for UpdateRoleCommand
+    /// </summary>
     public sealed class UpdateRoleCommandValidator : AbstractValidator<UpdateRoleCommand>
     {
         public UpdateRoleCommandValidator()
@@ -42,7 +57,7 @@ namespace UniManage.Application.Commands.System.Roles
 
             RuleFor(x => x.Description)
                 .MaximumLength(500)
-                .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_description, 500));
+                .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.common_description, 500));
 
             RuleFor(x => x.IsActive)
                 .InclusiveBetween((byte)0, (byte)1)
@@ -54,80 +69,83 @@ namespace UniManage.Application.Commands.System.Roles
         }
     }
 
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Handler for UpdateRoleCommand
+    /// </summary>
     public sealed class UpdateRoleCommandHandler : IRequestHandler<UpdateRoleCommand, ApiResponse<UpdateRoleCommand.Response>>
     {
         public async Task<ApiResponse<UpdateRoleCommand.Response>> Handle(UpdateRoleCommand request, CancellationToken ct)
         {
             var log = new CoreLogModel(request.HeaderInfo)
             {
-                Parameter = new List<CoreParamModel>
+                Parameters = new List<CoreParamModel>
                 {
-                    new CoreParamModel(nameof(request.RoleCode), request.RoleCode),
-                    new CoreParamModel(nameof(request.RoleName), request.RoleName),
-                    new CoreParamModel(nameof(request.IsActive), request.IsActive)
+                    new(nameof(request.RoleCode), request.RoleCode),
+                    new(nameof(request.RoleName), request.RoleName),
+                    new(nameof(request.IsActive), request.IsActive.ToString()),
+                    new(nameof(request.DataRowVersion), request.DataRowVersion != null ? Convert.ToBase64String(request.DataRowVersion) : string.Empty)
                 }
             };
 
-            using (var dbContext = new DbContext(openTransaction: true))
+            try
             {
-                try
+                using var dbContext = new DbContext(openTransaction: true);
+
+                var role = await dbContext.Set<sy_roles>()
+                    .FirstOrDefaultAsync(x => x.Code == request.RoleCode, ct);
+
+                if (role == null)
                 {
-                    var sql = @"
-                        UPDATE sy_roles
-                        SET RoleName = @RoleName,
-                            Description = @Description,
-                            IsActive = @IsActive,
-                            UpdatedBy = @UpdatedBy,
-                            UpdatedAt = GETDATE()
-                        WHERE RoleCode = @RoleCode AND DataRowVersion = @DataRowVersion";
-
-                    var rowsAffected = await dbContext.ExecuteAsync(sql, new
-                    {
-                        request.RoleCode,
-                        request.RoleName,
-                        request.Description,
-                        request.IsActive,
-                        UpdatedBy = request.HeaderInfo!.Username,
-                        request.DataRowVersion
-                    }, ct);
-
-                    if (rowsAffected == 0)
-                    {
-                        await dbContext.RollbackAsync(ct);
-                        var errorResponse = ResponseHelper.Error<UpdateRoleCommand.Response>(CoreResource.common_concurrencyError);
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
-                    }
-
-                    await dbContext.CommitAsync(ct);
-
-                    var responseData = new UpdateRoleCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
+                    var notFoundResponse = ResponseHelper.NotFound<UpdateRoleCommand.Response>(CoreResource.common_notFound);
+                    log.Message = notFoundResponse.Message;
+                    log.ReturnCode = notFoundResponse.ReturnCode;
+                    return notFoundResponse;
                 }
-                catch (Exception ex)
+
+                // Optimistic concurrency check
+                if (request.DataRowVersion != null && !role.DataRowVersion.SequenceEqual(request.DataRowVersion))
                 {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error updating role: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateRoleCommand.Response>(CoreResource.common_exceptionOccurred);
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
+                    var concurrencyResponse = ResponseHelper.Error<UpdateRoleCommand.Response>(CoreResource.common_concurrencyError);
+                    log.Message = concurrencyResponse.Message;
+                    log.ReturnCode = concurrencyResponse.ReturnCode;
+                    return concurrencyResponse;
                 }
+
+                role.NameVi = request.RoleName;
+                role.NameEn = request.RoleName;
+                role.Status = request.IsActive == 1 ? "Active" : "Inactive";
+                role.UpdatedBy = request.HeaderInfo!.Username;
+                role.UpdatedAt = DateTimeHelper.Now;
+
+                await dbContext.SaveChangesAsync(ct);
+                await dbContext.CommitAsync();
+
+                var responseData = new UpdateRoleCommand.Response { Success = true };
+                var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_role));
+
+                log.Result = responseData;
+                log.Message = "Update role success";
+                log.ReturnCode = response.ReturnCode;
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                log.IsException = true;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                throw;
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
             }
         }
     }
+
+    #endregion
 }

@@ -105,7 +105,7 @@ public sealed class GetDepartmentByIdQueryHandler : IRequestHandler<GetDepartmen
                 UniLogger.Error($"Error retrieving department: {ex.Message}", ex);
                 var response = ResponseHelper.Error<GetDepartmentByIdQuery.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
-                logData.IsException = 1;
+                logData.IsException = true;
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
                 return response;

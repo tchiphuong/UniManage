@@ -1,48 +1,55 @@
-using Dapper;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Queries.System.Auth
 {
+    #region Query
+
     /// <summary>
-    /// Get User Permissions Query - Lấy danh sách permissions của user
+    /// Truy vấn lấy danh sách quyền hạn (Permissions) và vai trò (Roles) của người dùng hiện tại
     /// </summary>
     public sealed class GetUserPermissionsQuery : BaseQuery, IRequest<ApiResponse<GetUserPermissionsQuery.Result>>
     {
-
+        /// <summary>
+        /// Kết quả trả về chứa danh sách mã quyền hạn và mã vai trò
+        /// </summary>
         public class Result
         {
-            /// <summary>
-            /// Danh sách permissions
-            /// </summary>
             public List<string> Permissions { get; set; } = new();
-            /// <summary>
-            /// Danh sách roles
-            /// </summary>
             public List<string> Roles { get; set; } = new();
         }
     }
 
+    #endregion
+
+    #region Validator
+
     /// <summary>
-    /// Get User Permissions Query Validator
+    /// Bộ kiểm tra dữ liệu cho truy vấn lấy quyền hạn người dùng
     /// </summary>
     public sealed class GetUserPermissionsQueryValidator : AbstractValidator<GetUserPermissionsQuery>
     {
         public GetUserPermissionsQueryValidator()
         {
             RuleFor(x => x.HeaderInfo.Username)
-                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userIdentity));
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username));
         }
     }
 
+    #endregion
+
+    #region Handler
+
     /// <summary>
-    /// Get User Permissions Query Handler
+    /// Bộ xử lý truy vấn lấy danh sách quyền hạn người dùng
     /// </summary>
     public sealed class GetUserPermissionsQueryHandler : IRequestHandler<GetUserPermissionsQuery, ApiResponse<GetUserPermissionsQuery.Result>>
     {
@@ -53,7 +60,7 @@ namespace UniManage.Application.Queries.System.Auth
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new CoreParamModel(nameof(request.HeaderInfo.Username), username)
+                    new(nameof(request.HeaderInfo.Username), username)
                 }
             };
 
@@ -61,31 +68,24 @@ namespace UniManage.Application.Queries.System.Auth
             {
                 using (var dbContext = new DbContext())
                 {
-                    // Get user roles
-                    var rolesSql = @"
-                        SELECT DISTINCT r.[Code] AS RoleCode
-                        FROM [dbo].[sy_users] u
-                        INNER JOIN [dbo].[sy_user_roles] ur ON u.[Username] = ur.[Username]
-                        INNER JOIN [dbo].[sy_roles] r ON ur.[RoleCode] = r.[Code]
-                        WHERE u.[Username] = @Username";
+                    // 1. Lấy danh sách các vai trò (Roles) sử dụng EF Core LINQ
+                    var roles = await dbContext.Set<sy_user_roles>()
+                        .Where(ur => ur.Username == username)
+                        .Select(ur => ur.RoleCode)
+                        .Distinct()
+                        .ToListAsync(ct);
 
-                    var roles = (await dbContext.QueryAsync<string>(
-                        rolesSql,
-                        new { Username = username })).ToList();
-
-                    // Get user permissions (FunctionCode + ActionCode)
-                    var permissionsSql = @"
-                        SELECT DISTINCT CONCAT(rp.[FunctionCode], '.', rp.[ActionCode]) AS PermissionCode
-                        FROM [dbo].[sy_users] u
-                        INNER JOIN [dbo].[sy_user_roles] ur ON u.[Username] = ur.[Username]
-                        INNER JOIN [dbo].[sy_role_permissions] rp ON ur.[RoleCode] = rp.[RoleCode]
-                        WHERE u.[Username] = @Username
-                            AND rp.[FunctionCode] IS NOT NULL
-                            AND rp.[ActionCode] IS NOT NULL";
-
-                    var permissions = (await dbContext.QueryAsync<string>(
-                        permissionsSql,
-                        new { Username = username })).ToList();
+                    // 2. Lấy danh sách các quyền hạn chi tiết (FunctionCode.ActionCode) sử dụng EF Core LINQ
+                    var permissions = await dbContext.Set<sy_user_roles>()
+                        .Where(ur => ur.Username == username)
+                        .Join(dbContext.Set<sy_role_permissions>(),
+                            ur => ur.RoleCode,
+                            rp => rp.RoleCode,
+                            (ur, rp) => new { rp.FunctionCode, rp.ActionCode })
+                        .Where(p => p.FunctionCode != null && p.ActionCode != null)
+                        .Select(p => p.FunctionCode + "." + p.ActionCode)
+                        .Distinct()
+                        .ToListAsync(ct);
 
                     var result = new GetUserPermissionsQuery.Result
                     {
@@ -93,19 +93,22 @@ namespace UniManage.Application.Queries.System.Auth
                         Roles = roles
                     };
 
-                    var response = ResponseHelper.Success(result);
-                    log.Result = response;
+                    var response = ResponseHelper.Success(result, string.Format(CoreResource.common_listSuccess, CoreResource.entity_permission));
+                    
+                    log.Result = new { PermissionCount = permissions.Count, RoleCount = roles.Count };
                     log.ReturnCode = response.ReturnCode;
-                    log.Message = $"Retrieved {permissions.Count} permissions and {roles.Count} roles for user: {username}";
+                    log.Message = response.Message;
+
                     return response;
                 }
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                return ResponseHelper.Error<GetUserPermissionsQuery.Result>(CoreResource.common_exceptionOccurred);
+                
+                return ResponseHelper.Error<GetUserPermissionsQuery.Result>(CoreResource.common_error);
             }
             finally
             {
@@ -113,4 +116,6 @@ namespace UniManage.Application.Queries.System.Auth
             }
         }
     }
+
+    #endregion
 }

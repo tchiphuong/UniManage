@@ -43,18 +43,9 @@ namespace UniManage.Application.Commands.Workflow.Requests
     {
         public async Task<ApiResponse<SubmitRequestCommand.Response>> Handle(SubmitRequestCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.RequestId), request.RequestId)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var getRequestSql = @"
                         SELECT RequestTypeKey
                         FROM wf_request
@@ -66,10 +57,7 @@ namespace UniManage.Application.Commands.Workflow.Requests
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<SubmitRequestCommand.Response>("Request not found");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
                     var getRouteSql = @"
@@ -84,10 +72,7 @@ namespace UniManage.Application.Commands.Workflow.Requests
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<SubmitRequestCommand.Response>("No approval route found for this request type");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
                     var updateRequestSql = @"
@@ -138,33 +123,13 @@ namespace UniManage.Application.Commands.Workflow.Requests
                         }, ct);
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new SubmitRequestCommand.Response { Success = true, Message = "Request submitted successfully" };
                     var response = ResponseHelper.Success(responseData, "Request submitted successfully");
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error submitting request: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<SubmitRequestCommand.Response>("Error occurred while submitting request");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+return response;
         }
     }
 }
+
+

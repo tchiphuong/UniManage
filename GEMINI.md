@@ -10,16 +10,26 @@ Sinh code cho dự án UniManage theo chuẩn CQRS, .NET 9, SQL Server, Dapper (
 **🔥 QUY TẮC QUAN TRỌNG: LUÔN SỬ DỤNG UTILITIES TRƯỚC**
 Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Utilities/ trước để sử dụng lại:
 
+- ❌ **KHÔNG GIẢ ĐỊNH**: TUYỆT ĐỐI KHÔNG giả định tên cột, cấu trúc DB hay code hiện có. PHẢI đọc file thực tế (.tt, .cs) trước khi làm.
 - ✅ **PasswordHelper**: HashPassword(), VerifyPassword(), GenerateRandomPassword(), IsValidPassword() (Min 8 chars, complexity)
 - ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels()
+- ✅ **Summary Comments**: ALWAYS provide XML `<summary>` comments for all public classes, methods, and properties.
+- ✅ **Logic Comments**: Provide clear Vietnamese comments for complex logic steps. **DO NOT** include conversation history or "fixed as requested" messages in code comments.
 - ✅ **DatabaseHelper**: UserCodeExistsAsync(), ExecuteWithTransactionAsync(), QueryPagingAsync(), CheckTableExistsAsync()
 - ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError()
+- ✅ **Validation**: ALWAYS use `DependentRules()` for complex validation chains in FluentValidation.
+- ✅ **Summary Comments**: ALWAYS provide XML `<summary>` comments for all public classes, methods, and properties.
+- ✅ **Localization**: ALL API response messages MUST be localized using `CoreResource` (T4 generated).
 - ✅ **Shared Validation**: Dùng `.All.Contains(status)` từ `CoreCommon.Value` auto-generated cho các danh sách giá trị.
 - ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
 - ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
 - ✅ **FileHelper**: IsValidImageFile(), ValidateFileUpload(), GetMimeType(), GetFileSizeText()
 - ✅ **QueryHelper**: BuildOrderByClause(), BuildWhereClause(), EscapeSqlIdentifier() - SQL injection prevention
-- ✅ **TranslateHelper**: TranslateAsync(), RemoveDiacritics(), TranslateCommonTerms() - Google Translate + Vietnamese
+- ✅ **TranslateHelper**: TranslateAsync(), RemoveDiacritics(), TranslateCommonTerms()
+- ✅ **Performance**: Ưu tiên dùng **`static class`** và **`static method`** cho các logic state-less.
+- ✅ **Proactive Improvement**: Luôn kiểm tra và cải thiện skill/instruction khi có chú ý hay ý tưởng mới để cải thiện chất lượng code.
+- ✅ **T4 Entities**: Entities được build tự động từ T4 template, không tạo thủ công.
+- ✅ **Mobile & Social**: Hỗ trợ FCM Token, Google, Facebook login. Sử dụng **Strategy Pattern** cho Social Auth (`ISocialAuthProvider`) để dễ dàng mở rộng.
 
 **🚫 KHÔNG ĐƯỢC:**
 
@@ -45,7 +55,7 @@ Auth: Duende IdentityServer (tự viết IClientStore, IResourceStore, IPersiste
 
 DB: SQL Server
 
-Data access: **Entity Framework Core 9.0 + Dapper (hybrid)** - EF Core cho CRUD, Dapper cho complex queries
+Data access: **Entity Framework Core 9.0 + Dapper (hybrid)** - EF Core cho CRUD, Dapper cho complex queries & performance-critical tasks.
 
 Pattern: CQRS + MediatR
 
@@ -490,6 +500,20 @@ Flow mặc định: Authorization Code + PKCE (không ROPC).
 IdentityServer: job Hangfire 15 phút xóa PersistedGrants/DeviceCodes hết hạn.
 
 🔥 **Security Note**: Login handler PHẢI check `Status == "Active"` để chặn user bị vô hiệu hóa.
+
+**🔥 SOCIAL AUTH ARCHITECTURE (STRATEGY PATTERN):**
+
+Để đảm bảo tính mở (extensibility), việc xác thực Social Token PHẢI tuân thủ:
+1. **`ISocialAuthProvider`**: Interface chung cho tất cả providers (Google, Facebook, Apple, Zalo...).
+2. **Providers**: Mỗi provider là một class riêng triển khai xác thực qua SDK hoặc Graph API.
+3. **`SocialAuthProviderFactory`**: Dùng để lấy đúng provider tại runtime.
+4. **Registration**: Đăng ký vào Autofac trong `ApplicationModule`.
+
+```csharp
+// Sử dụng trong Handler
+var provider = _socialProviderFactory.GetProvider(request.Provider);
+var profile = await provider.VerifyTokenAsync(request.AccessToken, ct);
+```
 
 Logging (log4net) — theo ngày & theo API
 Mỗi request gắn api = {controller}-{action} → log vào file:

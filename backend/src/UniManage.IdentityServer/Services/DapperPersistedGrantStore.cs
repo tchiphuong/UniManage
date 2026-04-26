@@ -7,15 +7,22 @@ using Newtonsoft.Json;
 
 namespace UniManage.IdentityServer.Services
 {
+    /// <summary>
+    /// Store quản lý các PersistedGrant (Authorization Code, Refresh Token, ...) trong IdentityServer sử dụng Dapper.
+    /// </summary>
     public class DapperPersistedGrantStore : IPersistedGrantStore
     {
+        /// <summary>
+        /// Lưu trữ một PersistedGrant mới hoặc cập nhật nếu đã tồn tại.
+        /// </summary>
+        /// <param name="grant">Thông tin PersistedGrant cần lưu.</param>
         public async Task StoreAsync(PersistedGrant grant)
         {
             try
             {
                 using var dbContext = new DbContext(openTransaction: true);
                 var sql = @"
-                    MERGE [dbo].[sy_is_persisted_grants] AS Target
+                    MERGE [dbo].[is_persisted_grants] AS Target
                     USING (SELECT @Key AS [Key]) AS Source
                     ON (Target.[Key] = Source.[Key])
                     WHEN MATCHED THEN
@@ -55,12 +62,17 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Lấy thông tin PersistedGrant dựa trên Key.
+        /// </summary>
+        /// <param name="key">Mã định danh duy nhất của grant.</param>
+        /// <returns>Thông tin grant nếu tìm thấy, ngược lại trả về null.</returns>
         public async Task<PersistedGrant?> GetAsync(string key)
         {
             try
             {
                 using var dbContext = new DbContext();
-                var sql = "SELECT * FROM [dbo].[sy_is_persisted_grants] WHERE [Key] = @Key";
+                var sql = "SELECT * FROM [dbo].[is_persisted_grants] WHERE [Key] = @Key";
                 return await dbContext.QueryFirstOrDefaultAsync<PersistedGrant>(sql, new { Key = key });
             }
             catch (Exception ex)
@@ -70,6 +82,11 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Lấy danh sách PersistedGrant dựa trên bộ lọc.
+        /// </summary>
+        /// <param name="filter">Bộ lọc chứa SubjectId, ClientId, Type, ...</param>
+        /// <returns>Danh sách các grant khớp với bộ lọc.</returns>
         public async Task<IEnumerable<PersistedGrant>> GetAllAsync(PersistedGrantFilter filter)
         {
             try
@@ -99,7 +116,7 @@ namespace UniManage.IdentityServer.Services
                     parameters.Add("Type", filter.Type);
                 }
 
-                var sql = "SELECT * FROM [dbo].[sy_is_persisted_grants]";
+                var sql = "SELECT * FROM [dbo].[is_persisted_grants]";
                 if (conditions.Any())
                 {
                     sql += " WHERE " + string.Join(" AND ", conditions);
@@ -114,12 +131,16 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Xóa một PersistedGrant dựa trên Key.
+        /// </summary>
+        /// <param name="key">Mã định danh duy nhất của grant cần xóa.</param>
         public async Task RemoveAsync(string key)
         {
             try
             {
                 using var dbContext = new DbContext(openTransaction: true);
-                var sql = "DELETE FROM [dbo].[sy_is_persisted_grants] WHERE [Key] = @Key";
+                var sql = "DELETE FROM [dbo].[is_persisted_grants] WHERE [Key] = @Key";
                 await dbContext.ExecuteAsync(sql, new { Key = key });
                 await dbContext.CommitAsync();
             }
@@ -129,6 +150,10 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
+        /// <summary>
+        /// Xóa danh sách PersistedGrant dựa trên bộ lọc.
+        /// </summary>
+        /// <param name="filter">Bộ lọc xác định các grant cần xóa.</param>
         public async Task RemoveAllAsync(PersistedGrantFilter filter)
         {
             try
@@ -160,7 +185,7 @@ namespace UniManage.IdentityServer.Services
 
                 if (!conditions.Any()) return; // Prevent deleting all records if no filter is provided
 
-                var sql = "DELETE FROM [dbo].[sy_is_persisted_grants] WHERE " + string.Join(" AND ", conditions);
+                var sql = "DELETE FROM [dbo].[is_persisted_grants] WHERE " + string.Join(" AND ", conditions);
                 await dbContext.ExecuteAsync(sql, parameters);
                 await dbContext.CommitAsync();
             }

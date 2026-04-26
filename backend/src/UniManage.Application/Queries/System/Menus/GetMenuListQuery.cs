@@ -143,7 +143,7 @@ public sealed class GetMenuListQueryHandler : IRequestHandler<GetMenuListQuery, 
                     }
                 }
 
-                var response = ResponseHelper.Success(rootMenus, CoreResource.crud_getSuccess);
+                var response = ResponseHelper.Success(rootMenus, CoreResource.common_getSuccess);
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;
@@ -156,7 +156,7 @@ public sealed class GetMenuListQueryHandler : IRequestHandler<GetMenuListQuery, 
                 UniLogger.Error($"Error retrieving menu tree: {ex.Message}", ex);
 
                 var response = ResponseHelper.Error<List<GetMenuListQuery.Response>>(CoreResource.common_exceptionOccurred);
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(log);

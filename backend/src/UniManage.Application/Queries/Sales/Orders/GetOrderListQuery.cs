@@ -178,7 +178,7 @@ namespace UniManage.Application.Queries.Sales.Orders
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -193,7 +193,7 @@ namespace UniManage.Application.Queries.Sales.Orders
 
                     var response = ResponseHelper.Error<PagedResult<GetOrderListQuery.Result>>("Error occurred while retrieving orders");
 
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);

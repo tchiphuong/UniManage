@@ -68,14 +68,14 @@ namespace UniManage.Application.Queries.HR.Attendance
 
                     if (item == null)
                     {
-                        var notFound = ResponseHelper.NotFound<GetAttendanceByIdQuery.Response>(string.Format(CoreResource.crud_notFound, "Attendance"));
+                        var notFound = ResponseHelper.NotFound<GetAttendanceByIdQuery.Response>(string.Format(CoreResource.common_notFound, "Attendance"));
                         log.ReturnCode = notFound.ReturnCode;
                         log.Message = notFound.Message;
                         UniLogManager.WriteApiLog(log);
                         return notFound;
                     }
 
-                    var response = ResponseHelper.Success(item, string.Format(CoreResource.crud_getSuccess, "Attendance"));
+                    var response = ResponseHelper.Success(item, string.Format(CoreResource.common_getSuccess, "Attendance"));
 
                     log.Result = response;
                     log.ReturnCode = response.ReturnCode;
@@ -86,7 +86,7 @@ namespace UniManage.Application.Queries.HR.Attendance
                 }
                 catch (Exception ex)
                 {
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                     UniLogManager.WriteApiLog(log);

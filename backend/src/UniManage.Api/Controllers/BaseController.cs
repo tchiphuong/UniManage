@@ -107,15 +107,14 @@ namespace UniManage.Api.Controllers
         }
 
         /// <summary>
+        /// Cache HeaderInfo trong request scope để tránh tạo mới mỗi lần truy cập
+        /// </summary>
+        private HeaderInfo? _headerInfo;
+
+        /// <summary>
         /// Thông tin header gom gọn một chỗ, dễ gọi lại.
         /// </summary>
-        protected HeaderInfo HeaderInfo
-        {
-            get
-            {
-                return BuildHeaderInfo();
-            }
-        }
+        protected HeaderInfo HeaderInfo => _headerInfo ??= BuildHeaderInfo();
 
         #endregion
 

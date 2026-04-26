@@ -19,6 +19,7 @@ builder.Services.AddRazorPages();
 
 // Register Identity User Repository
 builder.Services.AddScoped<IIdentityUserRepository, IdentityUserRepository>();
+// builder.Services.AddScoped<UniManage.Core.Services.IAuthService, UniManage.Core.Services.AuthService>(); // Xóa do không tồn tại
 
 // Add IdentityServer with Dapper stores
 builder.Services.AddIdentityServer(options =>
@@ -45,6 +46,20 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.SignInScheme = Duende.IdentityServer.IdentityServerConstants.ExternalCookieAuthenticationScheme;
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "dummy-google-id";
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "dummy-google-secret";
+    })
+    .AddFacebook(options =>
+    {
+        options.SignInScheme = Duende.IdentityServer.IdentityServerConstants.ExternalCookieAuthenticationScheme;
+        options.AppId = builder.Configuration["Authentication:Facebook:AppId"] ?? "dummy-fb-id";
+        options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"] ?? "dummy-fb-secret";
+    });
 
 var app = builder.Build();
 

@@ -241,5 +241,78 @@ namespace UniManage.Core.Utilities
 
             return result.ToString();
         }
+
+        /// <summary>
+        /// Lấy giá trị đa ngôn ngữ từ một đối tượng dựa trên quy tắc hậu tố (ví dụ: NameVi, NameEn).
+        /// Mặc định sẽ fallback về thuộc tính có hậu tố "En" nếu không tìm thấy ngôn ngữ yêu cầu.
+        /// </summary>
+        /// <param name="source">Đối tượng nguồn (Entity hoặc DTO)</param>
+        /// <param name="basePropertyName">Tên gốc của thuộc tính (ví dụ: "Name")</param>
+        /// <param name="languageCode">Mã ngôn ngữ từ Header (ví dụ: "vi-VN", "en-US")</param>
+        /// <returns>Giá trị của thuộc tính đa ngôn ngữ hoặc chuỗi rỗng</returns>
+        public static string GetLocalizedValue(object source, string basePropertyName, string? languageCode)
+        {
+            if (source == null) return string.Empty;
+
+            var targetPropertyName = GetLocalizedColumnName(basePropertyName, languageCode);
+            var fallbackPropertyName = $"{basePropertyName}En";
+
+            var type = source.GetType();
+            var prop = type.GetProperty(targetPropertyName) 
+                       ?? type.GetProperty(fallbackPropertyName) 
+                       ?? type.GetProperty(basePropertyName);
+
+            return prop?.GetValue(source)?.ToString() ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Trả về tên cột đa ngôn ngữ dựa trên tên gốc và mã ngôn ngữ (ví dụ: "Name", "vi-VN" -> "NameVi").
+        /// </summary>
+        public static string GetLocalizedColumnName(string basePropertyName, string? languageCode)
+        {
+            var suffix = GetLanguageSuffix(languageCode);
+            return $"{basePropertyName}{suffix}";
+        }
+
+        /// <summary>
+        /// Trả về tên cột đa ngôn ngữ an toàn, có kiểm tra sự tồn tại trong Metadata của EF Core.
+        /// Nếu không tồn tại, tự động fallback về cột Tiếng Anh (En).
+        /// </summary>
+        public static string GetSafeLocalizedColumnName<T>(Microsoft.EntityFrameworkCore.DbContext dbContext, string basePropertyName, string? languageCode) where T : class
+        {
+            var propertyName = GetLocalizedColumnName(basePropertyName, languageCode);
+            var entityType = dbContext.Model.FindEntityType(typeof(T));
+
+            if (entityType?.FindProperty(propertyName) == null)
+            {
+                return $"{basePropertyName}En";
+            }
+
+            return propertyName;
+        }
+
+        /// <summary>
+        /// Phân tích mã ngôn ngữ từ Header và trả về hậu tố chuẩn (ví dụ: "vi-VN" -> "Vi", "en-US" -> "En").
+        /// Sử dụng CultureInfo để hỗ trợ tất cả các ngôn ngữ chuẩn quốc tế một cách tự động.
+        /// </summary>
+        public static string GetLanguageSuffix(string? languageCode)
+        {
+            if (string.IsNullOrWhiteSpace(languageCode)) return "En";
+
+            try
+            {
+                // Sử dụng CultureInfo để phân tích mã ngôn ngữ chuẩn xác
+                var culture = new System.Globalization.CultureInfo(languageCode);
+                var isoLang = culture.TwoLetterISOLanguageName; // Trả về mã 2 chữ cái (vi, en, ja...)
+
+                // Chuyển đổi sang TitleCase (vi -> Vi, en -> En)
+                return culture.TextInfo.ToTitleCase(isoLang);
+            }
+            catch
+            {
+                // Fallback mặc định là Tiếng Anh nếu mã ngôn ngữ không hợp lệ
+                return "En";
+            }
+        }
     }
 }

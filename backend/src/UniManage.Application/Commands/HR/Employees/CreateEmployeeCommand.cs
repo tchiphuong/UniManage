@@ -1,240 +1,228 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
-using UniManage.Core.Database;
+using Microsoft.EntityFrameworkCore;
+using UniManage.Application.Utilities;
+using UniManage.Core.Constant;
 using UniManage.Core.Logging;
+using UniManage.Core.Services;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
 
-namespace UniManage.Application.Commands.HR.Employees;
-
-#region Command
-
-/// <summary>
-/// Command to create a new employee
-/// </summary>
-public sealed class CreateEmployeeCommand : BaseCommand, IRequest<ApiResponse<CreateEmployeeCommand.Response>>
+namespace UniManage.Application.Commands.HR.Employees
 {
-    public string EmployeeCode { get; init; } = default!;
-    public string FullName { get; init; } = default!;
-    public string? Email { get; init; }
-    public string? PhoneNumber { get; init; }
-    public DateTime? BirthDate { get; init; }
-    public string? Gender { get; init; }
-    public string? Address { get; init; }
-    public string? DepartmentCode { get; init; }
-    public string? PositionCode { get; init; }
-    public DateTime? JoinDate { get; init; }
-    public byte Status { get; init; } = 1;
+    #region Command
 
-    public sealed class Response
+    /// <summary>
+    /// Command to create a new employee in the system.
+    /// </summary>
+    public sealed class CreateEmployeeCommand : BaseCommand, IRequest<ApiResponse<CreateEmployeeCommand.Response>>
     {
-        public bool Success => Id > 0;
-        public long Id { get; init; }
-        public string EmployeeCode { get; init; } = default!;
-    }
-}
+        /// <summary>
+        /// Gets or sets the unique employee code.
+        /// </summary>
+        public string EmployeeCode { get; set; } = string.Empty;
 
-#endregion
+        /// <summary>
+        /// Gets or sets the employee's full name.
+        /// </summary>
+        public string FullName { get; set; } = string.Empty;
 
-#region Validator
+        /// <summary>
+        /// Gets or sets the employee's email address.
+        /// </summary>
+        public string? Email { get; set; }
 
-/// <summary>
-/// Validator for CreateEmployeeCommand
-/// </summary>
-public sealed class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCommand>
-{
-    public CreateEmployeeCommandValidator()
-    {
-        RuleFor(x => x.EmployeeCode)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Employee code is required")
-            .MaximumLength(50).WithMessage("Employee code must not exceed 50 characters")
-            .Matches("^[A-Z0-9]+$").WithMessage("Employee code must contain only uppercase letters and numbers")
-            .MustAsync(async (code, cancel) => !await IsEmployeeCodeExistsAsync(code))
-            .WithMessage("Employee code already exists");
+        /// <summary>
+        /// Gets or sets the employee's phone number.
+        /// </summary>
+        public string? PhoneNumber { get; set; }
 
-        RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("Full name is required")
-            .MaximumLength(200).WithMessage("Full name must not exceed 200 characters");
+        /// <summary>
+        /// Gets or sets the employee's gender.
+        /// </summary>
+        public string? Gender { get; set; }
 
-        RuleFor(x => x.Email)
-            .Cascade(CascadeMode.Stop)
-            .MaximumLength(100).WithMessage("Email must not exceed 100 characters")
-            .Must(email => string.IsNullOrEmpty(email) || ValidationHelper.IsValidEmail(email))
-            .WithMessage(CoreResource.validation_invalidEmail)
-            .MustAsync(async (email, cancel) => string.IsNullOrEmpty(email) || !await IsEmailExistsAsync(email))
-            .WithMessage("Email already exists");
+        /// <summary>
+        /// Gets or sets the employee's date of birth.
+        /// </summary>
+        public DateTime? BirthDate { get; set; }
 
-        RuleFor(x => x.PhoneNumber)
-            .MaximumLength(20).WithMessage("Phone number must not exceed 20 characters")
-            .Must(phone => string.IsNullOrEmpty(phone) || ValidationHelper.IsValidPhoneNumber(phone))
-            .WithMessage(CoreResource.validation_invalidPhone);
+        /// <summary>
+        /// Gets or sets the department code the employee belongs to.
+        /// </summary>
+        public string? DepartmentCode { get; set; }
 
-        RuleFor(x => x.Gender)
-            .MaximumLength(10).WithMessage("Gender must not exceed 10 characters");
+        /// <summary>
+        /// Gets or sets the position/job title code of the employee.
+        /// </summary>
+        public string? PositionCode { get; set; }
 
-        RuleFor(x => x.Address)
-            .MaximumLength(500).WithMessage("Address must not exceed 500 characters");
+        /// <summary>
+        /// Gets or sets the date the employee joined the company.
+        /// </summary>
+        public DateTime? JoinDate { get; set; }
 
-        RuleFor(x => x.DepartmentCode)
-            .Cascade(CascadeMode.Stop)
-            .MaximumLength(50).WithMessage("Department code must not exceed 50 characters")
-            .MustAsync(async (code, cancel) => string.IsNullOrEmpty(code) || await DepartmentExistsAsync(code))
-            .When(x => !string.IsNullOrEmpty(x.DepartmentCode))
-            .WithMessage("Department not found");
+        /// <summary>
+        /// Gets or sets the employee's current status (e.g., Active).
+        /// </summary>
+        public string Status { get; set; } = CoreCommon.Value.Commonstatus.Active;
 
-        RuleFor(x => x.PositionCode)
-            .Cascade(CascadeMode.Stop)
-            .MaximumLength(50).WithMessage("Position code must not exceed 50 characters")
-            .MustAsync(async (code, cancel) => string.IsNullOrEmpty(code) || await PositionExistsAsync(code))
-            .When(x => !string.IsNullOrEmpty(x.PositionCode))
-            .WithMessage("Position not found");
-
-        RuleFor(x => x.Status)
-            .InclusiveBetween((byte)0, (byte)1).WithMessage("Status must be 0 or 1");
-    }
-
-    private static async Task<bool> IsEmployeeCodeExistsAsync(string employeeCode)
-    {
-        using (var dbContext = new DbContext())
+        /// <summary>
+        /// Represents the response data for a successfully created employee.
+        /// </summary>
+        public class Response
         {
-            return await dbContext.ExecuteScalarAsync<bool>(
-                "SELECT CASE WHEN EXISTS(SELECT 1 FROM hr_employees WHERE EmployeeCode = @EmployeeCode) THEN 1 ELSE 0 END",
-                new { EmployeeCode = employeeCode });
+            /// <summary>
+            /// Gets or sets the unique database identifier.
+            /// </summary>
+            public int Id { get; set; }
+
+            /// <summary>
+            /// Gets or sets the confirmed employee code.
+            /// </summary>
+            public string EmployeeCode { get; set; } = string.Empty;
         }
     }
 
-    private static async Task<bool> IsEmailExistsAsync(string email)
+    #endregion
+
+    #region Validator
+
+    /// <summary>
+    /// Validator for CreateEmployeeCommand ensuring all mandatory fields are valid.
+    /// </summary>
+    public sealed class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCommand>
     {
-        using (var dbContext = new DbContext())
+        public CreateEmployeeCommandValidator()
         {
-            return await dbContext.ExecuteScalarAsync<bool>(
-                "SELECT CASE WHEN EXISTS(SELECT 1 FROM hr_employees WHERE Email = @Email) THEN 1 ELSE 0 END",
-                new { Email = email });
+            RuleFor(x => x.EmployeeCode)
+                .NotEmpty()
+                .WithMessage(status => string.Format(CoreResource.validation_required, CoreResource.lbl_employeeCode))
+                .MaximumLength(50)
+                .WithMessage(status => string.Format(CoreResource.validation_maxLength, CoreResource.lbl_employeeCode, 50))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.FullName)
+                        .NotEmpty()
+                        .WithMessage(status => string.Format(CoreResource.validation_required, "Full Name"))
+                        .MaximumLength(150)
+                        .WithMessage(status => string.Format(CoreResource.validation_maxLength, "Full Name", 150));
+
+                    RuleFor(x => x.Email)
+                        .Must(ValidationHelper.IsValidEmail)
+                        .When(x => !string.IsNullOrEmpty(x.Email))
+                        .WithMessage(CoreResource.validation_invalidEmail);
+
+                    RuleFor(x => x.PhoneNumber)
+                        .Must(ValidationHelper.IsValidPhoneNumber)
+                        .When(x => !string.IsNullOrEmpty(x.PhoneNumber))
+                        .WithMessage(CoreResource.validation_invalidPhone);
+
+                    RuleFor(x => x.Status)
+                        .Must(status => CoreCommon.Value.Commonstatus.All.Contains(status))
+                        .WithMessage(CoreResource.validation_invalidStatus);
+                });
         }
     }
 
-    private static async Task<bool> DepartmentExistsAsync(string departmentCode)
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Handler xử lý việc lưu trữ hồ sơ nhân viên mới vào cơ sở dữ liệu.
+    /// </summary>
+    public sealed class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, ApiResponse<CreateEmployeeCommand.Response>>
     {
-        using (var dbContext = new DbContext())
+        public async Task<ApiResponse<CreateEmployeeCommand.Response>> Handle(CreateEmployeeCommand request, CancellationToken ct)
         {
-            return await dbContext.ExecuteScalarAsync<bool>(
-                "SELECT CASE WHEN EXISTS(SELECT 1 FROM hr_departments WHERE Code = @Code) THEN 1 ELSE 0 END",
-                new { Code = departmentCode });
-        }
-    }
-
-    private static async Task<bool> PositionExistsAsync(string positionCode)
-    {
-        using (var dbContext = new DbContext())
-        {
-            return await dbContext.ExecuteScalarAsync<bool>(
-                "SELECT CASE WHEN EXISTS(SELECT 1 FROM hr_positions WHERE Code = @Code) THEN 1 ELSE 0 END",
-                new { Code = positionCode });
-        }
-    }
-}
-
-#endregion
-
-#region Handler
-
-/// <summary>
-/// Handler for CreateEmployeeCommand
-/// </summary>
-public sealed class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, ApiResponse<CreateEmployeeCommand.Response>>
-{
-    public async Task<ApiResponse<CreateEmployeeCommand.Response>> Handle(CreateEmployeeCommand request, CancellationToken ct)
-    {
-        var log = new CoreLogModel(request.HeaderInfo)
-        {
-            Parameter = new List<CoreParamModel>
+            var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
             {
-                new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
-                new CoreParamModel(nameof(request.FullName), request.FullName),
-                new CoreParamModel(nameof(request.Email), request.Email),
-                new CoreParamModel(nameof(request.DepartmentCode), request.DepartmentCode),
-                new CoreParamModel(nameof(request.PositionCode), request.PositionCode)
-            }
-        };
+                Parameter = new List<CoreParamModel>
+                {
+                    new(nameof(request.EmployeeCode), request.EmployeeCode),
+                    new(nameof(request.FullName), request.FullName),
+                    new(nameof(request.Email), request.Email),
+                    new(nameof(request.DepartmentCode), request.DepartmentCode),
+                    new(nameof(request.PositionCode), request.PositionCode)
+                }
+            };
 
-        using (var dbContext = new DbContext(openTransaction: true))
-        {
             try
             {
-                var id = await dbContext.ExecuteScalarAsync<long>(@"
-                    INSERT INTO hr_employees (
-                        EmployeeCode, 
-                        FullName, 
-                        Email, 
-                        PhoneNumber, 
-                        BirthDate, 
-                        Gender, 
-                        Address, 
-                        DepartmentCode, 
-                        PositionCode, 
-                        JoinDate, 
-                        Status, 
-                        CreatedBy, 
-                        CreatedAt
-                    )
-                    VALUES (
-                        @EmployeeCode, 
-                        @FullName, 
-                        @Email, 
-                        @PhoneNumber, 
-                        @BirthDate, 
-                        @Gender, 
-                        @Address,
-                        @DepartmentCode, 
-                        @PositionCode, 
-                        @JoinDate, 
-                        @Status, 
-                        @CreatedBy, 
-                        GETDATE()
-                    );
-                    SELECT SCOPE_IDENTITY();",
-                    new
+                using (var dbContext = new UniManage.Core.Database.DbContext(openTransaction: true))
+                {
+                    // 1. Kiểm tra trùng mã nhân viên
+                    var exists = await dbContext.Set<hr_employees>()
+                        .AnyAsync(e => e.EmployeeCode == request.EmployeeCode, ct);
+
+                    if (exists)
                     {
-                        request.EmployeeCode,
-                        request.FullName,
-                        request.Email,
-                        request.PhoneNumber,
-                        request.BirthDate,
-                        request.Gender,
-                        request.Address,
-                        request.DepartmentCode,
-                        request.PositionCode,
-                        request.JoinDate,
-                        request.Status,
-                        CreatedBy = request.HeaderInfo!.Username
-                    },
-                    ct);
+                        var errorMsg = string.Format(CoreResource.validation_alreadyExists, CoreResource.lbl_employeeCode);
+                        var errorRes = ResponseHelper.Error<CreateEmployeeCommand.Response>(errorMsg);
+                        log.Message = errorMsg;
+                        log.ReturnCode = errorRes.ReturnCode;
+                        return errorRes;
+                    }
 
-                await dbContext.transaction.CommitAsync(ct);
+                    // 2. Map Command sang Entity
+                    // [LƯU Ý]: BirthDate map vào DateOfBirth trong Entity.
+                    // Thuộc tính DateOfBirth trong Entity hr_employees.
+                    var entity = new hr_employees
+                    {
+                        EmployeeCode = request.EmployeeCode,
+                        FullName = request.FullName,
+                        Email = request.Email ?? string.Empty,
+                        PhoneNumber = request.PhoneNumber ?? string.Empty,
+                        Gender = request.Gender ?? string.Empty,
+                        DateOfBirth = request.BirthDate,
+                        DepartmentCode = request.DepartmentCode ?? string.Empty,
+                        PositionCode = request.PositionCode ?? string.Empty,
+                        CreatedAt = DateTimeHelper.Now,
+                        CreatedBy = request.HeaderInfo?.Username ?? "SYSTEM",
+                        DataRowVersion = new byte[8]
+                    };
 
-            var responseData = new CreateEmployeeCommand.Response { Id = id, EmployeeCode = request.EmployeeCode };
-            var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_createSuccess, CoreResource.entity_employee));
-                log.ReturnCode = response.ReturnCode;
-                log.Message = response.Message;
-                UniLogManager.WriteApiLog(log);
+                    // 3. Lưu vào Database
+                    dbContext.Set<hr_employees>().Add(entity);
+                    await dbContext.SaveChangesAsync(ct);
+                    await dbContext.CommitAsync(ct);
 
-                return response;
+                    var responseData = new CreateEmployeeCommand.Response
+                    {
+                        Id = entity.Id,
+                        EmployeeCode = entity.EmployeeCode
+                    };
+
+                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_employee));
+                    
+                    log.Result = responseData;
+                    log.ReturnCode = response.ReturnCode;
+                    log.Message = response.Message;
+
+                    return response;
+                }
             }
             catch (Exception ex)
             {
-                await dbContext.transaction.RollbackAsync(ct);
-
-                log.IsException = 1;
-                log.Message = ex.ToString();
-                log.ReturnCode = 500;
+                log.IsException = true;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                return ResponseHelper.Error<CreateEmployeeCommand.Response>(CoreResource.common_error);
+            }
+            finally
+            {
                 UniLogManager.WriteApiLog(log);
-
-                return ResponseHelper.Error<CreateEmployeeCommand.Response>(CoreResource.common_exceptionOccurred);
             }
         }
     }
-}
 
-#endregion
+    #endregion
+}

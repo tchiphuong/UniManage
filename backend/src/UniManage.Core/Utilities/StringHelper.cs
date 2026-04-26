@@ -1,11 +1,13 @@
+using System;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace UniManage.Core.Utilities
 {
     /// <summary>
-    /// Helper functions for string manipulation and formatting
+    /// Helper functions for string manipulation and formatting.
     /// </summary>
     public static class StringHelper
     {
@@ -14,10 +16,10 @@ namespace UniManage.Core.Utilities
         private static readonly Regex MultipleHyphensRegex = new(@"-+", RegexOptions.Compiled);
 
         /// <summary>
-        /// Converts string to slug format (URL-friendly)
+        /// Converts string to slug format (URL-friendly).
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>Slug string</returns>
+        /// <param name="input">Input string.</param>
+        /// <returns>Slug string.</returns>
         public static string ToSlug(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -42,10 +44,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Removes diacritics (accents) from string
+        /// Removes diacritics (accents) from string.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>String without diacritics</returns>
+        /// <param name="input">Input string.</param>
+        /// <returns>String without diacritics.</returns>
         public static string RemoveDiacritics(string input)
         {
             if (string.IsNullOrEmpty(input))
@@ -67,12 +69,12 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Truncates string to specified length with ellipsis
+        /// Truncates string to specified length with ellipsis.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <param name="maxLength">Maximum length</param>
-        /// <param name="ellipsis">Ellipsis string (default: "...")</param>
-        /// <returns>Truncated string</returns>
+        /// <param name="input">Input string.</param>
+        /// <param name="maxLength">Maximum length.</param>
+        /// <param name="ellipsis">Ellipsis string (default: "...").</param>
+        /// <returns>Truncated string.</returns>
         public static string Truncate(string input, int maxLength, string ellipsis = "...")
         {
             if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
@@ -85,10 +87,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Capitalizes first letter of each word
+        /// Capitalizes first letter of each word.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>Title case string</returns>
+        /// <param name="input">Input string.</param>
+        /// <returns>Title case string.</returns>
         public static string ToTitleCase(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -98,10 +100,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Capitalizes first letter of string
+        /// Capitalizes first letter of string.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>Capitalized string</returns>
+        /// <param name="input">Input string.</param>
+        /// <returns>Capitalized string.</returns>
         public static string Capitalize(string input)
         {
             if (string.IsNullOrEmpty(input))
@@ -114,10 +116,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Converts string to camelCase
+        /// Converts string to camelCase.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>CamelCase string</returns>
+        /// <param name="input">Input string.</param>
+        /// <returns>CamelCase string.</returns>
         public static string ToCamelCase(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -137,10 +139,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Converts string to PascalCase
+        /// Converts string to PascalCase.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>PascalCase string</returns>
+        /// <param name="input">Input string.</param>
+        /// <returns>PascalCase string.</returns>
         public static string ToPascalCase(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -158,13 +160,13 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Masks sensitive data in string
+        /// Masks sensitive data in string.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <param name="visibleStart">Number of characters to show at start</param>
-        /// <param name="visibleEnd">Number of characters to show at end</param>
-        /// <param name="maskChar">Character to use for masking</param>
-        /// <returns>Masked string</returns>
+        /// <param name="input">Input string.</param>
+        /// <param name="visibleStart">Number of characters to show at start.</param>
+        /// <param name="visibleEnd">Number of characters to show at end.</param>
+        /// <param name="maskChar">Character to use for masking.</param>
+        /// <returns>Masked string.</returns>
         public static string MaskSensitiveData(string input, int visibleStart = 2, int visibleEnd = 2, char maskChar = '*')
         {
             if (string.IsNullOrEmpty(input))
@@ -182,14 +184,14 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Generates random string with specified length and character set
+        /// Generates random string with specified length and character set.
         /// </summary>
-        /// <param name="length">String length</param>
-        /// <param name="useUppercase">Include uppercase letters</param>
-        /// <param name="useLowercase">Include lowercase letters</param>
-        /// <param name="useNumbers">Include numbers</param>
-        /// <param name="useSpecialChars">Include special characters</param>
-        /// <returns>Random string</returns>
+        /// <param name="length">String length.</param>
+        /// <param name="useUppercase">Include uppercase letters.</param>
+        /// <param name="useLowercase">Include lowercase letters.</param>
+        /// <param name="useNumbers">Include numbers.</param>
+        /// <param name="useSpecialChars">Include special characters.</param>
+        /// <returns>Random stringInstance.</returns>
         public static string GenerateRandomString(
             int length,
             bool useUppercase = true,
@@ -223,32 +225,32 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Checks if string is null, empty, or whitespace
+        /// Checks if string is null, empty, or whitespace.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>True if null, empty, or whitespace</returns>
-        public static bool IsNullOrWhiteSpace(string input)
+        /// <param name="input">Input string.</param>
+        /// <returns>True if null, empty, or whitespace.</returns>
+        public static bool IsNullOrWhiteSpace(string? input)
         {
             return string.IsNullOrWhiteSpace(input);
         }
 
         /// <summary>
-        /// Safely trims string, returns empty string if null
+        /// Safely trims string, returns empty string if null.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>Trimmed string or empty string</returns>
-        public static string SafeTrim(string input)
+        /// <param name="input">Input string.</param>
+        /// <returns>Trimmed string instance.</returns>
+        public static string SafeTrim(string? input)
         {
             return input?.Trim() ?? string.Empty;
         }
 
         /// <summary>
-        /// Joins strings with separator, ignoring null or empty values
+        /// Joins strings with separator, ignoring null or empty values.
         /// </summary>
-        /// <param name="separator">Separator string</param>
-        /// <param name="values">Values to join</param>
-        /// <returns>Joined string</returns>
-        public static string JoinNonEmpty(string separator, params string[] values)
+        /// <param name="separator">Separator string.</param>
+        /// <param name="values">Values to join.</param>
+        /// <returns>Joined stringInstance.</returns>
+        public static string JoinNonEmpty(string separator, params string?[] values)
         {
             if (values == null || values.Length == 0)
                 return string.Empty;
@@ -258,34 +260,35 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Compares strings ignoring case and culture
+        /// Compares strings ignoring case.
         /// </summary>
-        /// <param name="str1">First string</param>
-        /// <param name="str2">Second string</param>
-        /// <returns>True if strings are equal ignoring case</returns>
-        public static bool EqualsIgnoreCase(string str1, string str2)
+        /// <param name="str1">First string.</param>
+        /// <param name="str2">Second string.</param>
+        /// <returns>True if equal ignoring case.</returns>
+        public static bool EqualsIgnoreCase(string? str1, string? str2)
         {
             return string.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
-        /// Checks if string contains value ignoring case
+        /// Checks if string contains value ignoring case.
         /// </summary>
-        /// <param name="source">Source string</param>
-        /// <param name="value">Value to search for</param>
-        /// <returns>True if contains value ignoring case</returns>
-        public static bool ContainsIgnoreCase(string source, string value)
+        /// <param name="source">Source string.</param>
+        /// <param name="value">Value to search for.</param>
+        /// <returns>True if contains value ignoring case.</returns>
+        public static bool ContainsIgnoreCase(string? source, string? value)
         {
             if (source == null || value == null)
                 return false;
 
             return source.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
         }
+
         /// <summary>
-        /// Generates a random code with alphanumeric characters
+        /// Generates a random code with alphanumeric characters.
         /// </summary>
-        /// <param name="length">Length of the code</param>
-        /// <returns>Random code string</returns>
+        /// <param name="length">Length of the code.</param>
+        /// <returns>Random alphanumeric code.</returns>
         public static string GenerateCode(int length = 6)
         {
             return GenerateRandomString(length, useUppercase: true, useLowercase: false, useNumbers: true, useSpecialChars: false);

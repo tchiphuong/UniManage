@@ -58,20 +58,9 @@ namespace UniManage.Application.Commands.Inventory.ItemPrices
     {
         public async Task<ApiResponse<CreateItemPriceCommand.Response>> Handle(CreateItemPriceCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.ItemCode), request.ItemCode),
-                    new CoreParamModel(nameof(request.Price), request.Price.ToString()),
-                    new CoreParamModel(nameof(request.StartDate), request.StartDate.ToString())
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         INSERT INTO it_item_price (ItemCode, Price, StartDate, EndDate, CreatedAt)
                         VALUES (@ItemCode, @Price, @StartDate, @EndDate, GETDATE());
@@ -85,33 +74,13 @@ namespace UniManage.Application.Commands.Inventory.ItemPrices
                         request.EndDate
                     }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateItemPriceCommand.Response { Id = id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating item price: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateItemPriceCommand.Response>("Error occurred while creating item price");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

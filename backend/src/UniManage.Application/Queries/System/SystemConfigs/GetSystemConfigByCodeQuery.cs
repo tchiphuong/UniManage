@@ -71,7 +71,7 @@ namespace UniManage.Application.Queries.System.SystemConfigs
                 }
                 catch (Exception ex)
                 {
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                     UniLogManager.WriteApiLog(log);

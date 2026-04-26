@@ -74,7 +74,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
 
                     var result = await dbContext.QueryPagingAsync<GetWorkShiftListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
@@ -88,7 +88,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
                     var response = ResponseHelper.Error<PagedResult<GetWorkShiftListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
 

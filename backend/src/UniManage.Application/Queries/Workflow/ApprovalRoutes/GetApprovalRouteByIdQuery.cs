@@ -119,7 +119,7 @@ namespace UniManage.Application.Queries.Workflow.ApprovalRoutes
                         level.Approvers = approvers.ToList();
                     }
 
-                    var response = ResponseHelper.Success(route, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(route, CoreResource.common_getSuccess);
 
                     log.Result = route;
                     log.ReturnCode = response.ReturnCode;
@@ -134,7 +134,7 @@ namespace UniManage.Application.Queries.Workflow.ApprovalRoutes
 
                     var response = ResponseHelper.Error<GetApprovalRouteByIdQuery.Result>("Error occurred while retrieving approval route");
 
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);

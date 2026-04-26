@@ -52,20 +52,9 @@ namespace UniManage.Application.Commands.Inventory.ItemInventory
     {
         public async Task<ApiResponse<CreateItemInventoryCommand.Response>> Handle(CreateItemInventoryCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.ItemCode), request.ItemCode),
-                    new CoreParamModel(nameof(request.Quantity), request.Quantity.ToString()),
-                    new CoreParamModel(nameof(request.WarehouseLocation), request.WarehouseLocation)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         INSERT INTO it_item_inventory (ItemCode, Quantity, WarehouseLocation, UpdatedAt)
                         VALUES (@ItemCode, @Quantity, @WarehouseLocation, GETDATE());
@@ -78,33 +67,13 @@ namespace UniManage.Application.Commands.Inventory.ItemInventory
                         request.WarehouseLocation
                     }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateItemInventoryCommand.Response { Id = id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating item inventory: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateItemInventoryCommand.Response>("Error occurred while creating item inventory");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

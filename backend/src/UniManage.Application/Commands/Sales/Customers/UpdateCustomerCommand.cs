@@ -54,21 +54,9 @@ namespace UniManage.Application.Commands.Sales.Customers
     {
         public async Task<ApiResponse<UpdateCustomerCommand.Response>> Handle(UpdateCustomerCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Code), request.Code),
-                    new CoreParamModel(nameof(request.Name), request.Name),
-                    new CoreParamModel(nameof(request.Email), request.Email),
-                    new CoreParamModel(nameof(request.Phone), request.Phone)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         UPDATE sa_customers
                         SET Name = @Name,
@@ -94,39 +82,16 @@ namespace UniManage.Application.Commands.Sales.Customers
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<UpdateCustomerCommand.Response>("Customer not found");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new UpdateCustomerCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error updating customer: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateCustomerCommand.Response>("Error occurred while updating customer");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 }
+
+

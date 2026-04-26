@@ -52,7 +52,7 @@ public class TokenCleanupJob
                     Method = nameof(ExecuteAsync),
                     Path = "BackgroundJob",
                     ReturnCode = -1,
-                    IsException = 1
+                    IsException = true
                 };
                 UniLogManager.WriteApiLog(log);
                 throw; // Let Hangfire handle the retry/failure state

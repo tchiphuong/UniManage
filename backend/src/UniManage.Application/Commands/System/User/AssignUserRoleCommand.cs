@@ -1,149 +1,181 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using DbContext = UniManage.Core.Database.DbContext;
 
-namespace UniManage.Application.Commands.System.User;
-
-/// <summary>
-/// Command to assign a role to a user
-/// </summary>
-public sealed class AssignUserRoleCommand : BaseCommand, IRequest<ApiResponse<AssignUserRoleCommand.Response>>
+namespace UniManage.Application.Commands.System.User
 {
-    public long UserId { get; init; }
-    public string RoleCode { get; init; } = default!;
+    #region Command
 
-    // Internal - set by controller from token
-    internal string AssignedBy { get; init; } = default!;
-
-    public sealed class Response
+    /// <summary>
+    /// Lệnh gán vai trò (Role) cho người dùng
+    /// </summary>
+    public sealed class AssignUserRoleCommand : BaseCommand, IRequest<ApiResponse<AssignUserRoleCommand.Response>>
     {
-        public long UserId { get; init; }
+        /// <summary>
+        /// ID của người dùng cần được gán vai trò
+        /// </summary>
+        public long UserId { get; set; }
+
+        /// <summary>
+        /// Mã vai trò cần gán
+        /// </summary>
         public string RoleCode { get; init; } = default!;
-    }
-}
 
-/// <summary>
-/// Validator for AssignUserRoleCommand
-/// </summary>
-public sealed class AssignUserRoleCommandValidator : AbstractValidator<AssignUserRoleCommand>
-{
-    public AssignUserRoleCommandValidator()
-    {
-        RuleFor(x => x.UserId)
-            .GreaterThan(0).WithMessage("UserId must be greater than 0");
-
-        RuleFor(x => x.RoleCode)
-            .NotEmpty().WithMessage("Role code is required")
-            .MaximumLength(50).WithMessage("Role code must not exceed 50 characters");
-    }
-}
-
-/// <summary>
-/// Handler for AssignUserRoleCommand
-/// </summary>
-public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRoleCommand, ApiResponse<AssignUserRoleCommand.Response>>
-{
-    public async Task<ApiResponse<AssignUserRoleCommand.Response>> Handle(AssignUserRoleCommand request, CancellationToken ct)
-    {
-        var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
+        public sealed class Response
         {
-            Parameter = new List<CoreParamModel>
-            {
-                new() { Name = nameof(request.UserId), Value = request.UserId.ToString() },
-                new() { Name = nameof(request.RoleCode), Value = request.RoleCode }
-            }
-        };
-
-        try
-        {
-            // Check if user exists and get username
-            string username;
-            using (var checkDb = new DbContext())
-            {
-                username = await checkDb.ExecuteScalarAsync<string>(
-                    "SELECT Username FROM sy_users WHERE Id = @UserId",
-                    new { request.UserId },
-                    ct);
-
-                if (string.IsNullOrEmpty(username))
-                {
-                    return ResponseHelper.NotFound<AssignUserRoleCommand.Response>(string.Format(CoreResource.crud_notFound, CoreResource.entity_user));
-                }
-            }
-
-            // Check if role exists
-            using (var checkDb = new DbContext())
-            {
-                var roleExists = await checkDb.ExecuteScalarAsync<bool>(
-                    "SELECT CASE WHEN EXISTS(SELECT 1 FROM sy_roles WHERE Code = @RoleCode) THEN 1 ELSE 0 END",
-                    new { request.RoleCode },
-                    ct);
-
-                if (!roleExists)
-                {
-                    return ResponseHelper.NotFound<AssignUserRoleCommand.Response>("Role not found");
-                }
-            }
-
-            // Check if user already has this role
-            using (var checkDb = new DbContext())
-            {
-                var roleAlreadyAssigned = await checkDb.ExecuteScalarAsync<bool>(
-                    "SELECT CASE WHEN EXISTS(SELECT 1 FROM sy_user_roles WHERE Username = @Username AND RoleCode = @RoleCode) THEN 1 ELSE 0 END",
-                    new { Username = username, request.RoleCode },
-                    ct);
-
-                if (roleAlreadyAssigned)
-                {
-                    return ResponseHelper.Error<AssignUserRoleCommand.Response>(
-                        "User already has this role",
-                        CoreApiReturnCode.InvalidData);
-                }
-            }
-
-            using (var db = new DbContext(openTransaction: true))
-            {
-                try
-                {
-                    await db.ExecuteAsync(
-                        """
-                        INSERT INTO sy_user_roles (Username, RoleCode, CreatedBy, CreatedAt)
-                        VALUES (@Username, @RoleCode, @AssignedBy, GETDATE())
-                        """,
-                        new { Username = username, request.RoleCode, request.AssignedBy },
-                        ct);
-
-                    await db.CommitAsync(ct);
-
-                    var responseData = new AssignUserRoleCommand.Response { UserId = request.UserId, RoleCode = request.RoleCode };
-                    var response = ResponseHelper.Success(responseData, "Role assigned successfully");
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogger.Info(JsonConvert.SerializeObject(log));
-
-                    return response;
-                }
-                catch
-                {
-                    await db.RollbackAsync(ct);
-                    throw;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            log.IsException = 1;
-            log.Message = ex.Message;
-            log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-            UniLogger.Error(JsonConvert.SerializeObject(log));
-
-            return ResponseHelper.Error<AssignUserRoleCommand.Response>(CoreResource.common_exceptionOccurred);
+            public long UserId { get; init; }
+            public string RoleCode { get; init; } = default!;
         }
     }
+
+    #endregion
+
+    #region Validator
+
+    /// <summary>
+    /// Bộ kiểm tra dữ liệu cho lệnh gán vai trò người dùng
+    /// </summary>
+    public sealed class AssignUserRoleCommandValidator : AbstractValidator<AssignUserRoleCommand>
+    {
+        public AssignUserRoleCommandValidator()
+        {
+            RuleFor(x => x.UserId)
+                .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userId))
+                .MustAsync(async (id, cancel) => await IsUserExistsAsync(id))
+                .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+
+            RuleFor(x => x.RoleCode)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleCode))
+                .MaximumLength(50).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_roleCode, 50))
+                .MustAsync(async (code, cancel) => await IsRoleExistsAsync(code))
+                .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_role));
+        }
+
+        private static async Task<bool> IsUserExistsAsync(long userId)
+        {
+            using (var dbContext = new DbContext())
+            {
+                return await dbContext.Set<sy_users>().AnyAsync(x => x.Id == userId);
+            }
+        }
+
+        private static async Task<bool> IsRoleExistsAsync(string roleCode)
+        {
+            using (var dbContext = new DbContext())
+            {
+                return await dbContext.Set<sy_roles>().AnyAsync(x => x.Code == roleCode);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Bộ xử lý lệnh gán vai trò người dùng
+    /// </summary>
+    public sealed class AssignUserRoleCommandHandler : IRequestHandler<AssignUserRoleCommand, ApiResponse<AssignUserRoleCommand.Response>>
+    {
+        public async Task<ApiResponse<AssignUserRoleCommand.Response>> Handle(AssignUserRoleCommand request, CancellationToken ct)
+        {
+            // Khởi tạo log nghiệp vụ
+            var log = new CoreLogModel(request.HeaderInfo)
+            {
+                Parameter = new List<CoreParamModel>
+                {
+                    new(nameof(request.UserId), request.UserId),
+                    new(nameof(request.RoleCode), request.RoleCode)
+                }
+            };
+
+            try
+            {
+                using (var dbContext = new DbContext(openTransaction: true))
+                {
+                    try
+                    {
+                        var user = await dbContext.Set<sy_users>()
+                            .FirstOrDefaultAsync(u => u.Id == request.UserId, ct);
+
+                        if (user == null)
+                        {
+                            var notFoundResponse = ResponseHelper.NotFound<AssignUserRoleCommand.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+                            log.Message = notFoundResponse.Message;
+                            log.ReturnCode = notFoundResponse.ReturnCode;
+                            return notFoundResponse;
+                        }
+
+                        // Kiểm tra nếu vai trò đã được gán trước đó để tránh trùng lặp
+                        var isAlreadyAssigned = await dbContext.Set<sy_user_roles>()
+                            .AnyAsync(ur => ur.Username == user.Username && ur.RoleCode == request.RoleCode, ct);
+
+                        if (isAlreadyAssigned)
+                        {
+                            var errorResponse = ResponseHelper.Error<AssignUserRoleCommand.Response>(CoreResource.validation_alreadyExists);
+                            log.Message = errorResponse.Message;
+                            log.ReturnCode = errorResponse.ReturnCode;
+                            return errorResponse;
+                        }
+
+                        // 1. Thêm bản ghi vào bảng mapping sy_user_roles
+                        dbContext.Set<sy_user_roles>().Add(new sy_user_roles
+                        {
+                            Username = user.Username,
+                            RoleCode = request.RoleCode,
+                            CreatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser,
+                            CreatedAt = DateTimeHelper.Now
+                        });
+
+                        // 2. Nếu người dùng chưa có vai trò mặc định, gán vai trò này làm mặc định
+                        if (string.IsNullOrEmpty(user.RoleCode))
+                        {
+                            user.RoleCode = request.RoleCode;
+                            user.UpdatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser;
+                            user.UpdatedAt = DateTimeHelper.Now;
+                        }
+
+                        await dbContext.SaveChangesAsync(ct);
+                        await dbContext.CommitAsync();
+
+                        var responseData = new AssignUserRoleCommand.Response { UserId = request.UserId, RoleCode = request.RoleCode };
+                        var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_role));
+
+                        log.Result = responseData;
+                        log.Message = response.Message;
+                        log.ReturnCode = response.ReturnCode;
+
+                        return response;
+                    }
+                    catch (Exception ex)
+                    {
+                        await dbContext.RollbackAsync();
+                        throw;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log.IsException = true;
+                log.Message = ex.Message;
+                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                
+                return ResponseHelper.Error<AssignUserRoleCommand.Response>(CoreResource.common_error);
+            }
+            finally
+            {
+                UniLogManager.WriteApiLog(log);
+            }
+        }
+    }
+
+    #endregion
 }

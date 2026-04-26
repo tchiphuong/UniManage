@@ -54,19 +54,9 @@ namespace UniManage.Application.Commands.System.Auth
     {
         public async Task<ApiResponse<bool>> Handle(ForgotPasswordCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.EmailOrUsername), request.EmailOrUsername)
-                }
-            };
+            
 
-            var dbContext = new DbContext(openTransaction: true);
-            try
-            {
-                using (dbContext)
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     // Tìm user theo email hoặc username
                     var sql = @"
                         SELECT TOP 1
@@ -84,21 +74,15 @@ namespace UniManage.Application.Commands.System.Auth
                     // Không báo lỗi nếu không tìm thấy user (security best practice)
                     if (user == null)
                     {
-                        await dbContext.CommitAsync();
+                        
                         var successResponse = ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
-                        log.Result = successResponse;
-                        log.ReturnCode = successResponse.ReturnCode;
-                        log.Message = "User not found (Success returned for security)";
                         return successResponse;
                     }
 
                     if (string.IsNullOrEmpty(user.Email))
                     {
-                        await dbContext.CommitAsync();
+                        
                         var noEmailResponse = ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
-                        log.Result = noEmailResponse;
-                        log.ReturnCode = noEmailResponse.ReturnCode;
-                        log.Message = "User has no email (Success returned for security)";
                         return noEmailResponse;
                     }
 
@@ -123,31 +107,14 @@ namespace UniManage.Application.Commands.System.Auth
                         },
                         ct);
 
-                    await dbContext.CommitAsync();
+                    
 
                     // TODO: Gửi email với reset link
                     // var resetLink = $"{baseUrl}/reset-password?token={resetToken}";
                     // await emailService.SendPasswordResetEmail(user.Email, resetLink);
 
                     var response = ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = $"Reset token generated for user: {user.Username}";
                     return response;
-                }
-            }
-            catch (Exception ex)
-            {
-                await dbContext.RollbackAsync();
-                log.IsException = 1;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                return ResponseHelper.Error<bool>(CoreResource.common_error);
-            }
-            finally
-            {
-                UniLogManager.WriteApiLog(log);
-            }
         }
 
         private class UserDto
@@ -159,3 +126,5 @@ namespace UniManage.Application.Commands.System.Auth
 
     #endregion
 }
+
+

@@ -46,20 +46,9 @@ namespace UniManage.Application.Commands.Inventory.ItemPrices
     {
         public async Task<ApiResponse<UpdateItemPriceCommand.Response>> Handle(UpdateItemPriceCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Id), request.Id.ToString()),
-                    new CoreParamModel(nameof(request.Price), request.Price.ToString()),
-                    new CoreParamModel(nameof(request.StartDate), request.StartDate.ToString())
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         UPDATE it_item_price
                         SET Price = @Price,
@@ -79,39 +68,16 @@ namespace UniManage.Application.Commands.Inventory.ItemPrices
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<UpdateItemPriceCommand.Response>("Item price not found");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new UpdateItemPriceCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error updating item price: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateItemPriceCommand.Response>("Error occurred while updating item price");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 }
+
+

@@ -13,7 +13,7 @@ namespace UniManage.Application.Queries.HR.Positions;
 /// <summary>
 /// Query to get list of positions for dropdown
 /// </summary>
-public sealed class GetPositionComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+public sealed class GetPositionComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
 {
 }
 
@@ -24,9 +24,9 @@ public sealed class GetPositionComboboxQuery : BaseQuery, IRequest<ApiResponse<L
 /// <summary>
 /// Handler for GetPositionComboboxQuery
 /// </summary>
-public sealed class GetPositionComboboxQueryHandler : IRequestHandler<GetPositionComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+public sealed class GetPositionComboboxQueryHandler : IRequestHandler<GetPositionComboboxQuery, ApiResponse<List<ComboboxModel>>>
 {
-    public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetPositionComboboxQuery request, CancellationToken ct)
+    public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetPositionComboboxQuery request, CancellationToken ct)
     {
         var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
         {
@@ -50,12 +50,12 @@ public sealed class GetPositionComboboxQueryHandler : IRequestHandler<GetPositio
                     """,
                     cancellationToken: ct);
 
-                var items = positions.Select(p => new ComboboxItemDto
+                var items = positions.Select(p => new ComboboxModel
                 {
-                    Value = p.Code,
-                    Label = p.Name,
+                    Code = p.Code,
+                    Name = p.Name,
                     Status = 1, // Default active
-                    Metadata = new Dictionary<string, object>
+                    ExtData = new Dictionary<string, object>
                     {
                         ["Description"] = p.Description ?? ""
                     }
@@ -72,12 +72,12 @@ public sealed class GetPositionComboboxQueryHandler : IRequestHandler<GetPositio
         }
         catch (Exception ex)
         {
-            log.IsException = 1;
+            log.IsException = true;
             log.Message = ex.Message;
             log.ReturnCode = 500;
             UniLogger.Error(JsonConvert.SerializeObject(log));
 
-            return ResponseHelper.Error<List<ComboboxItemDto>>($"Failed to get positions: {ex.Message}");
+            return ResponseHelper.Error<List<ComboboxModel>>($"Failed to get positions: {ex.Message}");
         }
     }
 }

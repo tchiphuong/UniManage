@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.Master.Units
 {
     #region Query
 
-    public sealed class GetUnitComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetUnitComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
     {
         public string? Keyword { get; set; }
     }
@@ -20,9 +20,9 @@ namespace UniManage.Application.Queries.Master.Units
 
     #region Handler
 
-    public sealed class GetUnitComboboxQueryHandler : IRequestHandler<GetUnitComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetUnitComboboxQueryHandler : IRequestHandler<GetUnitComboboxQuery, ApiResponse<List<ComboboxModel>>>
     {
-        public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetUnitComboboxQuery request, CancellationToken ct)
+        public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetUnitComboboxQuery request, CancellationToken ct)
         {
             var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
             {
@@ -59,10 +59,10 @@ namespace UniManage.Application.Queries.Master.Units
                         new { Keyword = string.IsNullOrEmpty(request.Keyword) ? null : $"%{request.Keyword}%" },
                         ct);
 
-                    var items = units.Select(u => new ComboboxItemDto
+                    var items = units.Select(u => new ComboboxModel
                     {
-                        Value = u.Code,
-                        Label = u.Name,
+                        Code = u.Code,
+                        Name = u.Name,
                         Status = 1
                     }).ToList();
 
@@ -77,13 +77,13 @@ namespace UniManage.Application.Queries.Master.Units
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.ToString();
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting unit combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxModel>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

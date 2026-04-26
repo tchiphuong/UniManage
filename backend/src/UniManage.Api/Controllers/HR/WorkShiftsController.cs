@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.HR.WorkShifts;
 using UniManage.Application.Queries.HR.WorkShifts;
+using UniManage.Core.Constant;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 
@@ -25,7 +27,8 @@ namespace UniManage.Api.Controllers.HR
         #region GET: /api/v1/work-shifts/combobox
 
         [HttpGet("combobox")]
-        public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox([FromQuery] string? keyword, CancellationToken ct)
+        [PermissionAuthorize(CoreFunction.Hr, CoreAction.View)]
+        public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox([FromQuery] string? keyword, CancellationToken ct)
         {
             var query = new GetWorkShiftComboboxQuery { Keyword = keyword };
             query.HeaderInfo = HeaderInfo;
@@ -38,6 +41,7 @@ namespace UniManage.Api.Controllers.HR
         #region GET: /api/v1/work-shifts
 
         [HttpGet]
+        [PermissionAuthorize(CoreFunction.Hr, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<PagedResult<GetWorkShiftListQuery.Response>>>> GetList([FromQuery] GetWorkShiftListQuery query, CancellationToken ct)
         {
             query ??= new GetWorkShiftListQuery();
@@ -51,6 +55,7 @@ namespace UniManage.Api.Controllers.HR
         #region GET: /api/v1/work-shifts/{code}
 
         [HttpGet("{code}")]
+        [PermissionAuthorize(CoreFunction.Hr, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<GetWorkShiftByCodeQuery.Response>>> GetByCode(string code, CancellationToken ct)
         {
             var query = new GetWorkShiftByCodeQuery { Code = code };
@@ -64,6 +69,7 @@ namespace UniManage.Api.Controllers.HR
         #region POST: /api/v1/work-shifts
 
         [HttpPost]
+        [PermissionAuthorize(CoreFunction.Hr, CoreAction.Create)]
         public async Task<ActionResult<ApiResponse<CreateWorkShiftCommand.Response>>> Create([FromBody] CreateWorkShiftCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;
@@ -76,6 +82,7 @@ namespace UniManage.Api.Controllers.HR
         #region PUT: /api/v1/work-shifts/{id}
 
         [HttpPut("{id}")]
+        [PermissionAuthorize(CoreFunction.Hr, CoreAction.Update)]
         public async Task<ActionResult<ApiResponse<UpdateWorkShiftCommand.Response>>> Update(int id, [FromBody] UpdateWorkShiftCommand command, CancellationToken ct)
         {
             if (id != command.Id)
@@ -92,6 +99,7 @@ namespace UniManage.Api.Controllers.HR
         #region DELETE: /api/v1/work-shifts
 
         [HttpDelete]
+        [PermissionAuthorize(CoreFunction.Hr, CoreAction.Delete)]
         public async Task<ActionResult<ApiResponse<DeleteWorkShiftCommand.Response>>> Delete([FromBody] DeleteWorkShiftCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;

@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.Sales.Orders;
 using UniManage.Application.Queries.Sales.Orders;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.Sales
@@ -24,6 +26,7 @@ namespace UniManage.Api.Controllers.Sales
         #region GET: /api/v1/orders
 
         [HttpGet]
+        [PermissionAuthorize(CoreFunction.SaOrder, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<PagedResult<GetOrderListQuery.Result>>>> GetList([FromQuery] GetOrderListQuery query, CancellationToken ct)
         {
             query ??= new GetOrderListQuery();
@@ -37,6 +40,7 @@ namespace UniManage.Api.Controllers.Sales
         #region GET: /api/v1/orders/{orderCode}
 
         [HttpGet("{orderCode}")]
+        [PermissionAuthorize(CoreFunction.SaOrder, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<GetOrderByCodeQuery.Result>>> GetByCode([FromRoute] string orderCode, CancellationToken ct)
         {
             var query = new GetOrderByCodeQuery { OrderCode = orderCode };
@@ -50,6 +54,7 @@ namespace UniManage.Api.Controllers.Sales
         #region POST: /api/v1/orders
 
         [HttpPost]
+        [PermissionAuthorize(CoreFunction.SaOrder, CoreAction.Create)]
         public async Task<ActionResult<ApiResponse<CreateOrderCommand.Response>>> Create([FromBody] CreateOrderCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;
@@ -62,6 +67,7 @@ namespace UniManage.Api.Controllers.Sales
         #region PATCH: /api/v1/orders/{orderCode}/status
 
         [HttpPatch("{orderCode}/status")]
+        [PermissionAuthorize(CoreFunction.SaOrder, CoreAction.Update)]
         public async Task<ActionResult<ApiResponse<UpdateOrderStatusCommand.Response>>> UpdateStatus([FromRoute] string orderCode, [FromBody] UpdateOrderStatusCommand command, CancellationToken ct)
         {
             var cmd = new UpdateOrderStatusCommand
@@ -79,6 +85,7 @@ namespace UniManage.Api.Controllers.Sales
         #region DELETE: /api/v1/orders
 
         [HttpDelete]
+        [PermissionAuthorize(CoreFunction.SaOrder, CoreAction.Delete)]
         public async Task<ActionResult<ApiResponse<DeleteOrderCommand.Response>>> Delete([FromBody] DeleteOrderCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;

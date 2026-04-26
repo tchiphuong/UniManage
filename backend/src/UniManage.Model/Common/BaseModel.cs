@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace UniManage.Model.Common
 {
@@ -12,9 +12,19 @@ namespace UniManage.Model.Common
     }
 
     /// <summary>
-    /// Base class for all commands providing common properties
+    /// Marker interface for commands that require automatic transaction management via TransactionBehavior
     /// </summary>
-    public abstract class BaseCommand : BaseModel
+    public interface ITransactionalCommand { }
+
+    /// <summary>
+    /// Marker interface for commands/queries that require automatic logging via LoggingBehavior
+    /// </summary>
+    public interface ILoggableCommand { }
+
+    /// <summary>
+    /// Base class for all commands providing common properties and automatic Behaviors
+    /// </summary>
+    public abstract class BaseCommand : BaseModel, ITransactionalCommand, ILoggableCommand
     {
     }
 

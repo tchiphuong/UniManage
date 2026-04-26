@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.HR.Positions;
 using UniManage.Application.Queries.HR.Positions;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.HR;
@@ -30,7 +32,8 @@ public class PositionsController : BaseController
     /// Get list of positions for combobox
     /// </summary>
     [HttpGet("combobox")]
-    public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox(
+    [PermissionAuthorize(CoreFunction.HrPosition, CoreAction.View)]
+    public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox(
         CancellationToken ct)
     {
         var query = new GetPositionComboboxQuery { HeaderInfo = HeaderInfo };
@@ -46,6 +49,7 @@ public class PositionsController : BaseController
     /// Get list of positions for page
     /// </summary>
     [HttpGet]
+    [PermissionAuthorize(CoreFunction.HrPosition, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<PagedResult<GetPositionListQuery.Response>>>> GetList(
         [FromQuery] GetPositionListQuery query,
         CancellationToken ct)
@@ -64,6 +68,7 @@ public class PositionsController : BaseController
     /// Get position by id
     /// </summary>
     [HttpGet("{id}")]
+    [PermissionAuthorize(CoreFunction.HrPosition, CoreAction.View)]
     public async Task<ActionResult<ApiResponse<GetPositionByIdQuery.Response>>> GetById(int id, CancellationToken ct)
     {
         var query = new GetPositionByIdQuery { Id = id, HeaderInfo = HeaderInfo };
@@ -79,6 +84,7 @@ public class PositionsController : BaseController
     /// Create new position
     /// </summary>
     [HttpPost]
+    [PermissionAuthorize(CoreFunction.HrPosition, CoreAction.Create)]
     public async Task<ActionResult<ApiResponse<CreatePositionCommand.Response>>> Create(
         [FromBody] CreatePositionCommand command, CancellationToken ct)
     {
@@ -95,6 +101,7 @@ public class PositionsController : BaseController
     /// Update position
     /// </summary>
     [HttpPut("{id}")]
+    [PermissionAuthorize(CoreFunction.HrPosition, CoreAction.Update)]
     public async Task<ActionResult<ApiResponse<UpdatePositionCommand.Response>>> Update(
         [FromRoute] int id, [FromBody] UpdatePositionCommand command, CancellationToken ct)
     {
@@ -112,6 +119,7 @@ public class PositionsController : BaseController
     /// Delete positions
     /// </summary>
     [HttpDelete]
+    [PermissionAuthorize(CoreFunction.HrPosition, CoreAction.Delete)]
     public async Task<ActionResult<ApiResponse<DeletePositionCommand.Response>>> Delete(
         [FromBody] List<int> ids, CancellationToken ct)
     {

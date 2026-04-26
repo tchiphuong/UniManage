@@ -89,7 +89,7 @@ namespace UniManage.Application.Queries.Master.Countries
 
                     var result = await dbContext.QueryPagingAsync<GetCountryListQuery.Response>(query, request);
 
-                    var response = ResponseHelper.Success(result, string.Format(CoreResource.crud_listSuccess, CoreResource.entity_country));
+                    var response = ResponseHelper.Success(result, string.Format(CoreResource.common_listSuccess, CoreResource.entity_country));
 
                     logData.Result = result;
                     logData.ReturnCode = response.ReturnCode;
@@ -102,7 +102,7 @@ namespace UniManage.Application.Queries.Master.Countries
                     UniLogger.Error($"Error retrieving countries: {ex.Message}", ex);
                     var response = ResponseHelper.Error<PagedResult<GetCountryListQuery.Response>>(CoreResource.common_exceptionOccurred);
                     logData.Message = ex.ToString();
-                    logData.IsException = 1;
+                    logData.IsException = true;
                     logData.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(logData);
                     return response;

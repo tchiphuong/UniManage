@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.Master.Provinces
 {
     #region Query
 
-    public sealed class GetProvinceComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetProvinceComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
     {
         public string? CountryCode { get; init; }
         public string? Keyword { get; set; }
@@ -21,9 +21,9 @@ namespace UniManage.Application.Queries.Master.Provinces
 
     #region Handler
 
-    public sealed class GetProvinceComboboxQueryHandler : IRequestHandler<GetProvinceComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetProvinceComboboxQueryHandler : IRequestHandler<GetProvinceComboboxQuery, ApiResponse<List<ComboboxModel>>>
     {
-        public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetProvinceComboboxQuery request, CancellationToken ct)
+        public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetProvinceComboboxQuery request, CancellationToken ct)
         {
             var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
             {
@@ -71,12 +71,12 @@ namespace UniManage.Application.Queries.Master.Provinces
                         },
                         ct);
 
-                    var items = provinces.Select(p => new ComboboxItemDto
+                    var items = provinces.Select(p => new ComboboxModel
                     {
-                        Value = p.Code,
-                        Label = p.Name,
+                        Code = p.Code,
+                        Name = p.Name,
                         Status = 1,
-                        Metadata = new Dictionary<string, object>
+                        ExtData = new Dictionary<string, object>
                         {
                             ["CountryCode"] = p.CountryCode ?? ""
                         }
@@ -93,13 +93,13 @@ namespace UniManage.Application.Queries.Master.Provinces
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.ToString();
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting province combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxModel>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

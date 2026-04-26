@@ -105,7 +105,7 @@ public sealed class GetPositionByIdQueryHandler : IRequestHandler<GetPositionByI
                 UniLogger.Error($"Error retrieving position: {ex.Message}", ex);
                 var response = ResponseHelper.Error<GetPositionByIdQuery.Response>(CoreResource.common_exceptionOccurred);
                 logData.Message = ex.ToString();
-                logData.IsException = 1;
+                logData.IsException = true;
                 logData.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(logData);
                 return response;

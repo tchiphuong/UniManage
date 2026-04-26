@@ -3,143 +3,163 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
 using UniManage.Resource;
 using DbContext = UniManage.Core.Database.DbContext;
 
-namespace UniManage.Application.Queries.System.User;
-
-#region Query
-
-public sealed class GetUserListQuery : BaseListQuery, IRequest<ApiResponse<PagedResult<GetUserListQuery.Response>>>
+namespace UniManage.Application.Queries.System.User
 {
-    public string? Status { get; set; }
+    #region Query
 
-    public sealed record Response
+    /// <summary>
+    /// Truy vấn lấy danh sách người dùng có phân trang và lọc theo điều kiện
+    /// </summary>
+    public sealed class GetUserListQuery : BaseListQuery, IRequest<PagedResponse<GetUserListQuery.Response>>
     {
-        public long Id { get; set; }
-        public string Username { get; set; } = default!;
-        public string EmployeeCode { get; set; } = default!;
-        public string RoleCode { get; set; } = default!;
-        public string Status { get; set; } = default!;
-        public DateTime CreatedAt { get; set; }
-    }
-}
+        /// <summary>
+        /// Trạng thái người dùng để lọc (Active/Inactive)
+        /// </summary>
+        public string? Status { get; set; }
 
-#endregion
-
-#region Validator
-
-public sealed class GetUserListQueryValidator : AbstractValidator<GetUserListQuery>
-{
-    public GetUserListQueryValidator()
-    {
-        RuleFor(x => x.PageIndex)
-            .GreaterThan(0).WithMessage("Page index must be greater than 0");
-
-        RuleFor(x => x.PageSize)
-            .InclusiveBetween(1, 100).WithMessage("Page size must be between 1 and 100");
-    }
-}
-
-#endregion
-
-#region Handler
-
-public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, ApiResponse<PagedResult<GetUserListQuery.Response>>>
-{
-    public async Task<ApiResponse<PagedResult<GetUserListQuery.Response>>> Handle(GetUserListQuery request, CancellationToken cancellationToken)
-    {
-        // Initialize log data
-        var logData = new CoreLogModel(request.HeaderInfo)
+        /// <summary>
+        /// DTO kết quả trả về cho mỗi dòng người dùng
+        /// </summary>
+        public sealed record Response
         {
-            Parameter = new List<CoreParamModel>
-            {
-                new CoreParamModel(nameof(request.Keyword), request.Keyword),
-                new CoreParamModel(nameof(request.Status), request.Status),
-                new CoreParamModel(nameof(request.PageIndex), request.PageIndex),
-                new CoreParamModel(nameof(request.PageSize), request.PageSize)
-            }
-        };
+            public long Id { get; set; }
+            public string Username { get; set; } = default!;
+            public string EmployeeCode { get; set; } = default!;
+            public string RoleCode { get; set; } = default!;
+            public string Status { get; set; } = default!;
+            public DateTime CreatedAt { get; set; }
+        }
+    }
 
-        using (var dbContext = new DbContext())
+    #endregion
+
+    #region Validator
+
+    /// <summary>
+    /// Bộ kiểm tra dữ liệu cho truy vấn danh sách người dùng
+    /// </summary>
+    public sealed class GetUserListQueryValidator : AbstractValidator<GetUserListQuery>
+    {
+        public GetUserListQueryValidator()
         {
-            try
+            RuleFor(x => x.PageIndex)
+                .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_invalidFormat, "PageIndex"));
+
+            RuleFor(x => x.PageSize)
+                .InclusiveBetween(1, 100).WithMessage(string.Format(CoreResource.validation_maxLength, "PageSize", 100));
+        }
+    }
+
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Bộ xử lý truy vấn lấy danh sách người dùng
+    /// </summary>
+    public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, PagedResponse<GetUserListQuery.Response>>
+    {
+        /// <summary>
+        /// Hàm xử lý lấy dữ liệu danh sách có phân trang từ Database
+        /// </summary>
+        public async Task<PagedResponse<GetUserListQuery.Response>> Handle(GetUserListQuery request, CancellationToken cancellationToken)
+        {
+            // Khởi tạo log nghiệp vụ với các tham số phân trang và tìm kiếm
+            var logData = new CoreLogModel(request.HeaderInfo)
             {
-                // Build query with EF Core LINQ
-                var query = dbContext.Set<sy_users>().AsQueryable();
-
-                // Apply filters
-                if (!string.IsNullOrEmpty(request.Status))
+                Parameter = new List<CoreParamModel>
                 {
-                    query = query.Where(u => u.Status == request.Status);
+                    new(nameof(request.Keyword), request.Keyword),
+                    new(nameof(request.Status), request.Status),
+                    new(nameof(request.PageIndex), request.PageIndex),
+                    new(nameof(request.PageSize), request.PageSize)
                 }
+            };
 
-                if (!string.IsNullOrEmpty(request.Keyword))
+            using (var dbContext = new DbContext())
+            {
+                try
                 {
-                    var keyword = request.Keyword.Trim().ToLower();
-                    query = query.Where(u => 
-                        u.Username.ToLower().Contains(keyword) ||
-                        u.Email.ToLower().Contains(keyword) ||
-                        (u.EmployeeCode != null && u.EmployeeCode.ToLower().Contains(keyword)));
-                }
+                    // Khởi tạo truy vấn từ bảng sy_users
+                    var query = dbContext.Set<sy_users>().AsQueryable();
 
-                // Get total count before pagination
-                var totalItems = await query.CountAsync(cancellationToken);
-
-                // Apply sorting (default: CreatedAt DESC)
-                query = query.OrderByDescending(u => u.CreatedAt);
-
-                // Apply pagination
-                var items = await query
-                    .Skip(request.Offset)
-                    .Take(request.PageSize)
-                    .Select(u => new GetUserListQuery.Response
+                    // BƯỚC 1: Áp dụng các bộ lọc nghiệp vụ
+                    if (!string.IsNullOrEmpty(request.Status))
                     {
-                        Id = u.Id,
-                        Username = u.Username,
-                        EmployeeCode = u.EmployeeCode ?? string.Empty,
-                        RoleCode = u.RoleCode ?? string.Empty,
-                        Status = u.Status,
-                        CreatedAt = u.CreatedAt
-                    })
-                    .ToListAsync(cancellationToken);
-
-                // Build paged result
-                var result = new PagedResult<GetUserListQuery.Response>
-                {
-                    Items = items,
-                    Paging = new PagingInfo
-                    {
-                        PageIndex = request.PageIndex,
-                        PageSize = request.PageSize,
-                        TotalItems = totalItems
+                        query = query.Where(u => u.Status == request.Status);
                     }
-                };
 
-                var response = ResponseHelper.Success(result, string.Format(CoreResource.crud_listSuccess, CoreResource.entity_user));
+                    if (!string.IsNullOrEmpty(request.Keyword))
+                    {
+                        var keyword = request.Keyword.Trim().ToLower();
+                        query = query.Where(u => 
+                            u.Username.ToLower().Contains(keyword) ||
+                            u.Email.ToLower().Contains(keyword) ||
+                            (u.EmployeeCode != null && u.EmployeeCode.ToLower().Contains(keyword)));
+                    }
 
-                logData.Result = result;
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
+                    // BƯỚC 2: Lấy tổng số bản ghi trước khi phân trang để tính toán UI
+                    var totalItems = await query.CountAsync(cancellationToken);
 
-                return response;
-            }
-            catch (Exception ex)
-            {
-                UniLogger.Error($"Error retrieving users list: {ex.Message}", ex);
-                
-                var response = ResponseHelper.Error<PagedResult<GetUserListQuery.Response>>(CoreResource.common_exceptionOccurred);
-                logData.Message = ex.Message;
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
-                UniLogManager.WriteApiLog(logData);
+                    // BƯỚC 3: Áp dụng sắp xếp và phân trang trực tiếp từ tham số Query
+                    // Sử dụng request.Offset và request.PageSize đã được BaseListQuery tính toán sẵn
+                    var items = await query
+                        .OrderByDescending(u => u.CreatedAt)
+                        .Skip(request.Offset)
+                        .Take(request.PageSize)
+                        .Select(u => new GetUserListQuery.Response
+                        {
+                            Id = u.Id,
+                            Username = u.Username,
+                            EmployeeCode = u.EmployeeCode ?? string.Empty,
+                            RoleCode = u.RoleCode ?? string.Empty,
+                            Status = u.Status,
+                            CreatedAt = u.CreatedAt
+                        })
+                        .ToListAsync(cancellationToken);
 
-                return response;
+                    // BƯỚC 4: Đóng gói kết quả trả về theo chuẩn PagedResult
+                    var result = new PagedResult<GetUserListQuery.Response>
+                    {
+                        Items = items,
+                        Paging = new PagingInfo
+                        {
+                            PageIndex = request.PageIndex,
+                            PageSize = request.PageSize,
+                            TotalItems = totalItems
+                        }
+                    };
+
+                    var response = ResponseHelper.PagedSuccess(result, string.Format(CoreResource.common_listSuccess, CoreResource.entity_user));
+
+                    logData.Result = new { ItemCount = items.Count, TotalItems = totalItems };
+                    logData.ReturnCode = response.ReturnCode;
+                    logData.Message = response.Message;
+
+                    return response;
+                }
+                catch (Exception ex)
+                {
+                    logData.Message = ex.Message;
+                    logData.IsException = true;
+                    logData.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                    
+                    return ResponseHelper.PagedError<GetUserListQuery.Response>(CoreResource.common_error);
+                }
+                finally
+                {
+                    // Luôn ghi log API trong mọi trường hợp
+                    UniLogManager.WriteApiLog(logData);
+                }
             }
         }
     }
-}
 
-#endregion
+    #endregion
+}

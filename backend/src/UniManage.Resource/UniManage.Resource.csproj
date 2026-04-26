@@ -6,24 +6,15 @@
     <Nullable>enable</Nullable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
+
   <ItemGroup>
-    <Compile Remove="Extensions\ResourceExtensions.cs" />
-    <Compile Remove="ResourceProvider.cs" />
-    <Compile Remove="ResourcesGenerator2.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Remove="CoreResources.resx" />
-    <EmbeddedResource Remove="CoreResources.vi.resx" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="ResourcesGenerator2.tt" />
-  </ItemGroup>  <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <PackageReference Include="Mono.TextTemplating" Version="3.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -32,10 +23,6 @@
     <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
     <TextTemplateTransformationType>Regular</TextTemplateTransformationType>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\UniManage.Core\UniManage.Core.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <None Update="ResourcesGenerator.tt">

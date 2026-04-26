@@ -5,6 +5,7 @@ using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Resource;
+using UniManage.Core.Constant;
 
 namespace UniManage.Application.Queries.HR.Employees;
 
@@ -110,25 +111,28 @@ public sealed class GetEmployeeByIdQueryHandler : IRequestHandler<GetEmployeeByI
                 }
                 else
                 {
-                    response = ResponseHelper.Success(employee, string.Format(CoreResource.crud_getSuccess, CoreResource.entity_employee));
-                    logData.Result = new { employee.EmployeeCode };
+                    response = ResponseHelper.Success(employee, string.Format(CoreResource.common_getSuccess, CoreResource.entity_employee));
+                    
+                    logData.Result = employee;
                     logData.ReturnCode = response.ReturnCode;
+                    logData.Message = "Get employee by ID success";
                 }
             }
             catch (Exception ex)
             {
-                UniLogger.Error($"Error retrieving employee by id {request.Id}: {ex.Message}", ex);
-                response = ResponseHelper.Error<GetEmployeeByIdQuery.Response>(CoreResource.common_exceptionOccurred);
-
-                logData.Message = ex.ToString();
-                logData.IsException = 1;
-                logData.ReturnCode = response.ReturnCode;
+                logData.IsException = true;
+                logData.Message = ex.Message;
+                logData.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                
+                response = ResponseHelper.Error<GetEmployeeByIdQuery.Response>(CoreResource.common_error);
             }
+            finally
+            {
+                UniLogManager.WriteApiLog(logData);
+            }
+
+            return response;
         }
-
-        UniLogManager.WriteApiLog(logData);
-
-        return response;
     }
 }
 

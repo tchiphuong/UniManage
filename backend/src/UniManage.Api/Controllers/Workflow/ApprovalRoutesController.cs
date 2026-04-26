@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.Workflow.ApprovalRoutes;
 using UniManage.Application.Queries.Workflow.ApprovalRoutes;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
 
 namespace UniManage.Api.Controllers.Workflow
@@ -18,6 +20,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpGet]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<PagedResult<GetApprovalRouteListQuery.Result>>>> GetList([FromQuery] GetApprovalRouteListQuery query, CancellationToken ct)
         {
             query ??= new GetApprovalRouteListQuery();
@@ -27,6 +30,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpGet("{id}")]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<GetApprovalRouteByIdQuery.Result>>> GetById([FromRoute] int id, CancellationToken ct)
         {
             var query = new GetApprovalRouteByIdQuery { Id = id };
@@ -36,6 +40,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpPost]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.Create)]
         public async Task<ActionResult<ApiResponse<CreateApprovalRouteCommand.Response>>> Create([FromBody] CreateApprovalRouteCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;
@@ -44,6 +49,7 @@ namespace UniManage.Api.Controllers.Workflow
         }
 
         [HttpDelete]
+        [PermissionAuthorize(CoreFunction.Main, CoreAction.Delete)]
         public async Task<ActionResult<ApiResponse<DeleteApprovalRouteCommand.Response>>> Delete([FromBody] DeleteApprovalRouteCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;

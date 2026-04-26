@@ -219,7 +219,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("<#= table.Key #>")]
     <#= primaryKeyAttribute #>
-    public class <#= table.Key #>
+    public partial class <#= table.Key #>
     {
 <#
         foreach (var column in table.Value)

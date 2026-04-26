@@ -115,20 +115,9 @@ namespace UniManage.Application.Commands.Sales.Orders
     {
         public async Task<ApiResponse<CreateOrderCommand.Response>> Handle(CreateOrderCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.OrderCode), request.OrderCode),
-                    new CoreParamModel(nameof(request.CustomerCode), request.CustomerCode),
-                    new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var totalAmount = request.Items.Sum(i => i.Quantity * i.UnitPrice);
 
                     var orderSql = @"
@@ -141,7 +130,7 @@ namespace UniManage.Application.Commands.Sales.Orders
                         request.OrderCode,
                         request.CustomerCode,
                         request.EmployeeCode,
-                        OrderDate = request.OrderDate ?? DateTime.Now,
+                        OrderDate = request.OrderDate ?? DateTimeHelper.Now,
                         TotalAmount = totalAmount,
                         request.Status,
                         CreatedBy = request.HeaderInfo!.Username
@@ -163,37 +152,17 @@ namespace UniManage.Application.Commands.Sales.Orders
                         }, ct);
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateOrderCommand.Response
                     {
                         Id = orderId,
                         OrderCode = request.OrderCode
                     };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating order: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateOrderCommand.Response>("Error occurred while creating order");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

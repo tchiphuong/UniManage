@@ -25,7 +25,7 @@ namespace UniManage.Api.Controllers.System
         #region GET: /api/v1/commons/combobox/{typeKey}
 
         [HttpGet("combobox/{typeKey}")]
-        public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox([FromRoute] string typeKey, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox([FromRoute] string typeKey, CancellationToken ct)
         {
             var query = new GetCommonComboboxQuery { TypeKey = typeKey };
             query.HeaderInfo = HeaderInfo;

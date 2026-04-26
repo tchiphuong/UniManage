@@ -57,20 +57,9 @@ namespace UniManage.Application.Commands.Workflow.Requests
     {
         public async Task<ApiResponse<CreateRequestCommand.Response>> Handle(CreateRequestCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.RequestTypeKey), request.RequestTypeKey),
-                    new CoreParamModel(nameof(request.ApplicantEmployeeCode), request.ApplicantEmployeeCode),
-                    new CoreParamModel(nameof(request.ApplicantUsername), request.ApplicantUsername)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var requestDataJson = request.RequestData != null ? JsonConvert.SerializeObject(request.RequestData) : null;
 
                     var sql = @"
@@ -88,33 +77,13 @@ namespace UniManage.Application.Commands.Workflow.Requests
                         CreatedBy = request.HeaderInfo!.Username
                     }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new CreateRequestCommand.Response { Id = id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_createSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error creating request: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CreateRequestCommand.Response>("Error occurred while creating request");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_createSuccess);
+return response;
         }
     }
 }
+
+

@@ -17,7 +17,7 @@ namespace UniManage.Api.Controllers.Master
         }
 
         [HttpGet("combobox")]
-        public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox([FromQuery] string? countryCode, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox([FromQuery] string? countryCode, CancellationToken ct)
         {
             var query = new GetProvinceComboboxQuery { CountryCode = countryCode };
             query.HeaderInfo = HeaderInfo;

@@ -46,18 +46,9 @@ namespace UniManage.Application.Commands.Workflow.ApprovalRoutes
     {
         public async Task<ApiResponse<DeleteApprovalRouteCommand.Response>> Handle(DeleteApprovalRouteCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Ids), string.Join(",", request.Ids))
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var deleteLevelsSql = @"
                         DELETE ara
                         FROM wf_approval_route_approver ara
@@ -75,33 +66,13 @@ namespace UniManage.Application.Commands.Workflow.ApprovalRoutes
 
                     var deletedCount = await dbContext.ExecuteAsync(deleteRouteSql, new { Ids = request.Ids }, ct);
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new DeleteApprovalRouteCommand.Response { DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_deleteSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error deleting approval routes: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<DeleteApprovalRouteCommand.Response>("Error occurred while deleting approval routes");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_deleteSuccess);
+return response;
         }
     }
 }
+
+

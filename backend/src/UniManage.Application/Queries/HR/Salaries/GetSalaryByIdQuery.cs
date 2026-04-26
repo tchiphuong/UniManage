@@ -78,7 +78,7 @@ namespace UniManage.Application.Queries.HR.Salaries
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(salary, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(salary, CoreResource.common_getSuccess);
                     log.Result = salary;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -91,7 +91,7 @@ namespace UniManage.Application.Queries.HR.Salaries
                     var response = ResponseHelper.Error<GetSalaryByIdQuery.Response>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
 

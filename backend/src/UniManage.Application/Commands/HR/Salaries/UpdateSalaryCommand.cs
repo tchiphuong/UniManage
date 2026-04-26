@@ -50,19 +50,9 @@ namespace UniManage.Application.Commands.HR.Salaries
     {
         public async Task<ApiResponse<UpdateSalaryCommand.Response>> Handle(UpdateSalaryCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Id), request.Id),
-                    new CoreParamModel(nameof(request.SalaryAmount), request.SalaryAmount)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var currentSalary = await dbContext.QueryFirstOrDefaultAsync<dynamic>(
                         "SELECT SalaryAmount FROM hr_salaries WHERE Id = @Id",
                         new { request.Id },
@@ -110,31 +100,15 @@ namespace UniManage.Application.Commands.HR.Salaries
                             ct);
                     }
 
-                    await dbContext.CommitAsync();
+                    
 
                     var responseData = new UpdateSalaryCommand.Response { Success = true, Id = request.Id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error updating salary: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateSalaryCommand.Response>(CoreResource.common_exceptionOccurred);
-                    log.Message = ex.ToString();
-                    log.IsException = 1;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 
     #endregion
 }
+
+

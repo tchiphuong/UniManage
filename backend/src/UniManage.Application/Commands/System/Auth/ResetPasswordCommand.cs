@@ -1,36 +1,46 @@
 using FluentValidation;
 using MediatR;
-using UniManage.Application.Utilities;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Constant;
-using UniManage.Core.Database;
 using UniManage.Core.Logging;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Resource;
+using UniManage.Application.Utilities;
+using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Commands.System.Auth
 {
+    #region Command
+
     /// <summary>
-    /// Reset Password Command - Đặt lại mật khẩu với token
+    /// Lệnh đặt lại mật khẩu sử dụng mã Token xác thực từ Email
     /// </summary>
     public sealed class ResetPasswordCommand : BaseCommand, IRequest<ApiResponse<bool>>
     {
         /// <summary>
-        /// Reset Token từ email
+        /// Mã Token xác thực được gửi qua Email
         /// </summary>
         public string Token { get; set; } = string.Empty;
+
         /// <summary>
-        /// Mật khẩu mới
+        /// Mật khẩu mới muốn thiết lập
         /// </summary>
         public string NewPassword { get; set; } = string.Empty;
+
         /// <summary>
-        /// Xác nhận mật khẩu mới
+        /// Xác nhận lại mật khẩu mới
         /// </summary>
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
+    #endregion
+
+    #region Validator
+
     /// <summary>
-    /// Reset Password Command Validator
+    /// Bộ kiểm tra dữ liệu cho lệnh đặt lại mật khẩu
     /// </summary>
     public sealed class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
     {
@@ -40,7 +50,7 @@ namespace UniManage.Application.Commands.System.Auth
                 .NotEmpty()
                 .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_resetToken));
 
-            // [SECURITY] H4 — Unified password policy via extension method
+            // Sử dụng chính sách mật khẩu thống nhất của hệ thống
             RuleFor(x => x.NewPassword)
                 .Password(CoreResource.lbl_newPassword);
 
@@ -56,36 +66,39 @@ namespace UniManage.Application.Commands.System.Auth
         }
     }
 
+    #endregion
+
+    #region Handler
+
     /// <summary>
-    /// Reset Password Command Handler
+    /// Bộ xử lý lệnh đặt lại mật khẩu người dùng
     /// </summary>
     public sealed class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, ApiResponse<bool>>
     {
         public async Task<ApiResponse<bool>> Handle(ResetPasswordCommand request, CancellationToken ct)
         {
+            // Khởi tạo log (không ghi mật khẩu mới vào log vì lý do bảo mật)
             var log = new CoreLogModel(request.HeaderInfo)
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new CoreParamModel(nameof(request.Token), StringHelper.MaskSensitiveData(request.Token))
+                    new(nameof(request.Token), "********")
                 }
             };
 
-            var dbContext = new DbContext(openTransaction: true);
             try
             {
-                using (dbContext)
+                using (var dbContext = new DbContext(openTransaction: true))
                 {
-                    // Tìm tất cả reset token chưa sử dụng của user
-                    var getAllTokensSql = @"
-                        SELECT [Username], [Token], [ExpiresAt], [UsedAt]
-                        FROM [dbo].[sy_password_reset_tokens]
-                        WHERE [UsedAt] IS NULL AND [ExpiresAt] > GETUTCDATE()";
+                    // 1. Lấy danh sách các mã Token chưa sử dụng và chưa hết hạn từ Entity
+                    var activeTokens = await dbContext.Set<sy_password_reset_tokens>()
+                        .Where(t => t.UsedAt == null && t.ExpiresAt > DateTime.UtcNow)
+                        .ToListAsync(ct);
 
-                    var allTokens = await dbContext.QueryAsync<TokenDto>(getAllTokensSql, null, ct);
-                    TokenDto? validToken = null;
+                    sy_password_reset_tokens? validToken = null;
 
-                    foreach (var tokenItem in allTokens)
+                    // 2. Kiểm tra Token bằng PasswordHelper (vì Token trong DB đã được hash)
+                    foreach (var tokenItem in activeTokens)
                     {
                         if (PasswordHelper.VerifyPassword(request.Token, tokenItem.Token))
                         {
@@ -98,58 +111,52 @@ namespace UniManage.Application.Commands.System.Auth
                     {
                         await dbContext.RollbackAsync();
                         var errorResponse = ResponseHelper.Error<bool>(CoreResource.auth_invalidResetToken);
-                        log.ReturnCode = errorResponse.ReturnCode;
+                        
                         log.Message = "Invalid or expired reset token provided";
+                        log.ReturnCode = errorResponse.ReturnCode;
                         return errorResponse;
                     }
 
-                    // Hash mật khẩu mới
-                    var hashedPassword = PasswordHelper.HashPassword(request.NewPassword);
+                    // 3. Tìm người dùng tương ứng dựa trên Username từ Token
+                    var user = await dbContext.Set<sy_users>()
+                        .FirstOrDefaultAsync(u => u.Username == validToken.Username, ct);
 
-                    // Update password
-                    var updatePasswordSql = @"
-                        UPDATE [dbo].[sy_users]
-                        SET [Password] = @Password,
-                            [UpdatedAt] = GETDATE(),
-                            [UpdatedBy] = @SystemUser
-                        WHERE [Username] = @Username";
+                    if (user == null)
+                    {
+                        await dbContext.RollbackAsync();
+                        var errorResponse = ResponseHelper.NotFound<bool>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+                        
+                        log.Message = $"User '{validToken.Username}' not found for the provided token";
+                        log.ReturnCode = errorResponse.ReturnCode;
+                        return errorResponse;
+                    }
 
-                    await dbContext.ExecuteAsync(
-                        updatePasswordSql,
-                        new
-                        {
-                            Password = hashedPassword,
-                            Username = validToken.Username,
-                            SystemUser = ApplicationConstants.Defaults.SystemUser
-                        },
-                        ct);
+                    // 4. Cập nhật mật khẩu mới và thông tin Audit
+                    user.Password = PasswordHelper.HashPassword(request.NewPassword);
+                    user.UpdatedAt = DateTimeHelper.Now;
+                    user.UpdatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser;
 
-                    // Đánh dấu token đã sử dụng
-                    var markTokenUsedSql = @"
-                        UPDATE [dbo].[sy_password_reset_tokens]
-                        SET [UsedAt] = GETDATE()
-                        WHERE [Token] = @TokenHash";
+                    // 5. Đánh dấu Token đã được sử dụng
+                    validToken.UsedAt = DateTimeHelper.Now;
 
-                    await dbContext.ExecuteAsync(
-                        markTokenUsedSql,
-                        new { TokenHash = validToken.Token },
-                        ct);
-
+                    await dbContext.SaveChangesAsync(ct);
                     await dbContext.CommitAsync();
 
                     var response = ResponseHelper.Success(true, CoreResource.auth_passwordReset);
-                    log.Result = response;
+                    
+                    log.Message = $"Password successfully reset for user '{validToken.Username}'";
                     log.ReturnCode = response.ReturnCode;
-                    log.Message = $"Password reset successfully for user: {validToken.Username}";
+                    log.Result = true;
+
                     return response;
                 }
             }
             catch (Exception ex)
             {
-                await dbContext.RollbackAsync();
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
+                
                 return ResponseHelper.Error<bool>(CoreResource.common_error);
             }
             finally
@@ -157,13 +164,7 @@ namespace UniManage.Application.Commands.System.Auth
                 UniLogManager.WriteApiLog(log);
             }
         }
-
-        private class TokenDto
-        {
-            public string Username { get; set; } = default!;
-            public string Token { get; set; } = default!;
-            public DateTime ExpiresAt { get; set; }
-            public DateTime? UsedAt { get; set; }
-        }
     }
+
+    #endregion
 }

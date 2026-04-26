@@ -17,7 +17,7 @@ namespace UniManage.Api.Controllers.Master
         }
 
         [HttpGet("combobox")]
-        public async Task<ActionResult<ApiResponse<List<ComboboxItemDto>>>> GetCombobox(CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<List<ComboboxModel>>>> GetCombobox(CancellationToken ct)
         {
             var query = new GetCurrencyComboboxQuery();
             query.HeaderInfo = HeaderInfo;

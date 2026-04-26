@@ -11,7 +11,7 @@ namespace UniManage.Application.Queries.Master.Wards
 {
     #region Query
 
-    public sealed class GetWardComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetWardComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel>>>
     {
         public string? ProvinceCode { get; init; }
         public string? Keyword { get; set; }
@@ -21,9 +21,9 @@ namespace UniManage.Application.Queries.Master.Wards
 
     #region Handler
 
-    public sealed class GetWardComboboxQueryHandler : IRequestHandler<GetWardComboboxQuery, ApiResponse<List<ComboboxItemDto>>>
+    public sealed class GetWardComboboxQueryHandler : IRequestHandler<GetWardComboboxQuery, ApiResponse<List<ComboboxModel>>>
     {
-        public async Task<ApiResponse<List<ComboboxItemDto>>> Handle(GetWardComboboxQuery request, CancellationToken ct)
+        public async Task<ApiResponse<List<ComboboxModel>>> Handle(GetWardComboboxQuery request, CancellationToken ct)
         {
             var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo())
             {
@@ -71,12 +71,12 @@ namespace UniManage.Application.Queries.Master.Wards
                         },
                         ct);
 
-                    var items = wards.Select(w => new ComboboxItemDto
+                    var items = wards.Select(w => new ComboboxModel
                     {
-                        Value = w.Code,
-                        Label = w.Name,
+                        Code = w.Code,
+                        Name = w.Name,
                         Status = 1,
-                        Metadata = new Dictionary<string, object>
+                        ExtData = new Dictionary<string, object>
                         {
                             ["ProvinceCode"] = w.ProvinceCode ?? ""
                         }
@@ -93,13 +93,13 @@ namespace UniManage.Application.Queries.Master.Wards
             }
             catch (Exception ex)
             {
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.ToString();
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 UniLogManager.WriteApiLog(log);
 
                 UniLogger.Error($"Error getting ward combobox: {ex.Message}", ex);
-                return ResponseHelper.Error<List<ComboboxItemDto>>(CoreResource.common_exceptionOccurred);
+                return ResponseHelper.Error<List<ComboboxModel>>(CoreResource.common_exceptionOccurred);
             }
         }
     }

@@ -75,7 +75,7 @@ public sealed class GetUnitListQueryHandler : IRequestHandler<GetUnitListQuery, 
 
                 var result = await dbContext.QueryPagingAsync<GetUnitListQuery.Response>(baseQuery, request, filters);
 
-                var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
                 log.Result = result;
                 log.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(log);
@@ -87,7 +87,7 @@ public sealed class GetUnitListQueryHandler : IRequestHandler<GetUnitListQuery, 
                 UniLogger.Error($"Error retrieving units: {ex.Message}", ex);
 
                 var response = ResponseHelper.Error<PagedResult<GetUnitListQuery.Response>>(CoreResource.common_exceptionOccurred);
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = response.ReturnCode;
                 UniLogManager.WriteApiLog(log);

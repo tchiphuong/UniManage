@@ -1,11 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Dapper;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Application.Services;
 using UniManage.Application.Utilities;
 using UniManage.Core.Constant;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
+using UniManage.Core.Services;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Resource;
@@ -17,45 +24,99 @@ namespace UniManage.Application.Commands.System.Auth
     // ===========================================
     // This handler currently uses Resource Owner Password Credentials (ROPC)
     // grant_type, which is DEPRECATED in OAuth 2.1 (RFC 9700).
-    //
-    // Migration plan:
-    //   1. Configure IdentityServer to support Authorization Code + PKCE flow
-    //   2. Update frontend to redirect to IdentityServer login page
-    //   3. Backend only validates tokens — never touches credentials directly
-    //   4. Remove this entire LoginCommand once migration is complete
     // ===========================================
 
     #region Command
 
     /// <summary>
-    /// Login Command - Đăng nhập hệ thống
+    /// Command to perform system login.
     /// </summary>
     public sealed class LoginCommand : BaseCommand, IRequest<ApiResponse<LoginCommand.Response>>
     {
         /// <summary>
-        /// Username
+        /// User's login name.
         /// </summary>
         public string Username { get; set; } = string.Empty;
+
         /// <summary>
-        /// Password
+        /// User's password.
         /// </summary>
         public string Password { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Unique device identifier (Mobile).
+        /// </summary>
+        public string? DeviceId { get; set; }
+
+        /// <summary>
+        /// Device type (iOS, Android, Web).
+        /// </summary>
+        public string? DeviceType { get; set; }
+
+        /// <summary>
+        /// Firebase Cloud Messaging token.
+        /// </summary>
+        public string? FcmToken { get; set; }
+
+        /// <summary>
+        /// Successful login response data.
+        /// </summary>
         public class Response
         {
+            /// <summary>
+            /// Access token for API authorization.
+            /// </summary>
             public string AccessToken { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Refresh token to renew access token.
+            /// </summary>
             public string RefreshToken { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Access token lifetime in seconds.
+            /// </summary>
             public int ExpiresIn { get; set; }
+
+            /// <summary>
+            /// Token type (usually Bearer).
+            /// </summary>
             public string TokenType { get; set; } = "Bearer";
+
+            /// <summary>
+            /// Basic user information after login.
+            /// </summary>
             public UserInfo User { get; set; } = new UserInfo();
         }
 
+        /// <summary>
+        /// Compact user information.
+        /// </summary>
         public class UserInfo
         {
+            /// <summary>
+            /// User unique identifier.
+            /// </summary>
             public long Id { get; set; }
+
+            /// <summary>
+            /// User unique code (Username).
+            /// </summary>
             public string UserCode { get; set; } = string.Empty;
+
+            /// <summary>
+            /// User's display name.
+            /// </summary>
             public string DisplayName { get; set; } = string.Empty;
+
+            /// <summary>
+            /// User's email address.
+            /// </summary>
             public string? Email { get; set; }
+
+            /// <summary>
+            /// User's role code.
+            /// </summary>
             public string? RoleCode { get; set; }
         }
     }
@@ -65,25 +126,18 @@ namespace UniManage.Application.Commands.System.Auth
     #region Validator
 
     /// <summary>
-    /// Login Command Validator
+    /// Validator for LoginCommand.
     /// </summary>
     public sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
     {
         public LoginCommandValidator()
         {
             RuleFor(x => x.Username)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
-                .DependentRules(() =>
-                {
-                    RuleFor(x => x.Username)
-                        .MaximumLength(50)
-                        .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_username, 50));
-                });
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
+                .MaximumLength(50).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_username, 50));
 
-            // [SECURITY] H4 — Unified password policy via extension method
             RuleFor(x => x.Password)
-                .Password(CoreResource.lbl_password);
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_password));
         }
     }
 
@@ -92,7 +146,7 @@ namespace UniManage.Application.Commands.System.Auth
     #region Handler
 
     /// <summary>
-    /// Login Command Handler — uses shared IIdentityServerClient + CoreLogModel
+    /// Handler for system login, identity verification, and status check.
     /// </summary>
     public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<LoginCommand.Response>>
     {
@@ -103,110 +157,52 @@ namespace UniManage.Application.Commands.System.Auth
             _identityClient = identityClient;
         }
 
+        /// <summary>
+        /// Handles the login request.
+        /// </summary>
         public async Task<ApiResponse<LoginCommand.Response>> Handle(LoginCommand request, CancellationToken ct)
         {
-            // Khởi tạo log với HeaderInfo từ BaseCommand
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Username), request.Username)
-                }
-            };
-
-            var dbContext = new DbContext(openTransaction: true);
+            var log = new CoreLogModel(request.HeaderInfo ?? new HeaderInfo());
             try
             {
-                using (dbContext)
+                // 1. Validate user account status
+                var (statusSuccess, statusError, userSecurity) = await AuthHelper.ValidateUserStatusAsync(request.Username, log, ct);
+                if (!statusSuccess)
                 {
-                    // 1. Check account Lockout status
-                    var checkLockSql = @"
-                        SELECT TOP 1 [Id], [LockedUntil], [FailedLoginCount], [Status]
-                        FROM [dbo].[sy_users]
-                        WHERE [UserName] = @Username";
+                    return ReturnError(statusError!, "Account status check failed", log);
+                }
 
-                    var userSecurity = await dbContext.QueryFirstOrDefaultAsync<UserSecurityDto>(
-                        checkLockSql, new { request.Username });
+                // 2. Authenticate via IdentityServer (ROPC flow)
+                var (authSuccess, tokenData, identityError) = await _identityClient.RequestTokenAsync(request.Username, request.Password, ct);
 
-                    if (userSecurity != null)
-                    {
-                        if (userSecurity.Status != CoreCommon.Value.Commonstatus.Active)
-                        {
-                            var inactiveResponse = ResponseHelper.Error<LoginCommand.Response>("Account is inactive");
-                            log.ReturnCode = inactiveResponse.ReturnCode;
-                            log.Message = "Attempted login to inactive account";
-                            return inactiveResponse;
-                        }
+                if (!authSuccess || tokenData == null)
+                {
+                    // Increment failed login count
+                    await AuthHelper.HandleLoginFailureAsync(request.Username, log, ct);
+                    return ReturnError(CoreResource.auth_invalidLogin, identityError ?? "IdentityServer authentication failed", log);
+                }
 
-                        if (userSecurity.LockedUntil.HasValue && userSecurity.LockedUntil.Value > DateTime.Now)
-                        {
-                            var remainingMinutes = Math.Ceiling((userSecurity.LockedUntil.Value - DateTime.Now).TotalMinutes);
-                            var lockedResponse = ResponseHelper.Error<LoginCommand.Response>(CoreResource.auth_accountLocked);
-                            log.ReturnCode = lockedResponse.ReturnCode;
-                            log.Message = $"Account is locked until {userSecurity.LockedUntil.Value}";
-                            return lockedResponse;
-                        }
-                    }
+                // 3. Login success - Reset failure count and update device info
+                await AuthHelper.HandleLoginSuccessAsync(request.Username, log, ct);
 
-                    // 2. Authenticate via IdentityServer
-                    var (success, tokenData, error) = await _identityClient.RequestTokenAsync(
-                        request.Username, request.Password, ct);
+                if (!string.IsNullOrEmpty(request.DeviceId))
+                {
+                    await AuthHelper.UpdateDeviceTokenAsync(userSecurity!.Id, request.DeviceId, request.FcmToken, request.DeviceType, log, ct);
+                }
 
-                    if (!success || tokenData == null)
-                    {
-                        // Update failed login count
-                        var updateFailedSql = @"
-                            UPDATE [dbo].[sy_users]
-                            SET [FailedLoginCount] = ISNULL([FailedLoginCount], 0) + 1,
-                                [LockedUntil] = CASE WHEN ISNULL([FailedLoginCount], 0) + 1 >= 5 
-                                                     THEN DATEADD(MINUTE, 30, GETDATE()) 
-                                                     ELSE [LockedUntil] END,
-                                [UpdatedAt] = GETDATE(),
-                                [UpdatedBy] = @Username
-                            WHERE [UserName] = @Username";
-
-                        await dbContext.ExecuteAsync(updateFailedSql, new { request.Username });
-                        await dbContext.CommitAsync();
-
-                        var errorResponse = ResponseHelper.Error<LoginCommand.Response>(CoreResource.auth_invalidLogin);
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = error;
-                        return errorResponse;
-                    }
-
-                    // 3. Login success - Reset lockout & Get User Info
-                    var sql = @"
-                        UPDATE [dbo].[sy_users]
-                        SET [FailedLoginCount] = 0,
-                            [LockedUntil] = NULL,
-                            [UpdatedAt] = GETDATE(),
-                            [UpdatedBy] = @Username
-                        WHERE [UserName] = @Username;
-
-                        SELECT TOP 1
-                            [Id],
-                            [UserName] AS UserCode,
-                            [EmployeeCode],
-                            [RoleCode],
-                            [Email],
-                            [Status]
-                        FROM [dbo].[sy_users]
-                        WHERE [UserName] = @Username";
-
-                    var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
-                        sql, new { request.Username });
+                // 4. Load full user profile using EF Core
+                using (var dbContext = new UniManage.Core.Database.DbContext())
+                {
+                    var user = await dbContext.Set<UniManage.Model.Entities.sy_users>()
+                        .FirstOrDefaultAsync(u => u.Username == request.Username, ct);
 
                     if (user == null || user.Status != CoreCommon.Value.Commonstatus.Active)
                     {
-                        await dbContext.CommitAsync();
-                        var notFoundResponse = ResponseHelper.Error<LoginCommand.Response>(
-                            user == null ? CoreResource.auth_userNotFound : CoreResource.auth_accountInactive);
-                        log.ReturnCode = notFoundResponse.ReturnCode;
-                        log.Message = user == null ? "User data not found in database" : "Inactive account login attempt";
-                        return notFoundResponse;
+                        return ReturnError(
+                            user == null ? CoreResource.auth_userNotFound : CoreResource.auth_accountInactive,
+                            user == null ? "User not found after successful identity check" : "Account inactivated during process", 
+                            log);
                     }
-
-                    await dbContext.CommitAsync();
 
                     var responseData = new LoginCommand.Response
                     {
@@ -217,24 +213,20 @@ namespace UniManage.Application.Commands.System.Auth
                         User = new LoginCommand.UserInfo
                         {
                             Id = user.Id,
-                            UserCode = user.UserCode,
-                            DisplayName = user.EmployeeCode ?? user.UserCode,
+                            UserCode = user.Username,
+                            DisplayName = user.EmployeeCode ?? user.Username,
                             Email = user.Email,
                             RoleCode = user.RoleCode
                         }
                     };
 
                     var response = ResponseHelper.Success(responseData, CoreResource.auth_loginSuccess);
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    return response;
+                    return FinalizeLogAndReturn(response, log);
                 }
             }
             catch (Exception ex)
             {
-                await dbContext.RollbackAsync();
-                log.IsException = 1;
+                log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
                 return ResponseHelper.Error<LoginCommand.Response>(CoreResource.common_error);
@@ -245,22 +237,26 @@ namespace UniManage.Application.Commands.System.Auth
             }
         }
 
-        private class UserDto
+        /// <summary>
+        /// Creates error response and standardizes logging.
+        /// </summary>
+        private ApiResponse<LoginCommand.Response> ReturnError(string userMsg, string logMsg, CoreLogModel log)
         {
-            public long Id { get; set; }
-            public string UserCode { get; set; } = default!;
-            public string? EmployeeCode { get; set; }
-            public string? RoleCode { get; set; }
-            public string? Email { get; set; }
-            public string Status { get; set; } = default!;
+            var errorResponse = ResponseHelper.Error<LoginCommand.Response>(userMsg);
+            log.Message = logMsg;
+            log.ReturnCode = errorResponse.ReturnCode;
+            return errorResponse;
         }
 
-        private class UserSecurityDto
+        /// <summary>
+        /// Finalizes log metadata before returning successful response.
+        /// </summary>
+        private ApiResponse<LoginCommand.Response> FinalizeLogAndReturn(ApiResponse<LoginCommand.Response> res, CoreLogModel log)
         {
-            public long Id { get; set; }
-            public string Status { get; set; } = default!;
-            public DateTime? LockedUntil { get; set; }
-            public int? FailedLoginCount { get; set; }
+            log.Result = res.Data;
+            log.Message = res.Message;
+            log.ReturnCode = res.ReturnCode;
+            return res;
         }
     }
 

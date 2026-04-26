@@ -45,22 +45,11 @@ namespace UniManage.Application.Commands.HR.Attendance
     {
         public async Task<ApiResponse<CheckOutCommand.Response>> Handle(CheckOutCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.EmployeeCode), request.EmployeeCode),
-                    new CoreParamModel(nameof(request.AttendanceDate), request.AttendanceDate),
-                    new CoreParamModel(nameof(request.CheckOutTime), request.CheckOutTime)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var attendanceDate = request.AttendanceDate ?? DateTime.Today;
-                    var checkOutTime = request.CheckOutTime ?? DateTime.Now.TimeOfDay;
+                    var checkOutTime = request.CheckOutTime ?? DateTimeHelper.Now.TimeOfDay;
 
                     var attendance = await dbContext.QueryFirstOrDefaultAsync<dynamic>(
                         @"SELECT Id, CheckInTime FROM hr_attendance 
@@ -94,33 +83,15 @@ namespace UniManage.Application.Commands.HR.Attendance
                         },
                         ct);
 
-                    await dbContext.CommitAsync();
+                    
 
                     var responseData = new CheckOutCommand.Response { Success = true, Id = attendance.Id, CheckOutTime = checkOutTime };
                     var response = ResponseHelper.Success(responseData, "Check-out successful");
-
-                    log.Result = response.Data;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error checking out: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<CheckOutCommand.Response>(CoreResource.common_exceptionOccurred);
-                    log.Message = ex.ToString();
-                    log.IsException = 1;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+return response;
         }
     }
 
     #endregion
 }
+
+

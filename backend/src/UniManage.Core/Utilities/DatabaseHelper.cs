@@ -1,26 +1,31 @@
-﻿using Dapper;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+using Dapper;
+using Microsoft.EntityFrameworkCore;
 using UniManage.Core.Database;
 using UniManage.Model.Common;
 
 namespace UniManage.Core.Utilities
 {
     /// <summary>
-    /// Common database utility functions
+    /// Shared utility functions for database interactions.
     /// </summary>
     public static class DatabaseHelper
     {
         /// <summary>
-        /// Check if record exists by field value
+        /// Checks if a record exists by a specific field and value.
         /// </summary>
-        /// <param name="tableName">Table name</param>
-        /// <param name="fieldName">Field name to check</param>
-        /// <param name="value">Value to check</param>
-        /// <param name="excludeId">ID to exclude from check (for updates)</param>
-        /// <returns>True if record exists</returns>
+        /// <param name="tableName">Name of the table.</param>
+        /// <param name="fieldName">Field name to check.</param>
+        /// <param name="value">Value to look for.</param>
+        /// <param name="excludeId">Optional ID to exclude (e.g., for updates).</param>
+        /// <returns>True if at least one matching record exists.</returns>
         public static async Task<bool> RecordExistsAsync(string tableName, string fieldName, object value, int? excludeId = null)
         {
-            using var dbContext = new DbContext();
+            using var dbContext = new UniManage.Core.Database.DbContext();
 
             var sql = $"SELECT COUNT(*) FROM [{tableName}] WHERE [{fieldName}] = @Value";
             var parameters = new DynamicParameters();
@@ -37,61 +42,61 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Check if user code already exists
+        /// Checks if a username already exists in the system.
         /// </summary>
-        /// <param name="userCode">User code to check</param>
-        /// <param name="excludeId">ID to exclude (for updates)</param>
-        /// <returns>True if exists</returns>
+        /// <param name="userCode">Username to check.</param>
+        /// <param name="excludeId">Optional ID to exclude.</param>
+        /// <returns>True if the username exists.</returns>
         public static async Task<bool> UserCodeExistsAsync(string userCode, int? excludeId = null)
         {
             return await RecordExistsAsync("sy_users", "UserName", userCode, excludeId);
         }
 
         /// <summary>
-        /// Check if employee code already exists
+        /// Checks if an employee code already exists in the system.
         /// </summary>
-        /// <param name="employeeCode">Employee code to check</param>
-        /// <param name="excludeId">ID to exclude (for updates)</param>
-        /// <returns>True if exists</returns>
+        /// <param name="employeeCode">Employee code to check.</param>
+        /// <param name="excludeId">Optional ID to exclude.</param>
+        /// <returns>True if the employee code exists.</returns>
         public static async Task<bool> EmployeeCodeExistsAsync(string employeeCode, int? excludeId = null)
         {
             return await RecordExistsAsync("sy_users", "EmployeeCode", employeeCode, excludeId);
         }
 
         /// <summary>
-        /// Check if email already exists
+        /// Checks if an email address already exists in the system.
         /// </summary>
-        /// <param name="email">Email to check</param>
-        /// <param name="excludeId">ID to exclude (for updates)</param>
-        /// <returns>True if exists</returns>
+        /// <param name="email">Email address to check.</param>
+        /// <param name="excludeId">Optional ID to exclude.</param>
+        /// <returns>True if the email exists.</returns>
         public static async Task<bool> EmailExistsAsync(string email, int? excludeId = null)
         {
             return await RecordExistsAsync("sy_users", "Email", email, excludeId);
         }
 
         /// <summary>
-        /// Get next sequence number for a table
+        /// Retrieves the next sequence number for a specific table's field.
         /// </summary>
-        /// <param name="tableName">Table name</param>
-        /// <param name="sequenceField">Sequence field name</param>
-        /// <returns>Next sequence number</returns>
+        /// <param name="tableName">Name of the table.</param>
+        /// <param name="sequenceField">Sequence field name (defaults to Id).</param>
+        /// <returns>The calculated next increment value.</returns>
         public static async Task<int> GetNextSequenceAsync(string tableName, string sequenceField = "Id")
         {
-            using var dbContext = new DbContext();
+            using var dbContext = new UniManage.Core.Database.DbContext();
 
             var sql = $"SELECT ISNULL(MAX([{sequenceField}]), 0) + 1 FROM [{tableName}]";
             return await dbContext.ExecuteScalarAsync<int>(sql);
         }
 
         /// <summary>
-        /// Execute query with transaction
+        /// Executes a single SQL command within a database transaction.
         /// </summary>
-        /// <param name="sql">SQL query</param>
-        /// <param name="parameters">Parameters</param>
-        /// <returns>Number of affected rows</returns>
+        /// <param name="sql">SQL command string.</param>
+        /// <param name="parameters">Command parameters.</param>
+        /// <returns>Number of rows affected.</returns>
         public static async Task<int> ExecuteWithTransactionAsync(string sql, object? parameters = null)
         {
-            using var dbContext = new DbContext(openTransaction: true);
+            using var dbContext = new UniManage.Core.Database.DbContext(openTransaction: true);
 
             try
             {
@@ -107,13 +112,13 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Execute multiple queries in one transaction
+        /// Executes multiple SQL commands within a single database transaction.
         /// </summary>
-        /// <param name="queries">List of SQL queries with parameters</param>
-        /// <returns>Total affected rows</returns>
+        /// <param name="queries">Collection of SQL commands and their corresponding parameters.</param>
+        /// <returns>Total number of rows affected across all commands.</returns>
         public static async Task<int> ExecuteMultipleWithTransactionAsync(IEnumerable<(string Sql, object? Parameters)> queries)
         {
-            using var dbContext = new DbContext(openTransaction: true);
+            using var dbContext = new UniManage.Core.Database.DbContext(openTransaction: true);
 
             try
             {
@@ -135,12 +140,12 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Build WHERE clause from filter parameters
+        /// Constructs a SQL WHERE clause and parameters from filter dictionaries.
         /// </summary>
-        /// <param name="filters">Dictionary of field filters</param>
-        /// <param name="keyword">Keyword for searching (optional)</param>
-        /// <param name="searchFields">Fields to search when keyword is provided (optional, comma-separated)</param>
-        /// <returns>WHERE clause and parameters</returns>
+        /// <param name="filters">Dictionary of fields and values to filter by.</param>
+        /// <param name="keyword">Optional search keyword.</param>
+        /// <param name="searchFields">Optional comma-separated fields for keyword searching.</param>
+        /// <returns>A tuple containing the WHERE clause string and the populated DynamicParameters.</returns>
         public static (string WhereClause, DynamicParameters Parameters) BuildWhereClause(
             Dictionary<string, object?> filters,
             string? keyword = null,
@@ -168,7 +173,7 @@ namespace UniManage.Core.Utilities
                 }
             }
 
-            // Handle keyword search with multiple fields (OR logic)
+            // Keyword search with OR logic across multiple fields
             if (!string.IsNullOrEmpty(keyword))
             {
                 var fieldsArray = string.IsNullOrEmpty(searchFields)
@@ -191,36 +196,35 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Execute paginated query with automatic filtering, sorting, and pagination
+        /// Generic paginated database query with automatic filtering, sorting, and pagination logic.
         /// </summary>
-        /// <typeparam name="TResult">Result type for auto-generating column mappings</typeparam>
-        /// <param name="dbContext">Database context</param>
-        /// <param name="baseQuery">Base SELECT query without WHERE/ORDER BY</param>
-        /// <param name="request">Query request with pagination and filtering info</param>
-        /// <param name="filters">Additional custom filters (optional)</param>
-        /// <param name="defaultSortColumn">Default sort column name (optional, auto-detect CreatedAt if not provided)</param>
-        /// <returns>Paged result with items and paging info</returns>
-        public static async Task<PagedResult<TResult>> QueryPagingAsync<TResult>(this DbContext dbContext, StringBuilder baseQuery, BaseListQuery request, Dictionary<string, object?>? filters = null, string? defaultSortColumn = null) where TResult : class
+        /// <typeparam name="TResult">Model type for result mapping.</typeparam>
+        /// <param name="dbContext">Database context instance.</param>
+        /// <param name="baseQuery">Base SELECT query (excluding WHERE/ORDER BY).</param>
+        /// <param name="request">Query request containing pagination and filtering metadata.</param>
+        /// <param name="filters">Optional additional custom filters.</param>
+        /// <param name="defaultSortColumn">Optional default sort column (auto-detects CreatedAt if omitted).</param>
+        /// <returns>A paginated result containing items and paging metadata.</returns>
+        public static async Task<PagedResult<TResult>> QueryPagingAsync<TResult>(this UniManage.Core.Database.DbContext dbContext, StringBuilder baseQuery, BaseListQuery request, Dictionary<string, object?>? filters = null, string? defaultSortColumn = null) where TResult : class
         {
-            // Build WHERE clause from request and custom filters
+            // Build WHERE clause
             filters ??= new Dictionary<string, object?>();
             var (whereClause, parameters) = BuildWhereClause(
                 filters,
                 request.Keyword,
                 request.SearchFields);
 
-            // Extract pagination/sorting from request
+            // Extract pagination metadata
             var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
             var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
 
-            // Auto-generate ORDER BY clause from TResult type
+            // Generate ORDER BY clause
             var columnMappings = typeof(TResult)
                 .GetProperties()
                 .ToDictionary(
                     p => char.ToLowerInvariant(p.Name[0]) + p.Name.Substring(1), // camelCase
                     p => p.Name); // PascalCase
 
-            // Set default sort column (auto-detect CreatedAt if not provided)
             if (!string.IsNullOrEmpty(defaultSortColumn))
             {
                 columnMappings["default"] = defaultSortColumn;
@@ -231,7 +235,6 @@ namespace UniManage.Core.Utilities
             }
             else
             {
-                // Fallback to first property
                 columnMappings["default"] = columnMappings.Values.FirstOrDefault() ?? "Id";
             }
 
@@ -240,7 +243,7 @@ namespace UniManage.Core.Utilities
                 request.SortDirection ?? "DESC",
                 columnMappings);
 
-            // Get total count
+            // Fetch total record count
             var countQuery = $@"
                 SELECT COUNT(1)
                 FROM ({baseQuery}) AS TotalQuery
@@ -248,24 +251,25 @@ namespace UniManage.Core.Utilities
 
             var totalCount = await dbContext.ExecuteScalarAsync<int>(countQuery, parameters);
 
-            // Get data (only if there's data)
+            // Map columns for selection
+            var selectCols = string.Join(", ", typeof(TResult).GetProperties().Select(p => $"[{p.Name}]"));
+
+            // Fetch data
             List<TResult> items = new List<TResult>();
             if (totalCount > 0)
             {
                 var dataQuery = $@"
-                    SELECT *
+                    SELECT {selectCols}
                     FROM ({baseQuery}) AS DataQuery
                     {whereClause}
                     {orderByClause}
                     OFFSET @Skip ROWS
                     FETCH NEXT @Take ROWS ONLY";
 
-                // Use DynamicParameters to merge pagination parameters safely
                 var dynamicParams = new DynamicParameters(parameters);
                 dynamicParams.Add("@Skip", (pageIndex - 1) * pageSize);
                 dynamicParams.Add("@Take", pageSize);
 
-                // Use Generic QueryAsync<TResult> to ensure Dapper maps to Class (enabling JSON CamelCase)
                 var results = await dbContext.QueryAsync<TResult>(dataQuery, dynamicParams);
                 items = results.ToList();
             }
@@ -283,26 +287,22 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Execute paginated query with explicit WHERE clause and ORDER BY (Dynamic)
+        /// Explicit paginated database query for dynamic result types.
         /// </summary>
-        public static async Task<PagedResult<dynamic>> QueryPagingAsync(DbContext dbContext, string baseQuery, string whereClause, object parameters, BaseListQuery request, Type? resultType = null, string? defaultSortColumn = null)
+        public static async Task<PagedResult<dynamic>> QueryPagingAsync(UniManage.Core.Database.DbContext dbContext, string baseQuery, string whereClause, object parameters, BaseListQuery request, Type? resultType = null, string? defaultSortColumn = null)
         {
-            // 1. Validation cơ bản - extract from request
             var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
             var pageSize = request.PageSize < 1 ? 10 : request.PageSize;
 
-            // 2. Auto-generate ORDER BY clause
             string orderByClause;
             if (resultType != null)
             {
-                // Auto-generate column mappings from result type properties
                 var columnMappings = resultType
                     .GetProperties()
                     .ToDictionary(
-                        p => char.ToLowerInvariant(p.Name[0]) + p.Name.Substring(1), // camelCase
-                        p => p.Name); // PascalCase
+                        p => char.ToLowerInvariant(p.Name[0]) + p.Name.Substring(1), 
+                        p => p.Name);
 
-                // Set default sort column
                 if (!string.IsNullOrEmpty(defaultSortColumn))
                 {
                     columnMappings["default"] = defaultSortColumn;
@@ -320,13 +320,9 @@ namespace UniManage.Core.Utilities
             }
             else
             {
-                // Fallback: Nếu không có sort, SQL Server cần một cái gì đó để order trước khi offset
                 orderByClause = "ORDER BY (SELECT NULL)";
             }
 
-            // 3. Get total count
-            // Lưu ý: Thêm "WHERE 1=1" hoặc xử lý logic để đảm bảo cú pháp whereClause đúng (có chữ WHERE hay chưa)
-            // Giả sử whereClause bạn truyền vào đã bao gồm chữ "WHERE" hoặc rỗng.
             var countQuery = $@"
                                 SELECT COUNT(1)
                                 FROM ({baseQuery}) AS TotalQuery
@@ -334,7 +330,6 @@ namespace UniManage.Core.Utilities
 
             var totalCount = await dbContext.ExecuteScalarAsync<int>(countQuery, parameters);
 
-            // 4. Get data (chỉ chạy nếu có dữ liệu)
             List<dynamic> items = new List<dynamic>();
             if (totalCount > 0)
             {
@@ -346,7 +341,6 @@ namespace UniManage.Core.Utilities
                                     OFFSET @Skip ROWS 
                                     FETCH NEXT @Take ROWS ONLY";
 
-                // Sử dụng DynamicParameters để merge tham số phân trang an toàn
                 var dynamicParams = new DynamicParameters(parameters);
                 dynamicParams.Add("@Skip", (pageIndex - 1) * pageSize);
                 dynamicParams.Add("@Take", pageSize);
@@ -362,15 +356,16 @@ namespace UniManage.Core.Utilities
                 {
                     TotalItems = totalCount,
                     PageSize = pageSize,
-                    PageIndex = pageIndex // Nên trả về cả trang hiện tại
+                    PageIndex = pageIndex
                 }
             };
         }
+
         /// <summary>
-        /// Execute paginated query with explicit WHERE clause and ORDER BY (Generic)
+        /// Generic explicit paginated database query.
         /// </summary>
         public static async Task<PagedResult<TResult>> QueryPagingAsync<TResult>(
-            this DbContext dbContext, 
+            this UniManage.Core.Database.DbContext dbContext, 
             string baseQuery, 
             string whereClause, 
             object parameters, 

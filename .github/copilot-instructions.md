@@ -14,12 +14,19 @@ Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Util
 - ✅ **ValidationHelper**: IsValidEmail(), IsValidPhoneNumber(), IsValidCode(), ToFieldErrorModels()
 - ✅ **DatabaseHelper**: UserCodeExistsAsync(), ExecuteWithTransactionAsync(), QueryPagingAsync(), CheckTableExistsAsync()
 - ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError()
+- ✅ **Validation**: ALWAYS use `DependentRules()` for complex validation chains in FluentValidation.
+- ✅ **Summary Comments**: ALWAYS provide XML `<summary>` comments for all public classes, methods, and properties.
+- ✅ **Localization**: ALL API response messages MUST be localized using `CoreResource`.
 - ✅ **Shared Validation**: Dùng `.All.Contains(status)` từ `CoreCommon.Value` auto-generated cho các danh sách giá trị.
 - ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
 - ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
 - ✅ **FileHelper**: IsValidImageFile(), ValidateFileUpload(), GetMimeType(), GetFileSizeText()
 - ✅ **QueryHelper**: BuildOrderByClause(), BuildWhereClause(), EscapeSqlIdentifier() - SQL injection prevention
 - ✅ **TranslateHelper**: TranslateAsync(), RemoveDiacritics(), TranslateCommonTerms() - Google Translate + Vietnamese
+- ✅ **Performance**: Ưu tiên dùng **`static class`** và **`static method`** cho các logic state-less.
+- ✅ **Proactive Improvement**: Luôn kiểm tra và cải thiện skill/instruction khi có chú ý hay ý tưởng mới để cải thiện chất lượng code.
+- ✅ **T4 Entities**: Entities được build từ T4 template, không tạo thủ công.
+- ✅ **Mobile & Social**: Hỗ trợ FCM Token, Google, Facebook login. Sử dụng **Strategy Pattern** (`ISocialAuthProvider`) cho tính mở rộng.
 
 **🚫 KHÔNG ĐƯỢC:**
 
@@ -49,6 +56,7 @@ Data access: Entity Framework Core 9.0 + Dapper (Hybrid approach)
 
 - **EF Core**: CRUD operations (Create, Read, Update, Delete)
 - **Dapper**: Complex queries (joins, aggregations), high-performance scenarios
+- **Performance**: Ưu tiên `static class` cho các logic không giữ trạng thái.
 - **Auto-discovery**: DbContext scans UniManage.Model.Entities namespace for [Table] attributes
 
 Pattern: CQRS + MediatR
@@ -674,6 +682,14 @@ UniManage.Core/
 ├── Security/          # ConfigEncryption
 └── Utilities/         # 9 comprehensive utility classes
 ```
+
+**🔥 SOCIAL AUTH STRATEGY PATTERN (BẮT BUỘC):**
+
+Mọi logic xác thực Social Token mới PHẢI:
+- Triển khai `ISocialAuthProvider`
+- Đăng ký vào `ApplicationModule` (Autofac)
+- Sử dụng `SocialAuthProviderFactory` trong Handlers để lấy instance
+- KHÔNG hardcode logic verify token trực tiếp trong Handler
 
 IdentityServer (không EF)
 Lưu Clients, IdentityResources, ApiResources, ApiScopes, PersistedGrants, DeviceCodes, Keys trong SQL Server (schema thủ công).

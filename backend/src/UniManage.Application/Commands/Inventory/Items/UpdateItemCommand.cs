@@ -110,21 +110,9 @@ namespace UniManage.Application.Commands.Inventory.Items
     {
         public async Task<ApiResponse<UpdateItemCommand.Response>> Handle(UpdateItemCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Code), request.Code),
-                    new CoreParamModel(nameof(request.Name), request.Name),
-                    new CoreParamModel(nameof(request.BrandCode), request.BrandCode),
-                    new CoreParamModel(nameof(request.CategoryCode), request.CategoryCode)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var sql = @"
                         UPDATE it_items
                         SET Name = @Name,
@@ -150,39 +138,16 @@ namespace UniManage.Application.Commands.Inventory.Items
                     {
                         await dbContext.RollbackAsync(ct);
                         var errorResponse = ResponseHelper.Error<UpdateItemCommand.Response>("Item not found");
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = errorResponse.Message;
-                        UniLogManager.WriteApiLog(log);
-                        return errorResponse;
+return errorResponse;
                     }
 
-                    await dbContext.CommitAsync(ct);
+                    
 
                     var responseData = new UpdateItemCommand.Response { Success = true };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync(ct);
-                    UniLogger.Error($"Error updating item: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateItemCommand.Response>("Error occurred while updating item");
-
-                    log.IsException = 1;
-                    log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 }
+
+

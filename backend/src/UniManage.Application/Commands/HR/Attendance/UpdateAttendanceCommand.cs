@@ -61,20 +61,9 @@ namespace UniManage.Application.Commands.HR.Attendance
     {
         public async Task<ApiResponse<UpdateAttendanceCommand.Response>> Handle(UpdateAttendanceCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Id), request.Id),
-                    new CoreParamModel(nameof(request.AttendanceDate), request.AttendanceDate),
-                    new CoreParamModel(nameof(request.Status), request.Status)
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     var rowsAffected = await dbContext.ExecuteAsync(
                         @"UPDATE hr_attendance
                           SET AttendanceDate = @AttendanceDate,
@@ -102,31 +91,15 @@ namespace UniManage.Application.Commands.HR.Attendance
                         return ResponseHelper.Error<UpdateAttendanceCommand.Response>("Attendance has been modified by another user");
                     }
 
-                    await dbContext.CommitAsync();
+                    
 
                     var responseData = new UpdateAttendanceCommand.Response { Success = true, Id = request.Id };
-                    var response = ResponseHelper.Success(responseData, CoreResource.crud_updateSuccess);
-
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error updating attendance: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<UpdateAttendanceCommand.Response>(CoreResource.common_exceptionOccurred);
-                    log.Message = ex.ToString();
-                    log.IsException = 1;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, CoreResource.common_updateSuccess);
+return response;
         }
     }
 
     #endregion
 }
+
+

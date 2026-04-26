@@ -65,14 +65,7 @@ namespace UniManage.Application.Commands.System.Auth
         public async Task<ApiResponse<RefreshTokenCommand.Response>> Handle(RefreshTokenCommand request, CancellationToken ct)
         {
             // Khởi tạo log với HeaderInfo từ BaseCommand
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    // Không log refresh token value vì là sensitive data
-                    new CoreParamModel("HasRefreshToken", !string.IsNullOrEmpty(request.RefreshToken))
-                }
-            };
+            
 
             try
             {
@@ -82,8 +75,6 @@ namespace UniManage.Application.Commands.System.Auth
                 if (!success || tokenData == null)
                 {
                     var errorResponse = ResponseHelper.Error<RefreshTokenCommand.Response>("Invalid or expired refresh token");
-                    log.ReturnCode = errorResponse.ReturnCode;
-                    log.Message = error;
                     return errorResponse;
                 }
 
@@ -96,24 +87,15 @@ namespace UniManage.Application.Commands.System.Auth
                 };
 
                 var response = ResponseHelper.Success(responseData, CoreResource.auth_tokenRefreshed);
-                log.Result = response;
-                log.ReturnCode = response.ReturnCode;
-                log.Message = response.Message;
                 return response;
-            }
-            catch (Exception ex)
-            {
-                log.IsException = 1;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                return ResponseHelper.Error<RefreshTokenCommand.Response>("An error occurred during token refresh");
             }
             finally
             {
-                UniLogManager.WriteApiLog(log);
-            }
+}
         }
     }
 
     #endregion
 }
+
+

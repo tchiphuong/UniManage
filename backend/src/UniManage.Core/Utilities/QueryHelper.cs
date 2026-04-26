@@ -1,17 +1,22 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+
 namespace UniManage.Core.Utilities
 {
     /// <summary>
-    /// Helper functions for building SQL queries dynamically
+    /// Helper functions for building SQL queries dynamically.
     /// </summary>
     public static class QueryHelper
     {
         /// <summary>
-        /// Builds ORDER BY clause with column mapping and direction validation
+        /// Builds ORDER BY clause with column mapping and direction validation.
         /// </summary>
-        /// <param name="sortBy">Column name to sort by</param>
-        /// <param name="sortDirection">Sort direction (ASC/DESC)</param>
-        /// <param name="columnMappings">Dictionary mapping sort keys to actual column names</param>
-        /// <returns>Tuple containing ORDER BY clause and parameters</returns>
+        /// <param name="sortBy">Column name to sort by.</param>
+        /// <param name="sortDirection">Sort direction (ASC/DESC).</param>
+        /// <param name="columnMappings">Dictionary mapping sort keys to actual column names.</param>
+        /// <returns>Tuple containing ORDER BY clause and parameters.</returns>
         public static (string orderBy, object parameters) BuildOrderByClause(
             string? sortBy,
             string? sortDirection,
@@ -29,11 +34,11 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Builds WHERE clause from filter dictionary
+        /// Builds WHERE clause from filter dictionary.
         /// </summary>
-        /// <param name="filters">Dictionary of field names and values</param>
-        /// <param name="tableName">Table name prefix for columns</param>
-        /// <returns>WHERE clause string and parameters</returns>
+        /// <param name="filters">Dictionary of field names and values.</param>
+        /// <param name="tableName">Table name prefix for columns.</param>
+        /// <returns>WHERE clause string and parameters.</returns>
         public static (string whereClause, Dictionary<string, object> parameters) BuildWhereClause(
             Dictionary<string, object> filters,
             string? tableName = null)
@@ -73,11 +78,11 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Builds pagination SQL with OFFSET/FETCH
+        /// Builds pagination SQL with OFFSET/FETCH.
         /// </summary>
-        /// <param name="pageIndex">Page number (1-based)</param>
-        /// <param name="pageSize">Items per page</param>
-        /// <returns>Pagination SQL clause</returns>
+        /// <param name="pageIndex">Page number (1-based).</param>
+        /// <param name="pageSize">Items per page.</param>
+        /// <returns>Pagination SQL clause.</returns>
         public static string BuildPaginationClause(int pageIndex, int pageSize)
         {
             var offset = (pageIndex - 1) * pageSize;
@@ -85,17 +90,17 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Builds complete SELECT query with filters, sorting, and pagination
+        /// Builds complete SELECT query with filters, sorting, and pagination.
         /// </summary>
-        /// <param name="selectClause">SELECT columns</param>
-        /// <param name="fromClause">FROM tables</param>
-        /// <param name="filters">Filter conditions</param>
-        /// <param name="sortBy">Sort column</param>
-        /// <param name="sortDirection">Sort direction</param>
-        /// <param name="columnMappings">Column mappings for sorting</param>
-        /// <param name="pageIndex">Page number</param>
-        /// <param name="pageSize">Items per page</param>
-        /// <returns>Complete SQL query and parameters</returns>
+        /// <param name="selectClause">SELECT columns.</param>
+        /// <param name="fromClause">FROM tables.</param>
+        /// <param name="filters">Filter conditions.</param>
+        /// <param name="sortBy">Sort column.</param>
+        /// <param name="sortDirection">Sort direction.</param>
+        /// <param name="columnMappings">Column mappings for sorting.</param>
+        /// <param name="pageIndex">Page number.</param>
+        /// <param name="pageSize">Items per page.</param>
+        /// <returns>Complete SQL query and parameters.</returns>
         public static (string sql, Dictionary<string, object> parameters) BuildSelectQuery(
             string selectClause,
             string fromClause,
@@ -137,11 +142,11 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Builds COUNT query for pagination
+        /// Builds COUNT query for pagination.
         /// </summary>
-        /// <param name="fromClause">FROM tables</param>
-        /// <param name="filters">Filter conditions</param>
-        /// <returns>COUNT SQL query and parameters</returns>
+        /// <param name="fromClause">FROM tables.</param>
+        /// <param name="filters">Filter conditions.</param>
+        /// <returns>COUNT SQL query and parameters.</returns>
         public static (string sql, Dictionary<string, object> parameters) BuildCountQuery(
             string fromClause,
             Dictionary<string, object>? filters = null)
@@ -166,18 +171,18 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Validates and sanitizes column name for SQL injection prevention
+        /// Validates and sanitizes column name for SQL injection prevention.
         /// </summary>
-        /// <param name="columnName">Column name to validate</param>
-        /// <param name="allowedColumns">List of allowed column names</param>
-        /// <returns>True if column name is safe</returns>
+        /// <param name="columnName">Column name to validate.</param>
+        /// <param name="allowedColumns">List of allowed column names.</param>
+        /// <returns>True if column name is safe.</returns>
         public static bool IsValidColumnName(string columnName, IEnumerable<string> allowedColumns)
         {
             if (string.IsNullOrWhiteSpace(columnName))
                 return false;
 
             // Check if column name contains only alphanumeric, underscore, and dot
-            if (!System.Text.RegularExpressions.Regex.IsMatch(columnName, @"^[a-zA-Z0-9_.]+$"))
+            if (!Regex.IsMatch(columnName, @"^[a-zA-Z0-9_.]+$"))
                 return false;
 
             // Check if column is in allowed list
@@ -185,10 +190,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Sanitizes search term for LIKE queries
+        /// Sanitizes search term for LIKE queries.
         /// </summary>
-        /// <param name="searchTerm">Search term to sanitize</param>
-        /// <returns>Sanitized search term</returns>
+        /// <param name="searchTerm">Search term to sanitize.</param>
+        /// <returns>Sanitized search term string.</returns>
         public static string SanitizeSearchTerm(string? searchTerm)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
@@ -202,10 +207,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Escapes SQL identifier (column/table name) to prevent SQL injection
+        /// Escapes SQL identifier (column/table name) to prevent SQL injection.
         /// </summary>
-        /// <param name="identifier">SQL identifier to escape</param>
-        /// <returns>Escaped identifier safe for SQL queries</returns>
+        /// <param name="identifier">SQL identifier to escape.</param>
+        /// <returns>Escaped identifier safe for SQL queries string.</returns>
         public static string EscapeSqlIdentifier(string? identifier)
         {
             if (string.IsNullOrWhiteSpace(identifier))
@@ -213,7 +218,7 @@ namespace UniManage.Core.Utilities
 
             // Remove any characters that are not alphanumeric or underscore
             // This prevents SQL injection through column names
-            var sanitized = System.Text.RegularExpressions.Regex.Replace(
+            var sanitized = Regex.Replace(
                 identifier,
                 @"[^a-zA-Z0-9_]",
                 string.Empty);

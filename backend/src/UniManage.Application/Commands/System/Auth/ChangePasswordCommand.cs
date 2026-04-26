@@ -16,6 +16,9 @@ namespace UniManage.Application.Commands.System.Auth
     /// </summary>
     public sealed class ChangePasswordCommand : BaseCommand, IRequest<ApiResponse<bool>>
     {
+        [Newtonsoft.Json.JsonIgnore]
+        public string Username { get; set; } = string.Empty;
+
         /// <summary>
         /// Mật khẩu cũ
         /// </summary>
@@ -74,21 +77,9 @@ namespace UniManage.Application.Commands.System.Auth
     {
         public async Task<ApiResponse<bool>> Handle(ChangePasswordCommand request, CancellationToken ct)
         {
-            var username = request.HeaderInfo.Username ?? string.Empty;
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.HeaderInfo.Username), username),
-                    new CoreParamModel(nameof(request.OldPassword), StringHelper.MaskSensitiveData(request.OldPassword))
-                }
-            };
+            var username = request.Username ?? string.Empty;
 
-            var dbContext = new DbContext(openTransaction: true);
-            try
-            {
-                using (dbContext)
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     // Get current user with password
                     var getUserSql = @"
                         SELECT TOP 1
@@ -106,8 +97,6 @@ namespace UniManage.Application.Commands.System.Auth
                     if (user == null)
                     {
                         var errorResponse = ResponseHelper.Error<bool>(CoreResource.auth_userNotFound);
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = "User not found in database";
                         return errorResponse;
                     }
 
@@ -115,8 +104,6 @@ namespace UniManage.Application.Commands.System.Auth
                     if (!PasswordHelper.VerifyPassword(request.OldPassword, user.Password))
                     {
                         var errorResponse = ResponseHelper.Error<bool>(CoreResource.auth_oldPasswordIncorrect);
-                        log.ReturnCode = errorResponse.ReturnCode;
-                        log.Message = "Invalid old password provided";
                         return errorResponse;
                     }
 
@@ -141,27 +128,10 @@ namespace UniManage.Application.Commands.System.Auth
                         },
                         ct);
 
-                    await dbContext.CommitAsync();
+                    
 
                     var response = ResponseHelper.Success(true, CoreResource.auth_passwordChanged);
-                    log.Result = response;
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
                     return response;
-                }
-            }
-            catch (Exception ex)
-            {
-                await dbContext.RollbackAsync();
-                log.IsException = 1;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                return ResponseHelper.Error<bool>(CoreResource.common_error);
-            }
-            finally
-            {
-                UniLogManager.WriteApiLog(log);
-            }
         }
 
         private class UserDto
@@ -172,3 +142,5 @@ namespace UniManage.Application.Commands.System.Auth
         }
     }
 }
+
+

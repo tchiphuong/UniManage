@@ -44,18 +44,9 @@ namespace UniManage.Application.Commands.HR.Salaries
     {
         public async Task<ApiResponse<DeleteSalaryCommand.Response>> Handle(DeleteSalaryCommand request, CancellationToken ct)
         {
-            var log = new CoreLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<CoreParamModel>
-                {
-                    new CoreParamModel(nameof(request.Ids), string.Join(", ", request.Ids))
-                }
-            };
+            
 
-            using (var dbContext = new DbContext(openTransaction: true))
-            {
-                try
-                {
+            using var dbContext = new DbContext(openTransaction: true);
                     await dbContext.ExecuteAsync(
                         "DELETE FROM hr_salary_history WHERE SalaryId IN @Ids",
                         new { Ids = request.Ids },
@@ -66,33 +57,15 @@ namespace UniManage.Application.Commands.HR.Salaries
                         new { Ids = request.Ids },
                         ct);
 
-                    await dbContext.CommitAsync();
+                    
 
                     var responseData = new DeleteSalaryCommand.Response { Success = true, DeletedCount = deletedCount };
-                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.crud_deleteSuccess, deletedCount));
-
-                    log.Result = response.Data;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-                catch (Exception ex)
-                {
-                    await dbContext.RollbackAsync();
-                    UniLogger.Error($"Error deleting salaries: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<DeleteSalaryCommand.Response>(CoreResource.common_exceptionOccurred);
-                    log.Message = ex.ToString();
-                    log.IsException = 1;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
-
-                    return response;
-                }
-            }
+                    var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_deleteSuccess, deletedCount));
+return response;
         }
     }
 
     #endregion
 }
+
+

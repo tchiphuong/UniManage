@@ -64,3 +64,8 @@ public class ApiResponse<T>
         };
     }
 }
+
+/// <summary>
+/// Phản hồi API có phân trang, viết tắt của ApiResponse<PagedResult<T>>
+/// </summary>
+public class PagedResponse<T> : ApiResponse<PagedResult<T>> { }

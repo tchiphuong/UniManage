@@ -82,9 +82,9 @@ namespace UniManage.Core.Logging
             using (LogContext.PushProperty("Status", logData.ReturnCode))
             using (LogContext.PushProperty("ExecutionTime", "0")) // CoreLogModel 'ms' property?
             {
-                var message = logData.Message ?? (logData.IsException == 1 ? "Exception occurred" : "Success");
+                var message = logData.Message ?? (logData.IsException ? "Exception occurred" : "Success");
                 
-                if (logData.IsException == 1)
+                if (logData.IsException)
                 {
                     Log.Error(message);
                 }

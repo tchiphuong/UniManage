@@ -75,7 +75,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
                         return notFoundResponse;
                     }
 
-                    var response = ResponseHelper.Success(workShift, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(workShift, CoreResource.common_getSuccess);
                     log.Result = workShift;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
@@ -88,7 +88,7 @@ namespace UniManage.Application.Queries.HR.WorkShifts
                     var response = ResponseHelper.Error<GetWorkShiftByCodeQuery.Response>(CoreResource.common_exceptionOccurred);
 
                     log.Message = ex.ToString();
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.ReturnCode = response.ReturnCode;
                     UniLogManager.WriteApiLog(log);
 

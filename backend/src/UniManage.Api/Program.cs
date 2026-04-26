@@ -17,6 +17,7 @@ builder.Configuration.SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
+UniManage.Core.Utilities.ConfigHelper.Configuration = builder.Configuration;
 
 // Build connection string from configuration
 var dbSettings = builder.Configuration.GetSection("Database");
@@ -87,8 +88,10 @@ builder.Services.AddHttpClient("IdentityServer", client =>
 });
 
 // Health Checks
+var idpAuthority = builder.Configuration["IdentityServer:Authority"] ?? "http://localhost:5000";
 builder.Services.AddHealthChecks()
-    .AddSqlServer(connectionString, name: "Database", failureStatus: HealthStatus.Unhealthy);
+    .AddSqlServer(connectionString, name: "Database", tags: new[] { "ready" })
+    .AddUrlGroup(new Uri($"{idpAuthority}/.well-known/openid-configuration"), name: "IdentityServer", tags: new[] { "ready" });
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>
@@ -434,7 +437,15 @@ app.UseAuthorization();
 // 14. Map Controllers
 app.MapControllers();
 
-// 15. Health Check Endpoint
-app.MapHealthChecks("/health");
+// 15. Health Check Endpoints
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false // Liveness: Chỉ cần API rớt vào endpoint này là tính sống
+});
+
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready") // Readiness: Phải connect được DB và Idp
+});
 
 app.Run();

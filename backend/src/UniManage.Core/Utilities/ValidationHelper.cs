@@ -1,11 +1,14 @@
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using System.ComponentModel.DataAnnotations;
 using FluentValidation.Results;
 using UniManage.Model.Common;
 
 namespace UniManage.Core.Utilities
 {
     /// <summary>
-    /// Common validation utility functions
+    /// Shared validation utility functions.
     /// </summary>
     public static class ValidationHelper
     {
@@ -18,10 +21,10 @@ namespace UniManage.Core.Utilities
             RegexOptions.Compiled);
 
         /// <summary>
-        /// Validate email format
+        /// Validates if a string matches a standard email format.
         /// </summary>
-        /// <param name="email">Email to validate</param>
-        /// <returns>True if valid email format</returns>
+        /// <param name="email">Email string to validate.</param>
+        /// <returns>True if the email format is valid.</returns>
         public static bool IsValidEmail(string? email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -34,10 +37,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Validate Vietnamese phone number format
+        /// Validates if a string matches the Vietnamese phone number format.
         /// </summary>
-        /// <param name="phone">Phone number to validate</param>
-        /// <returns>True if valid phone format</returns>
+        /// <param name="phone">Phone number string to validate.</param>
+        /// <returns>True if the phone format is valid.</returns>
         public static bool IsValidPhoneNumber(string? phone)
         {
             if (string.IsNullOrWhiteSpace(phone))
@@ -50,11 +53,11 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Check if string contains only alphanumeric characters and allowed special chars
+        /// Checks if a string contains only alphanumeric characters and allowed special characters.
         /// </summary>
-        /// <param name="input">String to validate</param>
-        /// <param name="allowedSpecialChars">Allowed special characters (default: underscore, dash)</param>
-        /// <returns>True if valid</returns>
+        /// <param name="input">Input string to validate.</param>
+        /// <param name="allowedSpecialChars">Allowed special characters (default: underscore, dash).</param>
+        /// <returns>True if the string is valid alphanumeric.</returns>
         public static bool IsAlphanumeric(string? input, string allowedSpecialChars = "_-")
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -66,10 +69,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Validate user code format (alphanumeric, 3-50 chars)
+        /// Validates the format for a user code (3-50 alphanumeric characters).
         /// </summary>
-        /// <param name="userCode">User code to validate</param>
-        /// <returns>True if valid user code</returns>
+        /// <param name="userCode">User code string to validate.</param>
+        /// <returns>True if the user code is valid.</returns>
         public static bool IsValidUserCode(string? userCode)
         {
             if (string.IsNullOrWhiteSpace(userCode))
@@ -82,10 +85,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Validate employee code format
+        /// Validates the format for an employee code.
         /// </summary>
-        /// <param name="employeeCode">Employee code to validate</param>
-        /// <returns>True if valid employee code</returns>
+        /// <param name="employeeCode">Employee code string to validate.</param>
+        /// <returns>True if the employee code is valid.</returns>
         public static bool IsValidEmployeeCode(string? employeeCode)
         {
             if (string.IsNullOrWhiteSpace(employeeCode))
@@ -98,12 +101,12 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Check if string length is within range
+        /// Checks if the length of a string is within the specified range.
         /// </summary>
-        /// <param name="input">String to check</param>
-        /// <param name="minLength">Minimum length</param>
-        /// <param name="maxLength">Maximum length</param>
-        /// <returns>True if length is valid</returns>
+        /// <param name="input">Input string to check.</param>
+        /// <param name="minLength">Minimum required length.</param>
+        /// <param name="maxLength">Maximum allowed length.</param>
+        /// <returns>True if the length is within range.</returns>
         public static bool IsValidLength(string? input, int minLength, int maxLength)
         {
             if (string.IsNullOrEmpty(input))
@@ -113,10 +116,10 @@ namespace UniManage.Core.Utilities
         }
 
         /// <summary>
-        /// Normalize string (trim, remove extra spaces)
+        /// Normalizes a string by trimming whitespace and removing extra inner spaces.
         /// </summary>
-        /// <param name="input">Input string</param>
-        /// <returns>Normalized string</returns>
+        /// <param name="input">Input string to normalize.</param>
+        /// <returns>The normalized string instance.</returns>
         public static string? NormalizeString(string? input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -125,13 +128,11 @@ namespace UniManage.Core.Utilities
             return Regex.Replace(input.Trim(), @"\s+", " ");
         }
 
-
-
         /// <summary>
-        /// Chuyển danh sách ValidationFailure thành List<FieldErrorModel> gom nhiều lỗi theo field.
+        /// Converts a list of ValidationFailures into a list of FieldErrorModels.
         /// </summary>
-        /// <param name="failures">Danh sách ValidationFailure</param>
-        /// <returns>Danh sách FieldErrorModel với nhiều message trên 1 field</returns>
+        /// <param name="failures">Collection of failures from FluentValidation.</param>
+        /// <returns>A list of models containing mapped field errors.</returns>
         public static List<FieldErrorModel> ToFieldErrorModels(this IList<ValidationFailure> failures)
         {
             if (failures == null || failures.Count == 0)
@@ -141,6 +142,47 @@ namespace UniManage.Core.Utilities
                 .GroupBy(f => f.PropertyName)
                 .Select(g => new FieldErrorModel(g.Key, g.Select(f => f.ErrorMessage).ToList()))
                 .ToList();
+        }
+        /// <summary>
+        /// Gets the maximum length of a property from StringLength or MaxLength attributes using Lambda / 
+        /// Lấy độ dài tối đa của thuộc tính từ attribute StringLength hoặc MaxLength dùng Lambda
+        /// </summary>
+        /// <typeparam name="T">Entity class type / Kiểu lớp thực thể</typeparam>
+        /// <param name="propertyLambda">Lambda expression (e.g., x => x.Username)</param>
+        /// <returns>Maximum length or int.MaxValue if not defined / Độ dài tối đa hoặc int.MaxValue nếu không có định nghĩa</returns>
+        public static int GetMaxLength<T>(Expression<Func<T, object?>> propertyLambda)
+        {
+            MemberExpression? member = propertyLambda.Body as MemberExpression;
+            if (member == null && propertyLambda.Body is UnaryExpression unary)
+                member = unary.Operand as MemberExpression;
+
+            string? propertyName = member?.Member.Name;
+            if (string.IsNullOrEmpty(propertyName)) return int.MaxValue;
+
+            return GetMaxLength<T>(propertyName);
+        }
+
+        /// <summary>
+        /// Gets the maximum length of a property from StringLength or MaxLength attributes / 
+        /// Lấy độ dài tối đa của thuộc tính từ attribute StringLength hoặc MaxLength
+        /// </summary>
+        /// <typeparam name="T">Entity class type / Kiểu lớp thực thể</typeparam>
+        /// <param name="propertyName">Property name / Tên thuộc tính</param>
+        /// <returns>Maximum length or int.MaxValue if not defined / Độ dài tối đa hoặc int.MaxValue nếu không có định nghĩa</returns>
+        public static int GetMaxLength<T>(string propertyName)
+        {
+            PropertyInfo? property = typeof(T).GetProperty(propertyName);
+            if (property == null) return int.MaxValue;
+
+            // Try StringLengthAttribute
+            var stringLength = property.GetCustomAttribute<StringLengthAttribute>();
+            if (stringLength is not null) return stringLength.MaximumLength;
+
+            // Try MaxLengthAttribute
+            var maxLength = property.GetCustomAttribute<MaxLengthAttribute>();
+            if (maxLength is not null) return maxLength.Length;
+
+            return int.MaxValue;
         }
     }
 }

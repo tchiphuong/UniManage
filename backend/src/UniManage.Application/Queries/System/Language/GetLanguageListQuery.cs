@@ -92,7 +92,7 @@ public sealed class GetLanguageListQueryHandler : IRequestHandler<GetLanguageLis
                 response = ResponseHelper.Error<PagedResult<GetLanguageListQuery.Response>>(CoreResource.common_exceptionOccurred);
 
                 logData.Message = ex.ToString();
-                logData.IsException = 1;
+                logData.IsException = true;
                 logData.ReturnCode = response.ReturnCode;
             }
         }

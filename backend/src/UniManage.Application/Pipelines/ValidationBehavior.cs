@@ -83,22 +83,6 @@ namespace UniManage.Application.Pipelines
 
                     return (TResponse)response!;
                 }
-
-                // ApiResponse<T> (kế thừa ApiResponse<PagedResult<T>>)
-                if (genericType == typeof(ApiResponse<>))
-                {
-                    var dataType = responseType.GetGenericArguments()[0];
-                    var ApiResponseType = typeof(ApiResponse<>).MakeGenericType(dataType);
-
-                    var response = Activator.CreateInstance(ApiResponseType);
-
-                    ApiResponseType.GetProperty(nameof(ApiResponse<object>.ReturnCode))!.SetValue(response, CoreApiReturnCode.InvalidData);
-                    ApiResponseType.GetProperty(nameof(ApiResponse<object>.Message))!.SetValue(response, "Validation failed");
-                    ApiResponseType.GetProperty(nameof(ApiResponse<object>.Errors))!.SetValue(response, fieldErrors);
-                    ApiResponseType.GetProperty(nameof(ApiResponse<object>.Data))!.SetValue(response, null);
-
-                    return (TResponse)response!;
-                }
             }
 
             // Fallback: throw ValidationException nếu không match pattern

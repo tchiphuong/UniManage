@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using UniManage.Api.Authorization;
 using UniManage.Application.Commands.HR.Salaries;
 using UniManage.Application.Queries.HR.Salaries;
+using UniManage.Core.Constant;
 using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 
@@ -25,6 +27,7 @@ namespace UniManage.Api.Controllers.HR
         #region GET: /api/v1/salaries
 
         [HttpGet]
+        [PermissionAuthorize(CoreFunction.HrSalary, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<PagedResult<GetSalaryListQuery.Response>>>> GetList([FromQuery] GetSalaryListQuery query, CancellationToken ct)
         {
             query ??= new GetSalaryListQuery();
@@ -38,6 +41,7 @@ namespace UniManage.Api.Controllers.HR
         #region GET: /api/v1/salaries/{id}
 
         [HttpGet("{id}")]
+        [PermissionAuthorize(CoreFunction.HrSalary, CoreAction.View)]
         public async Task<ActionResult<ApiResponse<GetSalaryByIdQuery.Response>>> GetById(int id, CancellationToken ct)
         {
             var query = new GetSalaryByIdQuery { Id = id };
@@ -51,6 +55,7 @@ namespace UniManage.Api.Controllers.HR
         #region POST: /api/v1/salaries
 
         [HttpPost]
+        [PermissionAuthorize(CoreFunction.HrSalary, CoreAction.Create)]
         public async Task<ActionResult<ApiResponse<CreateSalaryCommand.Response>>> Create([FromBody] CreateSalaryCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;
@@ -63,6 +68,7 @@ namespace UniManage.Api.Controllers.HR
         #region PUT: /api/v1/salaries/{id}
 
         [HttpPut("{id}")]
+        [PermissionAuthorize(CoreFunction.HrSalary, CoreAction.Update)]
         public async Task<ActionResult<ApiResponse<UpdateSalaryCommand.Response>>> Update(int id, [FromBody] UpdateSalaryCommand command, CancellationToken ct)
         {
             if (id != command.Id)
@@ -79,6 +85,7 @@ namespace UniManage.Api.Controllers.HR
         #region DELETE: /api/v1/salaries
 
         [HttpDelete]
+        [PermissionAuthorize(CoreFunction.HrSalary, CoreAction.Delete)]
         public async Task<ActionResult<ApiResponse<DeleteSalaryCommand.Response>>> Delete([FromBody] DeleteSalaryCommand command, CancellationToken ct)
         {
             command.HeaderInfo = HeaderInfo;

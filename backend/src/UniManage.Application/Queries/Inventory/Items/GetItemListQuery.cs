@@ -8,6 +8,7 @@ using UniManage.Core.Utilities;
 using UniManage.Model.Common;
 using UniManage.Model.Common;
 using UniManage.Resource;
+using UniManage.Core.Constant;
 
 namespace UniManage.Application.Queries.Inventory.Items
 {
@@ -184,27 +185,25 @@ namespace UniManage.Application.Queries.Inventory.Items
                         }
                     };
 
-                    var response = ResponseHelper.Success(result, CoreResource.crud_getSuccess);
+                    var response = ResponseHelper.Success(result, CoreResource.common_getSuccess);
 
                     log.Result = result;
                     log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
-                    UniLogManager.WriteApiLog(log);
+                    log.Message = "Get item list success";
 
                     return response;
                 }
                 catch (Exception ex)
                 {
-                    UniLogger.Error($"Error retrieving items: {ex.Message}", ex);
-
-                    var response = ResponseHelper.Error<PagedResult<GetItemListQuery.Result>>("Error occurred while retrieving items");
-
-                    log.IsException = 1;
+                    log.IsException = true;
                     log.Message = ex.Message;
-                    log.ReturnCode = response.ReturnCode;
-                    UniLogManager.WriteApiLog(log);
+                    log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
 
-                    return response;
+                    return ResponseHelper.Error<PagedResult<GetItemListQuery.Result>>(CoreResource.common_error);
+                }
+                finally
+                {
+                    UniLogManager.WriteApiLog(log);
                 }
             }
         }

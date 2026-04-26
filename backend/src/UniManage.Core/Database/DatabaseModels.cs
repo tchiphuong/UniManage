@@ -11,7 +11,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_accounts")]
     
-    public class ac_accounts
+    public partial class ac_accounts
     {
         [Key]
         [Required]
@@ -88,7 +88,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_bank_accounts")]
     
-    public class ac_bank_accounts
+    public partial class ac_bank_accounts
     {
         [Key]
         [Required]
@@ -156,7 +156,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_bank_transactions")]
     
-    public class ac_bank_transactions
+    public partial class ac_bank_transactions
     {
         [Key]
         [Required]
@@ -216,7 +216,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_depreciation_schedule")]
     
-    public class ac_depreciation_schedule
+    public partial class ac_depreciation_schedule
     {
         [Key]
         [Required]
@@ -277,7 +277,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_fiscal_periods")]
     
-    public class ac_fiscal_periods
+    public partial class ac_fiscal_periods
     {
         [Key]
         [Required]
@@ -336,7 +336,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_fiscal_years")]
     
-    public class ac_fiscal_years
+    public partial class ac_fiscal_years
     {
         [Key]
         [Required]
@@ -381,7 +381,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_fixed_assets")]
     
-    public class ac_fixed_assets
+    public partial class ac_fixed_assets
     {
         [Key]
         [Required]
@@ -449,7 +449,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_journal_entries")]
     
-    public class ac_journal_entries
+    public partial class ac_journal_entries
     {
         [Key]
         [Required]
@@ -527,7 +527,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ac_journal_entry_lines")]
     
-    public class ac_journal_entry_lines
+    public partial class ac_journal_entry_lines
     {
         [Key]
         [Required]
@@ -589,7 +589,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ad_countries")]
     
-    public class ad_countries
+    public partial class ad_countries
     {
         [Key]
         [Required]
@@ -657,7 +657,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ad_provinces")]
     
-    public class ad_provinces
+    public partial class ad_provinces
     {
         [Key]
         [Required]
@@ -719,7 +719,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ad_wards")]
     
-    public class ad_wards
+    public partial class ad_wards
     {
         [Key]
         [Required]
@@ -775,7 +775,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_attendance")]
     
-    public class hr_attendance
+    public partial class hr_attendance
     {
         [Key]
         [Required]
@@ -815,7 +815,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_departments")]
     
-    public class hr_departments
+    public partial class hr_departments
     {
         [Key]
         [Required]
@@ -860,7 +860,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_employee_shifts")]
     
-    public class hr_employee_shifts
+    public partial class hr_employee_shifts
     {
         [Key]
         [Required]
@@ -897,7 +897,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_employees")]
     
-    public class hr_employees
+    public partial class hr_employees
     {
         [Key]
         [Required]
@@ -992,7 +992,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_positions")]
     
-    public class hr_positions
+    public partial class hr_positions
     {
         [Key]
         [Required]
@@ -1032,7 +1032,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_salaries")]
     
-    public class hr_salaries
+    public partial class hr_salaries
     {
         [Key]
         [Required]
@@ -1072,7 +1072,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_salary_history")]
     
-    public class hr_salary_history
+    public partial class hr_salary_history
     {
         [Key]
         [Required]
@@ -1109,7 +1109,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("hr_work_shifts")]
     
-    public class hr_work_shifts
+    public partial class hr_work_shifts
     {
         [Key]
         [Required]
@@ -1143,7 +1143,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("is_api_resources")]
     
-    public class is_api_resources
+    public partial class is_api_resources
     {
         [Key]
         [Required]
@@ -1174,7 +1174,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("is_api_scopes")]
     
-    public class is_api_scopes
+    public partial class is_api_scopes
     {
         [Key]
         [Required]
@@ -1213,7 +1213,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("is_clients")]
     
-    public class is_clients
+    public partial class is_clients
     {
         [Key]
         [Required]
@@ -1271,7 +1271,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("is_device_codes")]
     
-    public class is_device_codes
+    public partial class is_device_codes
     {
         [Key]
         [Required]
@@ -1304,7 +1304,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("is_identity_resources")]
     
-    public class is_identity_resources
+    public partial class is_identity_resources
     {
         [Key]
         [Required]
@@ -1343,7 +1343,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("is_persisted_grants")]
     
-    public class is_persisted_grants
+    public partial class is_persisted_grants
     {
         [Key]
         [Required]
@@ -1376,7 +1376,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("is_server_side_sessions")]
     
-    public class is_server_side_sessions
+    public partial class is_server_side_sessions
     {
         [Key]
         [Required]
@@ -1408,7 +1408,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_brand")]
     
-    public class it_item_brand
+    public partial class it_item_brand
     {
         [Key]
         [Required]
@@ -1436,7 +1436,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_category")]
     
-    public class it_item_category
+    public partial class it_item_category
     {
         [Key]
         [Required]
@@ -1473,7 +1473,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_color")]
     
-    public class it_item_color
+    public partial class it_item_color
     {
         [Key]
         [Required]
@@ -1498,7 +1498,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_details")]
     
-    public class it_item_details
+    public partial class it_item_details
     {
         [Key]
         [Required]
@@ -1542,7 +1542,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_image")]
     
-    public class it_item_image
+    public partial class it_item_image
     {
         [Key]
         [Required]
@@ -1577,7 +1577,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_inventory")]
     
-    public class it_item_inventory
+    public partial class it_item_inventory
     {
         [Key]
         [Required]
@@ -1608,7 +1608,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_price")]
     
-    public class it_item_price
+    public partial class it_item_price
     {
         [Key]
         [Required]
@@ -1639,7 +1639,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_review")]
     
-    public class it_item_review
+    public partial class it_item_review
     {
         [Key]
         [Required]
@@ -1670,7 +1670,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_size")]
     
-    public class it_item_size
+    public partial class it_item_size
     {
         [Key]
         [Required]
@@ -1707,7 +1707,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_tag")]
     
-    public class it_item_tag
+    public partial class it_item_tag
     {
         [Key]
         [Required]
@@ -1729,7 +1729,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_item_tag_map")]
     
-    public class it_item_tag_map
+    public partial class it_item_tag_map
     {
         [Key]
         [Required]
@@ -1760,7 +1760,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("it_items")]
     
-    public class it_items
+    public partial class it_items
     {
         [Key]
         [Required]
@@ -1901,7 +1901,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_bom")]
     
-    public class mf_bom
+    public partial class mf_bom
     {
         [Key]
         [Required]
@@ -1978,7 +1978,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_bom_items")]
     
-    public class mf_bom_items
+    public partial class mf_bom_items
     {
         [Key]
         [Required]
@@ -2046,7 +2046,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_bom_operations")]
     
-    public class mf_bom_operations
+    public partial class mf_bom_operations
     {
         [Key]
         [Required]
@@ -2115,7 +2115,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_cost_actuals")]
     
-    public class mf_cost_actuals
+    public partial class mf_cost_actuals
     {
         [Key]
         [Required]
@@ -2178,7 +2178,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_cost_standards")]
     
-    public class mf_cost_standards
+    public partial class mf_cost_standards
     {
         [Key]
         [Required]
@@ -2229,7 +2229,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_material_issues")]
     
-    public class mf_material_issues
+    public partial class mf_material_issues
     {
         [Key]
         [Required]
@@ -2292,7 +2292,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_production_order_materials")]
     
-    public class mf_production_order_materials
+    public partial class mf_production_order_materials
     {
         [Key]
         [Required]
@@ -2365,7 +2365,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_production_order_operations")]
     
-    public class mf_production_order_operations
+    public partial class mf_production_order_operations
     {
         [Key]
         [Required]
@@ -2445,7 +2445,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_production_orders")]
     
-    public class mf_production_orders
+    public partial class mf_production_orders
     {
         [Key]
         [Required]
@@ -2556,7 +2556,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_production_receipts")]
     
-    public class mf_production_receipts
+    public partial class mf_production_receipts
     {
         [Key]
         [Required]
@@ -2617,7 +2617,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_qc_inspection_results")]
     
-    public class mf_qc_inspection_results
+    public partial class mf_qc_inspection_results
     {
         [Key]
         [Required]
@@ -2663,7 +2663,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_qc_inspections")]
     
-    public class mf_qc_inspections
+    public partial class mf_qc_inspections
     {
         [Key]
         [Required]
@@ -2722,7 +2722,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_work_center_schedules")]
     
-    public class mf_work_center_schedules
+    public partial class mf_work_center_schedules
     {
         [Key]
         [Required]
@@ -2767,7 +2767,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("mf_work_centers")]
     
-    public class mf_work_centers
+    public partial class mf_work_centers
     {
         [Key]
         [Required]
@@ -2833,7 +2833,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ms_currencies")]
     
-    public class ms_currencies
+    public partial class ms_currencies
     {
         [Key]
         [Required]
@@ -2869,7 +2869,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("ms_units")]
     
-    public class ms_units
+    public partial class ms_units
     {
         [Key]
         [Required]
@@ -2899,7 +2899,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_goods_receipt_items")]
     
-    public class pr_goods_receipt_items
+    public partial class pr_goods_receipt_items
     {
         [Key]
         [Required]
@@ -2958,7 +2958,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_goods_receipts")]
     
-    public class pr_goods_receipts
+    public partial class pr_goods_receipts
     {
         [Key]
         [Required]
@@ -3014,7 +3014,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_purchase_order_items")]
     
-    public class pr_purchase_order_items
+    public partial class pr_purchase_order_items
     {
         [Key]
         [Required]
@@ -3087,7 +3087,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_purchase_orders")]
     
-    public class pr_purchase_orders
+    public partial class pr_purchase_orders
     {
         [Key]
         [Required]
@@ -3172,7 +3172,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_quotation_items")]
     
-    public class pr_quotation_items
+    public partial class pr_quotation_items
     {
         [Key]
         [Required]
@@ -3231,7 +3231,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_quotations")]
     
-    public class pr_quotations
+    public partial class pr_quotations
     {
         [Key]
         [Required]
@@ -3307,7 +3307,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_requisition_items")]
     
-    public class pr_requisition_items
+    public partial class pr_requisition_items
     {
         [Key]
         [Required]
@@ -3366,7 +3366,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_requisitions")]
     
-    public class pr_requisitions
+    public partial class pr_requisitions
     {
         [Key]
         [Required]
@@ -3442,7 +3442,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_rfq")]
     
-    public class pr_rfq
+    public partial class pr_rfq
     {
         [Key]
         [Required]
@@ -3504,7 +3504,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_rfq_items")]
     
-    public class pr_rfq_items
+    public partial class pr_rfq_items
     {
         [Key]
         [Required]
@@ -3564,7 +3564,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_rfq_suppliers")]
     
-    public class pr_rfq_suppliers
+    public partial class pr_rfq_suppliers
     {
         [Key]
         [Required]
@@ -3612,7 +3612,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_supplier_ratings")]
     
-    public class pr_supplier_ratings
+    public partial class pr_supplier_ratings
     {
         [Key]
         [Required]
@@ -3660,7 +3660,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("pr_suppliers")]
     
-    public class pr_suppliers
+    public partial class pr_suppliers
     {
         [Key]
         [Required]
@@ -3753,7 +3753,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sa_customers")]
     
-    public class sa_customers
+    public partial class sa_customers
     {
         [Key]
         [Required]
@@ -3791,7 +3791,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sa_order_items")]
     
-    public class sa_order_items
+    public partial class sa_order_items
     {
         [Key]
         [Required]
@@ -3829,7 +3829,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sa_orders")]
     
-    public class sa_orders
+    public partial class sa_orders
     {
         [Key]
         [Required]
@@ -3888,7 +3888,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sa_payments")]
     
-    public class sa_payments
+    public partial class sa_payments
     {
         [Key]
         [Required]
@@ -3927,7 +3927,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_actions")]
     
-    public class sy_actions
+    public partial class sy_actions
     {
         [Required]
         public int Id { get; set; }
@@ -3972,7 +3972,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_background_jobs")]
     
-    public class sy_background_jobs
+    public partial class sy_background_jobs
     {
         [Key]
         [Required]
@@ -4008,7 +4008,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_commons")]
     
-    public class sy_commons
+    public partial class sy_commons
     {
         [Key]
         [Required]
@@ -4052,7 +4052,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_configs")]
     
-    public class sy_configs
+    public partial class sy_configs
     {
         [Key]
         [Required]
@@ -4083,13 +4083,55 @@ namespace UniManage.Model.Entities
     }
     #endregion
 
+    #region sy_files
+    /// <summary>
+    /// Entity class for table sy_files
+    /// </summary>
+    [Table("sy_files")]
+    
+    public partial class sy_files
+    {
+        [Key]
+        [Required]
+        public long Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string FileCode { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string FileName { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string FilePath { get; set; }
+        [StringLength(50)]
+        public string FileType { get; set; }
+        [StringLength(10)]
+        public string FileExtension { get; set; }
+        [Required]
+        public long FileSize { get; set; }
+        [Required]
+        [Column(TypeName = "bit")]
+        public bool IsUsed { get; set; }
+        [StringLength(50)]
+        public string CreatedBy { get; set; }
+        [Required]
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; }
+        [StringLength(50)]
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public byte[] DataRowVersion { get; set; }
+    }
+    #endregion
+
     #region sy_function_mapping
     /// <summary>
     /// Entity class for table sy_function_mapping
     /// </summary>
     [Table("sy_function_mapping")]
     
-    public class sy_function_mapping
+    public partial class sy_function_mapping
     {
         [Key]
         [Required]
@@ -4129,7 +4171,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_functions")]
     
-    public class sy_functions
+    public partial class sy_functions
     {
         [Key]
         [Required]
@@ -4189,7 +4231,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_images")]
     
-    public class sy_images
+    public partial class sy_images
     {
         [Key]
         [Required]
@@ -4219,7 +4261,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_languages")]
     
-    public class sy_languages
+    public partial class sy_languages
     {
         [Key]
         [Required]
@@ -4293,7 +4335,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_menus")]
     
-    public class sy_menus
+    public partial class sy_menus
     {
         [Key]
         [Required]
@@ -4347,7 +4389,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_password_reset_tokens")]
     
-    public class sy_password_reset_tokens
+    public partial class sy_password_reset_tokens
     {
         [Key]
         [Required]
@@ -4379,7 +4421,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_refresh_tokens")]
     
-    public class sy_refresh_tokens
+    public partial class sy_refresh_tokens
     {
         [Key]
         [Required]
@@ -4425,7 +4467,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_resources")]
     
-    public class sy_resources
+    public partial class sy_resources
     {
         [Key]
         [Required]
@@ -4473,7 +4515,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_role_permissions")]
     
-    public class sy_role_permissions
+    public partial class sy_role_permissions
     {
         [Key]
         [Required]
@@ -4523,7 +4565,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_roles")]
     
-    public class sy_roles
+    public partial class sy_roles
     {
         [Key]
         [Required]
@@ -4568,7 +4610,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_token_revoked")]
     
-    public class sy_token_revoked
+    public partial class sy_token_revoked
     {
         [Key]
         [Required]
@@ -4601,7 +4643,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_tokens_management")]
     
-    public class sy_tokens_management
+    public partial class sy_tokens_management
     {
         [Key]
         [Required]
@@ -4638,7 +4680,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_user_roles")]
     [PrimaryKey(nameof(Username), nameof(RoleCode))]
-    public class sy_user_roles
+    public partial class sy_user_roles
     {
         [ReferencedKey(nameof(sy_users.Username))]
         [Required]
@@ -4672,7 +4714,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sy_users")]
     
-    public class sy_users
+    public partial class sy_users
     {
         [Key]
         [Required]
@@ -4687,6 +4729,8 @@ namespace UniManage.Model.Entities
         [ReferencedKey(nameof(sy_roles.Code))]
         [StringLength(50)]
         public string RoleCode { get; set; }
+        [StringLength(100)]
+        public string Email { get; set; }
         [StringLength(50)]
         public string Status { get; set; }
         [StringLength(50)]
@@ -4698,8 +4742,6 @@ namespace UniManage.Model.Entities
         public DateTime? UpdatedAt { get; set; }
         [Required]
         public byte[] RowVersion { get; set; }
-        [StringLength(100)]
-        public string Email { get; set; }
 
         /// <summary>
         /// Navigation property for hr_employees (EmployeeCode)
@@ -4745,7 +4787,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("sysdiagrams")]
     
-    public class sysdiagrams
+    public partial class sysdiagrams
     {
         [Required]
         [StringLength(128)]
@@ -4766,7 +4808,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("wf_approval_route")]
     
-    public class wf_approval_route
+    public partial class wf_approval_route
     {
         [Key]
         [Required]
@@ -4806,7 +4848,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("wf_approval_route_approver")]
     
-    public class wf_approval_route_approver
+    public partial class wf_approval_route_approver
     {
         [Key]
         [Required]
@@ -4847,7 +4889,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("wf_approval_route_level")]
     
-    public class wf_approval_route_level
+    public partial class wf_approval_route_level
     {
         [Key]
         [Required]
@@ -4892,7 +4934,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("wf_request")]
     
-    public class wf_request
+    public partial class wf_request
     {
         [Key]
         [Required]
@@ -4945,7 +4987,7 @@ namespace UniManage.Model.Entities
     /// </summary>
     [Table("wf_request_approval")]
     
-    public class wf_request_approval
+    public partial class wf_request_approval
     {
         [Key]
         [Required]

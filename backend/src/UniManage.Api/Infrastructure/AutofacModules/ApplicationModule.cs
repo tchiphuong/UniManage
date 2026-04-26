@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using UniManage.Application.Commands.System.Auth;
 using UniManage.Application.Services;
+using UniManage.Core.Services.Social;
 
 namespace UniManage.Api.Infrastructure.AutofacModules
 {
@@ -27,7 +28,16 @@ namespace UniManage.Api.Infrastructure.AutofacModules
                 .AsClosedTypesOf(typeof(IValidator<>))
                 .AsImplementedInterfaces();
 
-            // Register MediatR Pipeline Behaviors
+            // Register MediatR Pipeline Behaviors (Order matters: Outer -> Inner)
+            // 1. Logging Behavior (Bắt trọn Request/Response/Exception)
+            builder.RegisterGeneric(typeof(UniManage.Application.Pipelines.LoggingBehavior<,>))
+                .As(typeof(IPipelineBehavior<,>));
+
+            // 2. Transaction Behavior (Đóng/mở kết nối cho Command)
+            builder.RegisterGeneric(typeof(UniManage.Application.Pipelines.TransactionBehavior<,>))
+                .As(typeof(IPipelineBehavior<,>));
+
+            // 3. Validation Behavior (Kiểm tra dữ liệu trước khi vào Handler)
             builder.RegisterGeneric(typeof(UniManage.Application.Pipelines.ValidationBehavior<,>))
                 .As(typeof(IPipelineBehavior<,>));
 
@@ -38,6 +48,17 @@ namespace UniManage.Api.Infrastructure.AutofacModules
             // ===========================================
             builder.RegisterType<IdentityServerClient>()
                 .As<IIdentityServerClient>()
+                .SingleInstance();
+
+            // ===========================================
+            // [EXTENSIBILITY] Social Auth Architecture
+            // Strategy Pattern for multi-provider support
+            // ===========================================
+            builder.RegisterType<GoogleAuthProvider>().As<ISocialAuthProvider>().InstancePerDependency();
+            builder.RegisterType<FacebookAuthProvider>().As<ISocialAuthProvider>().InstancePerDependency();
+            
+            builder.RegisterType<SocialAuthProviderFactory>()
+                .AsSelf()
                 .SingleInstance();
         }
     }

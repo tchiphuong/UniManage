@@ -62,6 +62,105 @@ namespace UniManage.Api.Controllers.System
 
         #endregion
 
+        #region POST: /api/v1/auth/social-login
+
+        /// <summary>
+        /// Đăng nhập qua mạng xã hội (Google, Facebook)
+        /// </summary>
+        /// <param name="request">Social provider và token từ SDK</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Access token, refresh token và thông tin user</returns>
+        [HttpPost("social-login")]
+        [AllowAnonymous]
+        [EnableRateLimiting("LoginRateLimit")]
+        [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<LoginCommand.Response>>> SocialLogin([FromBody] SocialLoginCommand request, CancellationToken ct)
+        {
+            request ??= new();
+            request.HeaderInfo = HeaderInfo;
+
+            var response = await _mediator.Send(request, ct);
+
+            if (response.ReturnCode != 0)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        #endregion
+
+        #region POST: /api/v1/auth/biometric-challenge
+
+        /// <summary>
+        /// Lấy chuỗi challenge để ký sinh trắc học
+        /// </summary>
+        /// <param name="query">Thông tin username và deviceId</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Chuỗi ngẫu nhiên (nonce)</returns>
+        [HttpPost("biometric-challenge")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<string>>> GetBiometricChallenge([FromBody] GetBiometricChallengeQuery query, CancellationToken ct)
+        {
+            query ??= new();
+            query.HeaderInfo = HeaderInfo;
+            var response = await _mediator.Send(query, ct);
+            return Ok(response);
+        }
+
+        #endregion
+
+        #region POST: /api/v1/auth/biometric-login
+
+        /// <summary>
+        /// Đăng nhập bằng sinh trắc học (FaceID/Fingerprint)
+        /// </summary>
+        /// <param name="command">Chữ ký và challenge</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Access token và thông tin user</returns>
+        [HttpPost("biometric-login")]
+        [AllowAnonymous]
+        [EnableRateLimiting("LoginRateLimit")]
+        [ProducesResponseType(typeof(ApiResponse<LoginCommand.Response>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<LoginCommand.Response>>> BiometricLogin([FromBody] BiometricLoginCommand command, CancellationToken ct)
+        {
+            command ??= new();
+            command.HeaderInfo = HeaderInfo;
+            var response = await _mediator.Send(command, ct);
+
+            if (response.ReturnCode != 0)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        #endregion
+
+        #region POST: /api/v1/auth/biometric-register
+
+        /// <summary>
+        /// Đăng ký khóa sinh trắc học cho thiết bị
+        /// </summary>
+        /// <param name="command">Public Key và DeviceId</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Kết quả đăng ký</returns>
+        [HttpPost("biometric-register")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<bool>>> RegisterBiometric([FromBody] RegisterBiometricCommand command, CancellationToken ct)
+        {
+            command ??= new();
+            command.HeaderInfo = HeaderInfo;
+            
+            var response = await _mediator.Send(command, ct);
+            return Ok(response);
+        }
+
+        #endregion
+
         #region POST: /api/v1/auth/refresh
 
         /// <summary>
@@ -113,6 +212,27 @@ namespace UniManage.Api.Controllers.System
 
         #endregion
 
+        #region POST: /api/v1/auth/fcm-token
+
+        /// <summary>
+        /// Cập nhật FCM Token cho thiết bị
+        /// </summary>
+        /// <param name="request">DeviceId và FcmToken</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Kết quả cập nhật</returns>
+        [HttpPost("fcm-token")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<bool>>> UpdateFcmToken([FromBody] UpdateFcmTokenCommand request, CancellationToken ct)
+        {
+            request ??= new();
+            request.HeaderInfo = HeaderInfo;
+
+            var response = await _mediator.Send(request, ct);
+            return Ok(response);
+        }
+
+        #endregion
+
         #region POST: /api/v1/auth/change-password
 
         /// <summary>
@@ -128,7 +248,8 @@ namespace UniManage.Api.Controllers.System
         {
             request ??= new();
             request.HeaderInfo = HeaderInfo;
-
+            // [SECURITY] IDOR Fix: Username PHẢI lấy từ JWT claims, không từ client input
+            request.Username = this.Username;
             var response = await _mediator.Send(request, ct);
 
             if (response.ReturnCode != 0)
@@ -227,7 +348,7 @@ namespace UniManage.Api.Controllers.System
 
         #endregion
 
-        #region GET: /api/v1/auth/check-username/{username}
+        #region GET: /api/v1/auth/username/{username}
 
         /// <summary>
         /// Kiểm tra username có tồn tại
@@ -239,7 +360,7 @@ namespace UniManage.Api.Controllers.System
         // [SECURITY] Rate limit user enumeration endpoints (H9)
         // Prevents automated scanning of valid usernames
         // ===========================================
-        [HttpGet("check-username/{username}")]
+        [HttpGet("username/{username}")]
         [AllowAnonymous]
         [EnableRateLimiting("SensitiveRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<CheckUsernameExistsQuery.Result>), StatusCodes.Status200OK)]
@@ -254,7 +375,7 @@ namespace UniManage.Api.Controllers.System
 
         #endregion
 
-        #region GET: /api/v1/auth/check-email/{email}
+        #region GET: /api/v1/auth/email/{email}
 
         /// <summary>
         /// Kiểm tra email có tồn tại
@@ -262,7 +383,7 @@ namespace UniManage.Api.Controllers.System
         /// <param name="email">Email cần kiểm tra</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Email exists result</returns>
-        [HttpGet("check-email/{email}")]
+        [HttpGet("email/{email}")]
         [AllowAnonymous]
         [EnableRateLimiting("SensitiveRateLimit")]
         [ProducesResponseType(typeof(ApiResponse<CheckEmailExistsQuery.Result>), StatusCodes.Status200OK)]
