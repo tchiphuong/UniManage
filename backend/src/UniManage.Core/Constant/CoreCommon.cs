@@ -36,6 +36,16 @@
             /// </summary>
             public const string Sex = "Sex";
 
+            /// <summary>
+            /// Trạng thái công việc ERP
+            /// </summary>
+            public const string Taskstatus = "TaskStatus";
+
+            /// <summary>
+            /// Mức ưu tiên công việc ERP
+            /// </summary>
+            public const string Taskpriority = "TaskPriority";
+
         }
 
         public static class Value
@@ -221,6 +231,47 @@
                 /// Danh sách tất cả các giá trị (bao gồm cả Inactive)
                 /// </summary>
                 public static readonly List<string> AllWithInactive = new List<string> { Female, Male };
+            }
+
+            /// <summary>Trạng thái công việc ERP</summary>
+            public static class Taskstatus
+            {
+                /// <summary>Chưa bắt đầu</summary>
+                public const string Todo = "todo";
+
+                /// <summary>Đang thực hiện</summary>
+                public const string InProgress = "in_progress";
+
+                /// <summary>Hoàn thành</summary>
+                public const string Done = "done";
+
+                /// <summary>Đã hủy</summary>
+                public const string Cancelled = "cancelled";
+
+                /// <summary>Tất cả trạng thái hợp lệ</summary>
+                public static readonly List<string> All = new List<string> { Todo, InProgress, Done, Cancelled };
+
+                /// <summary>Chỉ những trạng thái cho phép xoá</summary>
+                public static readonly List<string> Deletable = new List<string> { Todo, Cancelled };
+            }
+
+            /// <summary>Mức ưu tiên công việc ERP</summary>
+            public static class Taskpriority
+            {
+                /// <summary>Thấp</summary>
+                public const string Low = "low";
+
+                /// <summary>Trung bình</summary>
+                public const string Medium = "medium";
+
+                /// <summary>Cao</summary>
+                public const string High = "high";
+
+                /// <summary>Khẩn cấp</summary>
+                public const string Urgent = "urgent";
+
+                /// <summary>Tất cả mức ưu tiên hợp lệ</summary>
+                public static readonly List<string> All = new List<string> { Low, Medium, High, Urgent };
             }
 
         }
