@@ -24,15 +24,15 @@ string connectionString = T4TemplateHelper.GetConnectionString(appSettingsPath);
 DatabaseSchemaReader reader = new DatabaseSchemaReader(connectionString);
 List<TableMetadata> tables = reader.ReadAll();
 GeneratedFileManager manager = new GeneratedFileManager(Host.TemplateFile);
-EntityFileBuilder builder = new EntityFileBuilder();
+ConfigurationFileBuilder builder = new ConfigurationFileBuilder();
 
 for (int i = 0; i < tables.Count; i++)
 {
     TableMetadata table = tables[i];
     string content = builder.Build(table);
-    manager.WriteFile(Path.Combine("Generated", "Entities", table.Name + ".generated.cs"), content);
+    manager.WriteFile(Path.Combine("Generated", "Configurations", table.Name + "Configuration.generated.cs"), content);
 }
 #>
-Multi-file entity generation completed.
+Multi-file configuration generation completed.
 Processed tables: <#= tables.Count #>
-Output folder: Database/Generated/Entities.
+Output folder: Database/Generated/Configurations.

@@ -6,6 +6,7 @@ using UniManage.Core.Constant;
 using UniManage.Model.Common;
 using UniManage.Model.Entities;
 using UniManage.Resource;
+using UniManage.Application.Pipelines;
 using DbContext = UniManage.Core.Database.DbContext;
 
 namespace UniManage.Application.Queries.System.User
@@ -15,12 +16,15 @@ namespace UniManage.Application.Queries.System.User
     /// <summary>
     /// Truy vấn lấy danh sách người dùng rút gọn cho các thành phần Combobox/Dropdown
     /// </summary>
-    public sealed class GetUserComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel<long>>>>
+    public sealed class GetUserComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxModel<long>>>>, ICacheable
     {
         /// <summary>
         /// Từ khóa tìm kiếm theo Username
         /// </summary>
         public string? Keyword { get; init; }
+
+        public string CacheKey => CacheHelper.BuildKey(string.Format(Core.Constant.CacheKeyConstant.System.ComboboxUsers, Keyword ?? "all"));
+        public int? CacheTTLMinutes => Core.Constant.CacheTimeConstant.Normal;
     }
 
     #endregion

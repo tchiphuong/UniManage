@@ -22,7 +22,7 @@ namespace UniManage.Application.Commands.System.User
         /// <summary>
         /// ID của người dùng cần được gán vai trò
         /// </summary>
-        public long UserId { get; set; }
+        public Guid UserUuid { get; set; }
 
         /// <summary>
         /// Mã vai trò cần gán
@@ -31,7 +31,7 @@ namespace UniManage.Application.Commands.System.User
 
         public sealed class Response
         {
-            public long UserId { get; init; }
+            public Guid UserUuid { get; init; }
             public string RoleCode { get; init; } = default!;
         }
     }
@@ -47,9 +47,9 @@ namespace UniManage.Application.Commands.System.User
     {
         public AssignUserRoleCommandValidator()
         {
-            RuleFor(x => x.UserId)
-                .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userId))
-                .MustAsync(async (id, cancel) => await IsUserExistsAsync(id))
+            RuleFor(x => x.UserUuid)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userId))
+                .MustAsync(async (uuid, cancel) => await IsUserExistsAsync(uuid))
                 .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
 
             RuleFor(x => x.RoleCode)
@@ -59,11 +59,11 @@ namespace UniManage.Application.Commands.System.User
                 .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_role));
         }
 
-        private static async Task<bool> IsUserExistsAsync(long userId)
+        private static async Task<bool> IsUserExistsAsync(Guid uuid)
         {
             using (var dbContext = new DbContext())
             {
-                return await dbContext.Set<sy_users>().AnyAsync(x => x.Id == userId);
+                return await dbContext.Set<sy_users>().AnyAsync(x => x.Uuid == uuid);
             }
         }
 
@@ -92,7 +92,7 @@ namespace UniManage.Application.Commands.System.User
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new(nameof(request.UserId), request.UserId),
+                    new(nameof(request.UserUuid), request.UserUuid.ToString()),
                     new(nameof(request.RoleCode), request.RoleCode)
                 }
             };
@@ -104,7 +104,7 @@ namespace UniManage.Application.Commands.System.User
                     try
                     {
                         var user = await dbContext.Set<sy_users>()
-                            .FirstOrDefaultAsync(u => u.Id == request.UserId, ct);
+                            .FirstOrDefaultAsync(u => u.Uuid == request.UserUuid, ct);
 
                         if (user == null)
                         {
@@ -146,7 +146,7 @@ namespace UniManage.Application.Commands.System.User
                         await dbContext.SaveChangesAsync(ct);
                         await dbContext.CommitAsync();
 
-                        var responseData = new AssignUserRoleCommand.Response { UserId = request.UserId, RoleCode = request.RoleCode };
+                        var responseData = new AssignUserRoleCommand.Response { UserUuid = request.UserUuid, RoleCode = request.RoleCode };
                         var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_role));
 
                         log.Result = responseData;

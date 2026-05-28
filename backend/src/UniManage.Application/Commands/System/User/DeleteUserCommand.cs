@@ -19,11 +19,11 @@ namespace UniManage.Application.Commands.System.User
     /// </summary>
     public sealed class DeleteUserCommand : BaseCommand, IRequest<ApiResponse<DeleteUserCommand.Response>>
     {
-        public List<long> Ids { get; init; } = new();
+        public List<Guid> Uuids { get; init; } = new();
 
         public sealed class Response
         {
-            public List<long> DeletedIds { get; init; } = new();
+            public List<Guid> DeletedUuids { get; init; } = new();
             public int Count { get; init; }
         }
     }
@@ -39,9 +39,9 @@ namespace UniManage.Application.Commands.System.User
     {
         public DeleteUserCommandValidator()
         {
-            RuleFor(x => x.Ids)
+            RuleFor(x => x.Uuids)
                 .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_userIdentity))
-                .Must(ids => ids != null && ids.All(id => id > 0)).WithMessage(CoreResource.validation_invalidId);
+                .Must(ids => ids != null && ids.All(id => id != Guid.Empty)).WithMessage(CoreResource.validation_invalidId);
         }
     }
 
@@ -60,7 +60,7 @@ namespace UniManage.Application.Commands.System.User
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new(nameof(request.Ids), string.Join(",", request.Ids))
+                    new(nameof(request.Uuids), string.Join(",", request.Uuids))
                 }
             };
 
@@ -72,7 +72,7 @@ namespace UniManage.Application.Commands.System.User
                     {
                         // Find users by Ids using EF Core
                         var users = await dbContext.Set<sy_users>()
-                            .Where(u => request.Ids.Contains(u.Id))
+                            .Where(u => request.Uuids.Contains(u.Uuid))
                             .ToListAsync(ct);
 
                         if (users.Count == 0)
@@ -94,9 +94,12 @@ namespace UniManage.Application.Commands.System.User
                         await dbContext.SaveChangesAsync(ct);
                         await dbContext.CommitAsync();
 
+                        // Xóa cache combobox user
+                        await CacheHelper.RemoveByPatternAsync(Core.Constant.CacheKeyConstant.System.ComboboxUsersPattern);
+
                         var responseData = new DeleteUserCommand.Response 
                         { 
-                            DeletedIds = users.Select(u => u.Id).ToList(),
+                            DeletedUuids = users.Select(u => u.Uuid).ToList(),
                             Count = users.Count 
                         };
                         var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_deleteSuccess, CoreResource.entity_user));

@@ -2,16 +2,16 @@
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.Data" #>
 <#@ assembly name="System.Data.Common" #>
-<#@ assembly name="Microsoft.Data.SqlClient" #>
+<#@ assembly name="System.Data" #>
 <#@ assembly name="Newtonsoft.Json" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Data" #>
 <#@ import namespace="System.IO" #>
-<#@ import namespace="Microsoft.Data.SqlClient" #>
+<#@ import namespace="System.Data.SqlClient" #>
 <#@ import namespace="Newtonsoft.Json.Linq" #>
-<#@ output extension=".cs" #>
+<#@ output extension=".cs" encoding="utf-8" #>
 <#
     // Đọc connection string từ appsettings.Development.json
     string projectPath = Host.ResolveAssemblyReference("$(ProjectDir)");

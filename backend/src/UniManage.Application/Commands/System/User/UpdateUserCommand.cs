@@ -18,7 +18,7 @@ namespace UniManage.Application.Commands.System.User
     /// </summary>
     public sealed class UpdateUserCommand : BaseCommand, IRequest<ApiResponse<UpdateUserCommand.Response>>
     {
-        public long Id { get; set; }
+        public Guid Uuid { get; set; }
         public string Email { get; init; } = default!;
         public string? EmployeeCode { get; init; }
         public string Status { get; init; } = default!;
@@ -26,7 +26,7 @@ namespace UniManage.Application.Commands.System.User
 
         public sealed class Response
         {
-            public long Id { get; init; }
+            public Guid Uuid { get; init; }
         }
     }
 
@@ -41,10 +41,10 @@ namespace UniManage.Application.Commands.System.User
     {
         public UpdateUserCommandValidator()
         {
-            RuleFor(x => x.Id)
+            RuleFor(x => x.Uuid)
                 .NotEmpty()
                 .WithMessage(string.Format(CoreResource.validation_required, CoreResource.user_userIdentity))
-                .MustAsync(async (id, cancel) => await IsUserExistsAsync(id))
+                .MustAsync(async (uuid, cancel) => await IsUserExistsAsync(uuid))
                 .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
 
             RuleFor(x => x.EmployeeCode)
@@ -73,11 +73,11 @@ namespace UniManage.Application.Commands.System.User
                 .WithMessage(string.Format(CoreResource.validation_required, "RowVersion"));
         }
 
-        private static async Task<bool> IsUserExistsAsync(long id)
+        private static async Task<bool> IsUserExistsAsync(Guid uuid)
         {
             using (var dbContext = new DbContext())
             {
-                return await dbContext.Set<sy_users>().AnyAsync(x => x.Id == id);
+                return await dbContext.Set<sy_users>().AnyAsync(x => x.Uuid == uuid);
             }
         }
 
@@ -105,7 +105,7 @@ namespace UniManage.Application.Commands.System.User
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new(nameof(request.Id), request.Id),
+                    new(nameof(request.Uuid), request.Uuid.ToString()),
                     new(nameof(request.Email), request.Email),
                     new(nameof(request.EmployeeCode), request.EmployeeCode),
                     new(nameof(request.Status), request.Status),
@@ -120,7 +120,7 @@ namespace UniManage.Application.Commands.System.User
                     try
                     {
                         var user = await dbContext.Set<sy_users>()
-                            .FirstOrDefaultAsync(u => u.Id == request.Id, ct);
+                            .FirstOrDefaultAsync(u => u.Uuid == request.Uuid, ct);
 
                         if (user == null)
                         {
@@ -148,7 +148,10 @@ namespace UniManage.Application.Commands.System.User
                         await dbContext.SaveChangesAsync(ct);
                         await dbContext.CommitAsync();
 
-                        var responseData = new UpdateUserCommand.Response { Id = user.Id };
+                        // Xóa cache combobox user vì thông tin hiển thị có thể bị đổi
+                        await CacheHelper.RemoveByPatternAsync(Core.Constant.CacheKeyConstant.System.ComboboxUsersPattern);
+
+                        var responseData = new UpdateUserCommand.Response { Uuid = user.Uuid };
                         var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_user));
 
                         log.Result = responseData;

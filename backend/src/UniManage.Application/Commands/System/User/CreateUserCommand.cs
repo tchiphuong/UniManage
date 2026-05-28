@@ -28,8 +28,8 @@ namespace UniManage.Application.Commands.System.User
 
         public sealed class Response
         {
-            public bool Success => Id > 0;
-            public long Id { get; init; } = default!;
+            public bool Success => Uuid != Guid.Empty;
+            public Guid Uuid { get; init; }
         }
     }
 
@@ -152,6 +152,7 @@ namespace UniManage.Application.Commands.System.User
 
                         var newUser = new sy_users
                         {
+                            Uuid = Guid.CreateVersion7(),
                             Username = request.Username,
                             Password = passwordHash,
                             Email = request.Email,
@@ -183,7 +184,10 @@ namespace UniManage.Application.Commands.System.User
 
                         await dbContext.CommitAsync();
 
-                        var responseData = new CreateUserCommand.Response { Id = newUser.Id };
+                        // Xóa cache combobox user vì danh sách đã thay đổi
+                        await CacheHelper.RemoveByPatternAsync(Core.Constant.CacheKeyConstant.System.ComboboxUsersPattern);
+
+                        var responseData = new CreateUserCommand.Response { Uuid = newUser.Uuid };
                         var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_user));
 
                         log.Result = responseData;

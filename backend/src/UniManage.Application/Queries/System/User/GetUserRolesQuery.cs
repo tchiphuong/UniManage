@@ -20,7 +20,7 @@ namespace UniManage.Application.Queries.System.User
         /// <summary>
         /// ID của người dùng cần lấy danh sách vai trò
         /// </summary>
-        public long Id { get; init; }
+        public Guid Uuid { get; init; }
     }
 
     /// <summary>
@@ -42,8 +42,8 @@ namespace UniManage.Application.Queries.System.User
     {
         public GetUserRolesQueryValidator()
         {
-            RuleFor(x => x.Id)
-                .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_required, "Id"));
+            RuleFor(x => x.Uuid)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, "Uuid"));
         }
     }
 
@@ -63,7 +63,7 @@ namespace UniManage.Application.Queries.System.User
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new(nameof(request.Id), request.Id.ToString())
+                    new(nameof(request.Uuid), request.Uuid.ToString())
                 }
             };
 
@@ -73,8 +73,8 @@ namespace UniManage.Application.Queries.System.User
                 {
                     // Bước 1: Kiểm tra người dùng có tồn tại trong hệ thống hay không
                     var userExists = await db.ExecuteScalarAsync<bool>(
-                        "SELECT CASE WHEN EXISTS(SELECT 1 FROM sy_users WHERE Id = @Id) THEN 1 ELSE 0 END",
-                        new { request.Id },
+                        "SELECT CASE WHEN EXISTS(SELECT 1 FROM sy_users WHERE Uuid = @Uuid) THEN 1 ELSE 0 END",
+                        new { request.Uuid },
                         cancellationToken: ct);
 
                     if (!userExists)
@@ -96,10 +96,10 @@ namespace UniManage.Application.Queries.System.User
                         FROM sy_user_roles ur
                         INNER JOIN sy_roles r ON ur.RoleCode = r.Code
                         INNER JOIN sy_users u ON ur.Username = u.Username
-                        WHERE u.Id = @Id
+                        WHERE u.Uuid = @Uuid
                         ORDER BY ur.CreatedAt
                         """,
-                        new { request.Id },
+                        new { request.Uuid },
                         cancellationToken: ct);
 
                     var result = roles.ToList();

@@ -15,7 +15,7 @@ namespace UniManage.Application.Commands.System.SystemConfigs
 
     public sealed class UpdateSystemConfigCommand : BaseCommand, IRequest<ApiResponse<bool>>
     {
-        public int Id { get; init; }
+        public Guid Uuid { get; set; }
         public string? ConfigValue { get; init; }
     }
 
@@ -27,9 +27,9 @@ namespace UniManage.Application.Commands.System.SystemConfigs
     {
         public UpdateSystemConfigValidator()
         {
-            RuleFor(x => x.Id)
+            RuleFor(x => x.Uuid)
                 .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, "Id"));
+                .WithMessage(string.Format(CoreResource.validation_required, "Uuid"));
         }
     }
 
@@ -45,7 +45,7 @@ namespace UniManage.Application.Commands.System.SystemConfigs
             {
                 Parameters = new List<CoreParamModel>
                 {
-                    new(nameof(request.Id), request.Id),
+                    new(nameof(request.Uuid), request.Uuid.ToString()),
                     new(nameof(request.ConfigValue), request.ConfigValue)
                 }
             };
@@ -55,7 +55,7 @@ namespace UniManage.Application.Commands.System.SystemConfigs
                 using var dbContext = new DbContext(openTransaction: true);
 
                 var config = await dbContext.Set<sy_configs>()
-                    .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                    .FirstOrDefaultAsync(x => x.Uuid == request.Uuid, ct);
 
                 if (config == null)
                 {

@@ -28,7 +28,7 @@ namespace UniManage.Application.Queries.System.User
         /// </summary>
         public sealed record Response
         {
-            public long Id { get; set; }
+            public Guid Uuid { get; set; }
             public string Username { get; set; } = default!;
             public string EmployeeCode { get; set; } = default!;
             public string RoleCode { get; set; } = default!;
@@ -115,7 +115,7 @@ namespace UniManage.Application.Queries.System.User
                         .Take(request.PageSize)
                         .Select(u => new GetUserListQuery.Response
                         {
-                            Id = u.Id,
+                            Uuid = u.Uuid,
                             Username = u.Username,
                             EmployeeCode = u.EmployeeCode ?? string.Empty,
                             RoleCode = u.RoleCode ?? string.Empty,

@@ -65,11 +65,11 @@ public class UsersController : BaseController
     /// <summary>
     /// Get user by id
     /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("{uuid}")]
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.View)]
-    public async Task<ActionResult<ApiResponse<GetUserByIdQuery.Response>>> GetUserById(long id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<GetUserByIdQuery.Response>>> GetUserById(Guid uuid, CancellationToken ct)
     {
-        var query = new GetUserByIdQuery { Id = id, HeaderInfo = HeaderInfo };
+        var query = new GetUserByIdQuery { Uuid = uuid, HeaderInfo = HeaderInfo };
         var result = await _mediator.Send(query, ct);
         return Ok(result);
     }
@@ -81,11 +81,11 @@ public class UsersController : BaseController
     /// <summary>
     /// Get user's roles
     /// </summary>
-    [HttpGet("{id}/roles")]
+    [HttpGet("{uuid}/roles")]
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.View)]
-    public async Task<ActionResult<ApiResponse<List<UserRoleDto>>>> GetRoles(long id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<List<UserRoleDto>>>> GetRoles(Guid uuid, CancellationToken ct)
     {
-        var query = new GetUserRolesQuery { Id = id, HeaderInfo = HeaderInfo };
+        var query = new GetUserRolesQuery { Uuid = uuid, HeaderInfo = HeaderInfo };
         var result = await _mediator.Send(query, ct);
         return Ok(result);
     }
@@ -129,12 +129,12 @@ public class UsersController : BaseController
     /// <summary>
     /// Update user information
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("{uuid}")]
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.Update)]
-    public async Task<ActionResult<ApiResponse<UpdateUserCommand.Response>>> UpdateUser([FromRoute] long id, [FromBody] UpdateUserCommand command, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<UpdateUserCommand.Response>>> UpdateUser([FromRoute] Guid uuid, [FromBody] UpdateUserCommand command, CancellationToken ct)
     {
         command ??= new UpdateUserCommand();
-        command.Id = id;
+        command.Uuid = uuid;
         command.HeaderInfo = HeaderInfo;
         var result = await _mediator.Send(command, ct);
         return Ok(result);
@@ -149,9 +149,9 @@ public class UsersController : BaseController
     /// </summary>
     [HttpDelete]
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.Delete)]
-    public async Task<ActionResult<ApiResponse<DeleteUserCommand.Response>>> DeleteUser([FromBody] List<long> ids, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<DeleteUserCommand.Response>>> DeleteUser([FromBody] List<Guid> uuids, CancellationToken ct)
     {
-        var command = new DeleteUserCommand { Ids = ids, HeaderInfo = HeaderInfo };
+        var command = new DeleteUserCommand { Uuids = uuids, HeaderInfo = HeaderInfo };
         var result = await _mediator.Send(command, ct);
         return Ok(result);
     }
@@ -163,11 +163,11 @@ public class UsersController : BaseController
     /// <summary>
     /// Assign role to user
     /// </summary>
-    [HttpPost("{id}/roles")]
+    [HttpPost("{uuid}/roles")]
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.Update)]
-    public async Task<ActionResult<ApiResponse<AssignUserRoleCommand.Response>>> AssignRole([FromRoute] long id, [FromBody] AssignUserRoleCommand command, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<AssignUserRoleCommand.Response>>> AssignRole([FromRoute] Guid uuid, [FromBody] AssignUserRoleCommand command, CancellationToken ct)
     {
-        command.UserId = id;
+        command.UserUuid = uuid;
         command.HeaderInfo = HeaderInfo;
         var result = await _mediator.Send(command, ct);
         return Ok(result);
@@ -180,11 +180,11 @@ public class UsersController : BaseController
     /// <summary>
     /// Remove role from user
     /// </summary>
-    [HttpDelete("{id}/roles/{roleCode}")]
+    [HttpDelete("{uuid}/roles/{roleCode}")]
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.Update)]
-    public async Task<ActionResult<ApiResponse<RemoveUserRoleCommand.Response>>> RemoveRole(long id, string roleCode, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<RemoveUserRoleCommand.Response>>> RemoveRole(Guid uuid, string roleCode, CancellationToken ct)
     {
-        var command = new RemoveUserRoleCommand { UserId = id, RoleCode = roleCode, HeaderInfo = HeaderInfo };
+        var command = new RemoveUserRoleCommand { UserUuid = uuid, RoleCode = roleCode, HeaderInfo = HeaderInfo };
         var result = await _mediator.Send(command, ct);
         return Ok(result);
     }

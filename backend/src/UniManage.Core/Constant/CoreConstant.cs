@@ -105,5 +105,22 @@ namespace UniManage.Core.Constant
         }
 
         #endregion
+
+        #region Config Codes
+
+        /// <summary>
+        /// Định nghĩa các mã cấu hình hệ thống
+        /// </summary>
+        public static class ConfigCode
+        {
+            public const string CompanyName = "COMPANY_NAME";
+            public const string CompanyAddress = "COMPANY_ADDRESS";
+            public const string CompanyPhone = "COMPANY_PHONE";
+            public const string CompanyEmail = "COMPANY_EMAIL";
+            public const string CompanyTaxCode = "COMPANY_TAX_CODE";
+            public const string CompanyLogo = "COMPANY_LOGO";
+        }
+
+        #endregion
     }
 }

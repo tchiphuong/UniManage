@@ -18,7 +18,7 @@ namespace UniManage.Application.Queries.System.User;
 /// </summary>
 public sealed class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<GetUserByIdQuery.Response>>
 {
-    public long Id { get; init; }
+    public Guid Uuid { get; init; }
 
     public sealed record Response
     {
@@ -44,8 +44,8 @@ public sealed class GetUserByIdQueryValidator : AbstractValidator<GetUserByIdQue
 {
     public GetUserByIdQueryValidator()
     {
-        RuleFor(x => x.Id)
-            .GreaterThan(0).WithMessage("Id must be greater than 0");
+        RuleFor(x => x.Uuid)
+            .NotEmpty().WithMessage("Uuid must not be empty");
     }
 }
 
@@ -65,7 +65,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
         {
             Parameter = new List<CoreParamModel>
             {
-                new CoreParamModel(nameof(request.Id), request.Id.ToString())
+                new CoreParamModel(nameof(request.Uuid), request.Uuid.ToString())
             }
         };
 
@@ -75,7 +75,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
             {
                 // Use EF Core LINQ to find user
                 var user = await dbContext.Set<sy_users>()
-                    .Where(u => u.Id == request.Id)
+                    .Where(u => u.Uuid == request.Uuid)
                     .Select(u => new GetUserByIdQuery.Response
                     {
                         Username = u.Username,

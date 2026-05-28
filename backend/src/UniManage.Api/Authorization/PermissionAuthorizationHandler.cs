@@ -1,8 +1,8 @@
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Caching.Memory;
 using UniManage.Core.Database;
 using UniManage.Core.Logging;
+using UniManage.Core.Utilities;
 
 namespace UniManage.Api.Authorization
 {
@@ -20,14 +20,11 @@ namespace UniManage.Api.Authorization
     /// </summary>
     public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
     {
-        private readonly IMemoryCache _cache;
-
         // Cache duration for user permissions
-        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+        private static readonly int CacheDurationMinutes = Core.Constant.CacheTimeConstant.Short;
 
-        public PermissionAuthorizationHandler(IMemoryCache cache)
+        public PermissionAuthorizationHandler()
         {
-            _cache = cache;
         }
 
         protected override async Task HandleRequirementAsync(
@@ -78,35 +75,30 @@ namespace UniManage.Api.Authorization
         /// </summary>
         private async Task<HashSet<string>> GetUserPermissionsAsync(string username)
         {
-            var cacheKey = $"permissions:{username}";
+            var cacheKey = string.Format(Core.Constant.CacheKeyConstant.System.Permissions, username);
 
-            if (_cache.TryGetValue(cacheKey, out HashSet<string>? cachedPermissions) && cachedPermissions != null)
+            var permissionSet = await CacheHelper.GetOrSetAsync(cacheKey, async () =>
             {
-                return cachedPermissions;
-            }
+                // Query permissions from database
+                using (var dbContext = new DbContext())
+                {
+                    var sql = @"
+                        SELECT DISTINCT CONCAT(rp.[FunctionCode], '.', rp.[ActionCode]) AS PermissionCode
+                        FROM [dbo].[sy_users] u
+                        INNER JOIN [dbo].[sy_user_roles] ur ON u.[Username] = ur.[Username]
+                        INNER JOIN [dbo].[sy_role_permissions] rp ON ur.[RoleCode] = rp.[RoleCode]
+                        WHERE u.[Username] = @Username
+                            AND rp.[FunctionCode] IS NOT NULL
+                            AND rp.[ActionCode] IS NOT NULL";
 
-            // Query permissions from database
-            using (var dbContext = new DbContext())
-            {
-                var sql = @"
-                    SELECT DISTINCT CONCAT(rp.[FunctionCode], '.', rp.[ActionCode]) AS PermissionCode
-                    FROM [dbo].[sy_users] u
-                    INNER JOIN [dbo].[sy_user_roles] ur ON u.[Username] = ur.[Username]
-                    INNER JOIN [dbo].[sy_role_permissions] rp ON ur.[RoleCode] = rp.[RoleCode]
-                    WHERE u.[Username] = @Username
-                        AND rp.[FunctionCode] IS NOT NULL
-                        AND rp.[ActionCode] IS NOT NULL";
+                    var permissions = (await dbContext.QueryAsync<string>(
+                        sql, new { Username = username })).ToList();
 
-                var permissions = (await dbContext.QueryAsync<string>(
-                    sql, new { Username = username })).ToList();
+                    return new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
+                }
+            }, CacheDurationMinutes);
 
-                var permissionSet = new HashSet<string>(permissions, StringComparer.OrdinalIgnoreCase);
-
-                // Cache for 5 minutes
-                _cache.Set(cacheKey, permissionSet, CacheDuration);
-
-                return permissionSet;
-            }
+            return permissionSet ?? new HashSet<string>();
         }
     }
 }

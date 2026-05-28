@@ -29,6 +29,10 @@ namespace UniManage.Api.Infrastructure.AutofacModules
                 .AsImplementedInterfaces();
 
             // Register MediatR Pipeline Behaviors (Order matters: Outer -> Inner)
+            // 0. Cache Behavior (Kiểm tra cache trước, giảm tải DB)
+            builder.RegisterGeneric(typeof(UniManage.Application.Pipelines.CacheBehavior<,>))
+                .As(typeof(IPipelineBehavior<,>));
+
             // 1. Logging Behavior (Bắt trọn Request/Response/Exception)
             builder.RegisterGeneric(typeof(UniManage.Application.Pipelines.LoggingBehavior<,>))
                 .As(typeof(IPipelineBehavior<,>));

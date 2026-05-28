@@ -142,6 +142,7 @@ namespace UniManage.Core.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(DbContext).Assembly);
             ConfigureCommonConventions(modelBuilder);
             ConfigureDynamicEntities(modelBuilder);
         }

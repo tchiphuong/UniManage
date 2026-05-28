@@ -71,9 +71,8 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Pr
 // ===========================================
 // [SECURITY] Database-Driven Authorization
 // PermissionAuthorizationHandler queries sy_role_permissions table
-// Cached per user for 5 minutes via IMemoryCache
+// Cached per user for 5 minutes via Redis
 // ===========================================
-builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IAuthorizationHandler, UniManage.Api.Authorization.PermissionAuthorizationHandler>();
 
 // ===========================================
@@ -113,6 +112,9 @@ builder.Services.AddApiVersioning(options =>
 
 // Serilog configuration via UniLogManager
 UniManage.Core.Logging.UniLogManager.Initialize(builder.Configuration["AppSettings:LogPath"] ?? "logs");
+
+// Khởi tạo Redis Cache
+UniManage.Core.Utilities.CacheHelper.Initialize(builder.Configuration);
 
 // Test log to verify configuration
 Serilog.Log.Information($"Application Starting Up.");

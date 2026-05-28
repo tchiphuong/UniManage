@@ -37,6 +37,33 @@ namespace UniManage.Api.Controllers.System
 
         #endregion
 
+        #region GET: /api/v1/system-configs/company-profile
+
+        [HttpGet("company-profile")]
+        [PermissionAuthorize(CoreFunction.SyConfig, CoreAction.View)]
+        public async Task<ActionResult<ApiResponse<GetCompanyProfileQuery.Response>>> GetCompanyProfile(CancellationToken ct)
+        {
+            var query = new GetCompanyProfileQuery { HeaderInfo = HeaderInfo };
+            var result = await _mediator.Send(query, ct);
+            return Ok(result);
+        }
+
+        #endregion
+
+        #region PUT: /api/v1/system-configs/company-profile
+
+        [HttpPut("company-profile")]
+        [PermissionAuthorize(CoreFunction.SyConfig, CoreAction.Update)]
+        public async Task<ActionResult<ApiResponse<bool>>> UpdateCompanyProfile([FromBody] UpdateCompanyProfileCommand command, CancellationToken ct)
+        {
+            command ??= new UpdateCompanyProfileCommand();
+            command.HeaderInfo = HeaderInfo;
+            var result = await _mediator.Send(command, ct);
+            return Ok(result);
+        }
+
+        #endregion
+
         #region GET: /api/v1/system-configs/{code}
 
         [HttpGet("{code}")]
@@ -50,16 +77,16 @@ namespace UniManage.Api.Controllers.System
 
         #endregion
 
-        #region PUT: /api/v1/system-configs/{id}
+        #region PUT: /api/v1/system-configs/{uuid}
 
-        [HttpPut("{id}")]
+        [HttpPut("{uuid}")]
         [PermissionAuthorize(CoreFunction.SyConfig, CoreAction.Update)]
-        public async Task<ActionResult<ApiResponse<bool>>> Update(int id, [FromBody] UpdateSystemConfigCommand command, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<bool>>> Update(Guid uuid, [FromBody] UpdateSystemConfigCommand command, CancellationToken ct)
         {
             command ??= new UpdateSystemConfigCommand();
             var finalCommand = new UpdateSystemConfigCommand
             {
-                Id = id,
+                Uuid = uuid,
                 ConfigValue = command.ConfigValue,
                 HeaderInfo = HeaderInfo
             };

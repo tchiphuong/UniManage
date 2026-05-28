@@ -4,7 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using UniManage.Application.Commands.System.Auth;
 using UniManage.Application.Queries.System.Auth;
+using UniManage.Api.Authorization;
+using UniManage.Application.Commands.System.SystemConfigs;
+using UniManage.Application.Queries.System.SystemConfigs;
+using UniManage.Core.Constant;
 using UniManage.Model.Common;
+using UniManage.Model.Entities;
 using UniManage.Core.Utilities;
 
 namespace UniManage.Api.Controllers.System
@@ -288,6 +293,56 @@ namespace UniManage.Api.Controllers.System
                 return Unauthorized(response);
             }
 
+            return Ok(response);
+        }
+
+        #endregion
+
+        #region GET: /api/v1/auth/me/profile
+
+        /// <summary>
+        /// Lấy thông tin cá nhân hiện tại
+        /// </summary>
+        [HttpGet("me/profile")]
+        [ProducesResponseType(typeof(ApiResponse<GetProfileQuery.Response>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<GetProfileQuery.Response>>> GetProfile(CancellationToken ct)
+        {
+            var request = new GetProfileQuery { HeaderInfo = HeaderInfo };
+            var response = await _mediator.Send(request, ct);
+            return Ok(response);
+        }
+
+        #endregion
+
+        #region PUT: /api/v1/auth/me/profile
+
+        /// <summary>
+        /// Cập nhật thông tin cá nhân (Avatar, Phone, Address...)
+        /// </summary>
+        [HttpPut("me/profile")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<bool>>> UpdateProfile([FromBody] UpdateProfileCommand request, CancellationToken ct)
+        {
+            request ??= new UpdateProfileCommand();
+            request.HeaderInfo = HeaderInfo;
+            var response = await _mediator.Send(request, ct);
+            return Ok(response);
+        }
+
+        #endregion
+
+        #region PUT: /api/v1/auth/me/preferences
+
+        /// <summary>
+        /// Cập nhật cấu hình hiển thị cá nhân (Theme, Language...)
+        /// </summary>
+        [HttpPut("me/preferences")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<bool>>> UpdatePreferences([FromBody] UpdatePreferencesCommand request, CancellationToken ct)
+        {
+            request ??= new UpdatePreferencesCommand();
+            request.HeaderInfo = HeaderInfo;
+            var response = await _mediator.Send(request, ct);
             return Ok(response);
         }
 

@@ -22,7 +22,7 @@ namespace UniManage.Application.Commands.System.User
         /// <summary>
         /// ID của người dùng cần gỡ bỏ vai trò
         /// </summary>
-        public long UserId { get; init; }
+        public Guid UserUuid { get; init; }
 
         /// <summary>
         /// Mã vai trò cần gỡ bỏ
@@ -31,7 +31,7 @@ namespace UniManage.Application.Commands.System.User
 
         public sealed class Response
         {
-            public long UserId { get; init; }
+            public Guid UserUuid { get; init; }
             public string RoleCode { get; init; } = default!;
         }
     }
@@ -47,8 +47,8 @@ namespace UniManage.Application.Commands.System.User
     {
         public RemoveUserRoleCommandValidator()
         {
-            RuleFor(x => x.UserId)
-                .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username));
+            RuleFor(x => x.UserUuid)
+                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username));
 
             RuleFor(x => x.RoleCode)
                 .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleCode));
@@ -71,7 +71,7 @@ namespace UniManage.Application.Commands.System.User
             {
                 Parameter = new List<CoreParamModel>
                 {
-                    new(nameof(request.UserId), request.UserId),
+                    new(nameof(request.UserUuid), request.UserUuid.ToString()),
                     new(nameof(request.RoleCode), request.RoleCode)
                 }
             };
@@ -84,7 +84,7 @@ namespace UniManage.Application.Commands.System.User
                     {
                         // 1. Tìm thông tin người dùng bằng EF Core
                         var user = await dbContext.Set<sy_users>()
-                            .FirstOrDefaultAsync(u => u.Id == request.UserId, ct);
+                            .FirstOrDefaultAsync(u => u.Uuid == request.UserUuid, ct);
 
                         if (user == null)
                         {
@@ -126,7 +126,7 @@ namespace UniManage.Application.Commands.System.User
                         await dbContext.SaveChangesAsync(ct);
                         await dbContext.CommitAsync();
 
-                        var responseData = new RemoveUserRoleCommand.Response { UserId = request.UserId, RoleCode = request.RoleCode };
+                        var responseData = new RemoveUserRoleCommand.Response { UserUuid = request.UserUuid, RoleCode = request.RoleCode };
                         var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_deleteSuccess, CoreResource.entity_role));
 
                         log.Result = responseData;
