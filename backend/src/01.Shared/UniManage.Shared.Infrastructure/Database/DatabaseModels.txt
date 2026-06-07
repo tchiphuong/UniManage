@@ -1,0 +1,13 @@
+﻿
+
+
+
+
+
+
+
+
+Multi-file entity generation completed.
+Processed tables: 96
+Output folder: 02. Modules/{Module}/UniManage.Modules.{Module}.Domain/Entities/Generated.
+

@@ -2,8 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { SidebarProvider } from "@/contexts/SidebarContext";
+import { ThemeProvider } from "@/contexts/theme-context";
+import { SidebarProvider } from "@/contexts/sidebar-context";
 
 import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";

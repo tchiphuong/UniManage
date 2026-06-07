@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\01.Shared\UniManage.Shared.Application\UniManage.Shared.Application.csproj" />
+    <ProjectReference Include="..\UniManage.Modules.Inventory.Domain\UniManage.Modules.Inventory.Domain.csproj" />
+    <ProjectReference Include="..\..\..\01.Shared\UniManage.Shared.Infrastructure\UniManage.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\01.Shared\UniManage.Shared.Resource\UniManage.Shared.Resource.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>
+
+

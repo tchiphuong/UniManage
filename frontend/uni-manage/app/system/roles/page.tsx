@@ -3,14 +3,14 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Column, DataTable } from "@/components/common/data-table";
+import { Column, DataTable } from "@/components/ui/data-table";
 import { RoleService, Role } from "@/services/role.service";
 import { PageHeader } from "@/components/page-header-i18n";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Input, Chip } from '@heroui/react';
 import { Icon } from "@iconify/react";
 import { RoleModal } from "./components/role-modal";
-import { ConfirmModal } from "@/components/common/confirm-modal";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { addToast } from "@heroui/toast";
 
 // Icon components

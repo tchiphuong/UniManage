@@ -47,6 +47,7 @@ Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Util
 - Dùng DatabaseHelper cho tất cả database operations có transaction
 - **Validator Resources**: LUÔN dùng `CoreResource` cho tất cả nhãn và thông báo lỗi (mẫu: `string.Format(CoreResource.validation_required, CoreResource.lbl_username)`).
 - **Logging Standard**: LUÔN dùng `nameof(request.PropertyName)` cho tên tham số trong `CoreParamModel`.
+- **Caching Standard**: Tất cả cache key BẮT BUỘC phải được khai báo constant trong `CacheKeyConstant.cs` (`UniManage.Core.Constant`). Tuyệt đối không hardcode cache string rác trong code (VD: `$"System_CurrentUser_{id}"`).
 
 Tech stack (bắt buộc)
 Backend: ASP.NET Core .NET 9
@@ -334,6 +335,8 @@ Database access patterns (bắt buộc)
 
 **🔥 HYBRID APPROACH: Entity Framework Core 9.0 + Dapper**
 
+- **BẮT BUỘC: Sử dụng `using (var dbContext = new DbContext(...))` bọc ngoài block `try-catch`** cho tất cả các thao tác cơ sở dữ liệu (kể cả Query và Command).
+- **CẤM: Sử dụng `using var dbContext = new DbContext(...)` bên trong block `try-catch`** vì sẽ làm mất scope của biến `dbContext` trong block `catch`, không thể gọi rollback hoặc xử lý tài nguyên.
 - **EF Core cho CRUD operations**: Create, Read by Id, Update, Delete
 - **Dapper cho complex queries**: Joins, aggregations, raw SQL optimization
 - **DbContext tự động discover entities** từ UniManage.Model.Entities namespace

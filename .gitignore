@@ -1,4 +1,27 @@
-# Ignore Visual Studio specific files
+# ==========================================
+# 1. FRONTEND PROJECT (React, Next.js, Node)
+# ==========================================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+frontend/build/
+frontend/dist/
+frontend/.next/
+frontend/out/
+frontend/.nuxt/
+frontend/.cache/
+frontend/coverage/
+dist/
+coverage/
+*.tsbuildinfo
+.turbo/
+.parcel-cache/
+
+# ==========================================
+# 2. BACKEND PROJECT (.NET, C#)
+# ==========================================
+# IDE & User settings
 .vs/
 *.user
 *.suo
@@ -7,40 +30,55 @@
 *.sln.docstates
 *.sln.DotSettings.user
 *.slnLaunch.user
+.idea/
+.fake
 
-# Ignore build output
+# Build outputs
 bin/
 obj/
 **/Properties/launchSettings.json
 
-# Ignore NuGet packages (using PackageReference)
+# NuGet packages
 packages/
 *.nupkg
 *.snupkg
 
-# Ignore dependencies and packages
-node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# T4 Generated files
+/src/Core/UniManage.Resource/*.resx
+/src/Core/UniManage.Resource/ResourcesGenerator.cs
+/src/Core/UniManage.Core/Database/Generator/CoreLanguage.cs
+/src/Core/UniManage.Core/Database/Generator/DatabaseModels.cs
+/backend/src/UniManage.Core/Database/Generated/Configurations
+/backend/src/UniManage.Core/Database/Generated/Entities
 
-# Ignore Frontend build outputs
-frontend/build/
-frontend/dist/
-frontend/.next/
-frontend/out/
-frontend/.nuxt/
-frontend/.cache/
-frontend/coverage/
+# Module-specific T4 Generated files (New Architecture)
+**/Entities/Generated/
+**/Database/Configurations/Generated/
 
-# Ignore logs and temp files
+# ==========================================
+# 3. AI TOOLS & AGENT CONFIG
+# ==========================================
+.agent/
+.sixth/
+.gemini/
+
+# ==========================================
+# 4. REFERENCE / TEMP PROJECTS (không commit)
+# ==========================================
+dashboard_tailwind_repo/
+reference_dashboard/
+
+# ==========================================
+# 5. COMMON & ENVIRONMENT
+# ==========================================
+# Logs
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Ignore environment and secrets
+# Environment and Secrets
 .env
 .env.local
 .env.development.local
@@ -48,43 +86,28 @@ yarn-error.log*
 .env.production.local
 secrets.json
 
-# Ignore database and migration files
+# Database local files
 *.mdf
 *.ldf
 Migrations/
+hangfire.db
 
-# Ignore Docker and CI/CD files
+# Docker
 .dockerignore
 Dockerfile
 .docker-compose*
 
-# Ignore Redis cache and Hangfire database
+# Cache & Publish
 redis-data/
-hangfire.db
-
-# Ignore IIS and publish settings
 publish/
 *.pubxml
 *.publishsettings
 
-# Ignore Tailwind and frontend generated files
-tailwind.config.js
-dist/
-coverage/
-*.tsbuildinfo
-.turbo/
-.vercel/
-.parcel-cache/
-
-# Ignore JetBrains Rider / WebStorm IDE files
-.idea/
-
-# Ignore other OS-specific files
+# OS-specific
 .DS_Store
 Thumbs.db
-/src/Core/UniManage.Resource/*.resx
-/src/Core/UniManage.Resource/ResourcesGenerator.cs
-/src/Core/UniManage.Core/Database/Generator/CoreLanguage.cs
-/src/Core/UniManage.Core/Database/Generator/DatabaseModels.cs
+.vercel/
 
-.fake
+# Temp scripts
+*.ps1
+!backend/scripts/*.ps1

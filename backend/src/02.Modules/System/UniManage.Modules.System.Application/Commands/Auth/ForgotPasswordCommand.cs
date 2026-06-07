@@ -1,0 +1,133 @@
+﻿using FluentValidation;
+using MediatR;
+using UniManage.Shared.Application.Models;
+using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Infrastructure.Utilities;
+using UniManage.Shared.Resource;
+
+namespace UniManage.Modules.System.Application.Commands.Auth
+{
+    #region Command
+
+    /// <summary>
+    /// Forgot Password Command - Gửi link reset mật khẩu
+    /// </summary>
+    public sealed class ForgotPasswordCommand : BaseCommand, IRequest<ApiResponse<bool>>
+    {
+        public string EmailOrUsername { get; set; } = string.Empty;
+    }
+
+    #endregion
+
+    #region Validator
+
+    /// <summary>
+    /// Forgot Password Command Validator
+    /// </summary>
+    public sealed class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCommand>
+    {
+        public ForgotPasswordCommandValidator()
+        {
+            RuleFor(x => x.EmailOrUsername)
+                .NotEmpty()
+                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_emailOrUsername))
+                .DependentRules(() =>
+                {
+                    RuleFor(x => x.EmailOrUsername)
+                        .MaximumLength(255)
+                        .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.lbl_emailOrUsername, 255));
+                });
+        }
+    }
+
+    #endregion
+
+    #region Handler
+
+    /// <summary>
+    /// Forgot Password Command Handler
+    /// </summary>
+    public sealed class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, ApiResponse<bool>>
+    {
+        public async Task<ApiResponse<bool>> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
+        {
+            
+
+            using var dbContext = new DbContext(openTransaction: true);
+                    // Tìm user theo email hoặc username
+                    var sql = @"
+                        SELECT TOP 1
+                            [Username],
+                            [Email]
+                        FROM [dbo].[SyUsers]
+                        WHERE [Username] = @EmailOrUsername 
+                            OR [Email] = @EmailOrUsername";
+
+                    var user = await dbContext.QueryFirstOrDefaultAsync<UserDto>(
+                        sql,
+                        new { request.EmailOrUsername },
+                        cancellationToken);
+
+                    // Không báo lỗi nếu không tìm thấy user (security best practice)
+                    if (user == null)
+                    {
+                        
+                        var successResponse = ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
+                        return successResponse;
+                    }
+
+                    if (string.IsNullOrEmpty(user.Email))
+                    {
+                        
+                        var noEmailResponse = ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
+                        return noEmailResponse;
+                    }
+
+                    // Generate reset token
+                    var resetToken = StringHelper.GenerateCode(32);
+                    var hashedToken = PasswordHelper.HashPassword(resetToken);
+                    var expiresAt = DateTime.UtcNow.AddHours(24);
+
+                    // Lưu reset token vào database (hash token để bảo mật)
+                    var insertSql = @"
+                        INSERT INTO [dbo].[SyPasswordResetTokens]
+                        ([Username], [Token], [ExpiresAt], [CreatedAt])
+                        VALUES (@Username, @Token, @ExpiresAt, GETDATE())";
+
+                    await dbContext.ExecuteAsync(
+                        insertSql,
+                        new
+                        {
+                            Username = user.Username,
+                            Token = hashedToken,
+                            ExpiresAt = expiresAt
+                        },
+                        cancellationToken);
+
+                    
+
+                    // TODO: Gửi email với reset link
+                    // var resetLink = $"{baseUrl}/reset-password?token={resetToken}";
+                    // await emailService.SendPasswordResetEmail(user.Email, resetLink);
+
+                    var response = ResponseHelper.Success(true, CoreResource.auth_resetLinkSent);
+                    return response;
+        }
+
+        private class UserDto
+        {
+            public string Username { get; set; } = string.Empty;
+            public string? Email { get; set; }
+        }
+    }
+
+    #endregion
+}
+
+
+
+
+
+
+
+

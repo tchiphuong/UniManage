@@ -1,0 +1,352 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text" #>
+<#@ output extension=".txt" encoding="utf-8" #>
+<#
+string templateFolder = Path.GetDirectoryName(Host.TemplateFile);
+if (string.IsNullOrWhiteSpace(templateFolder))
+{
+    throw new InvalidOperationException("Cannot resolve template folder.");
+}
+
+string appSettingsPath = Path.GetFullPath(Path.Combine(templateFolder, "..", "appsettings.json"));
+string connectionString = T4TemplateHelper.GetConnectionString(appSettingsPath);
+DatabaseSchemaReader reader = new DatabaseSchemaReader(connectionString);
+List<TableMetadata> tables = reader.ReadAll();
+GeneratedFileManager manager = new GeneratedFileManager(Host.TemplateFile);
+ConfigurationFileBuilder builder = new ConfigurationFileBuilder();
+
+for (int i = 0; i < tables.Count; i++)
+{
+    TableMetadata table = tables[i];
+    string content = builder.Build(table);
+    string moduleFolder = T4TemplateHelper.GetModuleFolder(table.Name);
+    string relativePath = Path.Combine("..", "..", "..", "02.Modules", moduleFolder, $"UniManage.Modules.{moduleFolder}.Infrastructure", "Database", "Configurations", "Generated", table.ClassName + "Configuration.generated.cs");
+    manager.WriteFile(relativePath, content);
+}
+WriteLine("Multi-file configuration generation completed.");
+WriteLine("Processed tables: " + tables.Count);
+WriteLine("Output folder: 02. Modules/{Module}/UniManage.Modules.{Module}.Infrastructure/Database/Configurations/Generated.");
+#>
+<#+
+public static class T4TemplateHelper
+{
+    public static string GetConnectionString(string appSettingsPath)
+    {
+        string configPath = appSettingsPath;
+        if (!File.Exists(configPath))
+        {
+            string templateFolder = Path.GetDirectoryName(appSettingsPath);
+            configPath = Path.GetFullPath(Path.Combine(templateFolder, "..", "..", "..", "03. Apps", "UniManage.WebApi", "appsettings.Development.json"));
+        }
+        
+        if (File.Exists(configPath))
+        {
+            try
+            {
+                var content = File.ReadAllText(configPath);
+                
+                var serverMatch = System.Text.RegularExpressions.Regex.Match(content, @"""Server""\s*:\s*""([^""]+)""");
+                var dbMatch = System.Text.RegularExpressions.Regex.Match(content, @"""DefaultDatabase""\s*:\s*""([^""]+)""");
+                var userIdMatch = System.Text.RegularExpressions.Regex.Match(content, @"""UserId""\s*:\s*""([^""]+)""");
+                var passwordMatch = System.Text.RegularExpressions.Regex.Match(content, @"""Password""\s*:\s*""([^""]+)""");
+                
+                string server = serverMatch.Success ? serverMatch.Groups[1].Value : "localhost";
+                string database = dbMatch.Success ? dbMatch.Groups[1].Value : "UniManage";
+                string userId = userIdMatch.Success ? userIdMatch.Groups[1].Value : "uni_manager";
+                string password = passwordMatch.Success ? passwordMatch.Groups[1].Value : "uni_manager@2024";
+                
+                if (server.IndexOf("TCPHUONG", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    server = server.Replace("TCPHUONG", "localhost");
+                }
+                
+                return $"Server={server};Database={database};User Id={userId};Password={password};TrustServerCertificate=True;";
+            }
+            catch
+            {
+                // Fallback nếu parse lỗi
+            }
+        }
+        return "Server=localhost\\SQLEXPRESS;Database=UniManage;User Id=uni_manager;Password=uni_manager@2024;TrustServerCertificate=True;";
+    }
+
+    public static string GetModuleFolder(string tableName)
+    {
+        string prefix = tableName.Split('_')[0].ToLower();
+        switch (prefix)
+        {
+            case "sy":
+            case "sys":
+            case "backgroundjob":
+            case "backgroundjobparameter":
+            case "state":
+            case "jobqueue":
+            case "list":
+            case "set":
+            case "counter":
+            case "hash":
+            case "schema":
+                return "System";
+            case "hr":
+                return "HumanResource";
+            case "inv":
+            case "pd":
+                return "Inventory";
+            case "sl":
+            case "sa":
+                return "Sales";
+            case "wf":
+                return "Workflow";
+            default:
+                return "Master";
+        }
+    }
+
+    public static string ToPascalCase(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return input;
+        var words = input.Split(new[] { '_' }, StringSplitOptions.RemoveEmptyEntries);
+        var sb = new StringBuilder();
+        foreach (var word in words)
+        {
+            if (word.Length > 0)
+            {
+                sb.Append(char.ToUpper(word[0]));
+                if (word.Length > 1)
+                {
+                    sb.Append(word.Substring(1));
+                }
+            }
+        }
+        return sb.ToString();
+    }
+}
+
+public class TableMetadata
+{
+    public string Name { get; set; } = "";
+    public string ClassName => T4TemplateHelper.ToPascalCase(Name);
+    public List<ColumnMetadata> Columns { get; set; } = new List<ColumnMetadata>();
+}
+
+public class ColumnMetadata
+{
+    public string Name { get; set; } = "";
+    public string SqlType { get; set; } = "";
+    public string SystemType { get; set; } = "string";
+    public bool IsNullable { get; set; }
+    public bool IsPrimaryKey { get; set; }
+    public bool IsIdentity { get; set; }
+    public int? MaxLength { get; set; }
+}
+
+public class DatabaseSchemaReader
+{
+    private readonly string _connectionString;
+    public DatabaseSchemaReader(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+    
+    public List<TableMetadata> ReadAll()
+    {
+        var tables = new List<TableMetadata>();
+        
+        try
+        {
+            using (var conn = new System.Data.SqlClient.SqlConnection(_connectionString))
+            {
+                conn.Open();
+                
+                var tableNames = new List<string>();
+                string sqlTables = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME NOT IN ('sysdiagrams') ORDER BY TABLE_NAME";
+                using (var cmd = new System.Data.SqlClient.SqlCommand(sqlTables, conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        tableNames.Add(reader.GetString(0));
+                    }
+                }
+                
+                foreach (var tableName in tableNames)
+                {
+                    var table = new TableMetadata { Name = tableName };
+                    
+                    string sqlColumns = @"
+                        SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH,
+                               COLUMNPROPERTY(object_id(TABLE_SCHEMA + '.' + TABLE_NAME), COLUMN_NAME, 'IsIdentity') as IsIdentity
+                        FROM INFORMATION_SCHEMA.COLUMNS
+                        WHERE TABLE_NAME = @TableName
+                        ORDER BY ORDINAL_POSITION";
+                        
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(sqlColumns, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@TableName", tableName);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var colName = reader.GetString(0);
+                                var sqlType = reader.GetString(1);
+                                var isNullable = reader.GetString(2) == "YES";
+                                var maxLength = reader.IsDBNull(3) ? (int?)null : reader.GetInt32(3);
+                                var isIdentity = reader.IsDBNull(4) ? false : Convert.ToInt32(reader[4]) == 1;
+                                
+                                var sysType = MapSqlTypeToSystemType(sqlType, isNullable);
+                                
+                                table.Columns.Add(new ColumnMetadata
+                                {
+                                    Name = colName,
+                                    SqlType = sqlType,
+                                    SystemType = sysType,
+                                    IsNullable = isNullable,
+                                    IsIdentity = isIdentity,
+                                    MaxLength = maxLength
+                                });
+                            }
+                        }
+                    }
+                    
+                    string sqlPk = @"
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                        WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 
+                          AND TABLE_NAME = @TableName";
+                          
+                    var pkColumns = new HashSet<string>();
+                    using (var cmd = new System.Data.SqlClient.SqlCommand(sqlPk, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@TableName", tableName);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                pkColumns.Add(reader.GetString(0));
+                            }
+                        }
+                    }
+                    
+                    foreach (var col in table.Columns)
+                    {
+                        if (pkColumns.Contains(col.Name))
+                        {
+                            col.IsPrimaryKey = true;
+                        }
+                    }
+                    
+                    tables.Add(table);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Lỗi đọc schema database: " + ex.Message + "\n" + ex.StackTrace);
+        }
+        
+        return tables;
+    }
+    
+    private string MapSqlTypeToSystemType(string sqlType, bool isNullable)
+    {
+        string sysType = "string";
+        switch (sqlType.ToLower())
+        {
+            case "bigint": sysType = "long"; break;
+            case "int": sysType = "int"; break;
+            case "smallint": sysType = "short"; break;
+            case "tinyint": sysType = "byte"; break;
+            case "bit": sysType = "bool"; break;
+            case "decimal":
+            case "numeric":
+            case "money":
+            case "smallmoney": sysType = "decimal"; break;
+            case "float": sysType = "double"; break;
+            case "real": sysType = "float"; break;
+            case "datetime":
+            case "datetime2":
+            case "smalldatetime":
+            case "date": sysType = "DateTime"; break;
+            case "time": sysType = "TimeSpan"; break;
+            case "uniqueidentifier": sysType = "Guid"; break;
+            case "binary":
+            case "varbinary":
+            case "image":
+            case "timestamp": sysType = "byte[]"; break;
+        }
+        
+        if (isNullable && sysType != "string" && sysType != "byte[]")
+        {
+            sysType += "?";
+        }
+        return sysType;
+    }
+}
+
+public class GeneratedFileManager
+{
+    private readonly string _templateFile;
+    public GeneratedFileManager(string templateFile)
+    {
+        _templateFile = templateFile;
+    }
+    
+    public void WriteFile(string relativePath, string content)
+    {
+        string templateFolder = Path.GetDirectoryName(_templateFile);
+        string outputPath = Path.GetFullPath(Path.Combine(templateFolder, relativePath));
+        string outputFolder = Path.GetDirectoryName(outputPath);
+        
+        if (!Directory.Exists(outputFolder))
+        {
+            Directory.CreateDirectory(outputFolder);
+        }
+        
+        File.WriteAllText(outputPath, content, Encoding.UTF8);
+    }
+}
+
+public class ConfigurationFileBuilder
+{
+    public string Build(TableMetadata table)
+    {
+        string moduleFolder = T4TemplateHelper.GetModuleFolder(table.Name);
+        var sb = new StringBuilder();
+        sb.AppendLine("using Microsoft.EntityFrameworkCore;");
+        sb.AppendLine("using Microsoft.EntityFrameworkCore.Metadata.Builders;");
+        sb.AppendLine($"using UniManage.Modules.{moduleFolder}.Domain;");
+        sb.AppendLine();
+        sb.AppendLine($"namespace UniManage.Modules.{moduleFolder}.Infrastructure.Database.Configurations");
+        sb.AppendLine("{");
+        sb.AppendLine($"    public class {table.ClassName}Configuration : IEntityTypeConfiguration<{table.ClassName}>");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        public void Configure(EntityTypeBuilder<{table.ClassName}> builder)");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            builder.ToTable(\"{table.Name}\");");
+        
+        foreach (var col in table.Columns)
+        {
+            if (col.IsPrimaryKey)
+            {
+                sb.AppendLine($"            builder.HasKey(x => x.{col.Name});");
+            }
+            
+            if (col.IsIdentity)
+            {
+                sb.AppendLine($"            builder.Property(x => x.{col.Name}).UseIdentityColumn();");
+            }
+        }
+        
+        sb.AppendLine("        }");
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
+}
+#>
