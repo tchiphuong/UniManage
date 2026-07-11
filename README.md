@@ -10,12 +10,10 @@
 UniManage/                         # Monorepo root
 ├── backend/                      # Backend .NET 9
 │   ├── src/                     # Backend source code
-│   │   ├── UniManage.Api/       # REST API (Controllers, Middleware)
-│   │   ├── UniManage.Application/ # CQRS (Commands, Queries, Handlers)
-│   │   ├── UniManage.Core/      # Database, Models, Infrastructure
-│   │   ├── UniManage.Model/     # Shared Entities, DTOs, Enums
-│   │   ├── UniManage.Resource/  # Localization (T4 Templates)
-│   │   ├── UniManage.IdentityServer/ # Authentication & Authorization
+│   │   ├── 01.Shared/           # Common Domain, Infrastructure, Application, Resource
+│   │   ├── 02.Modules/          # Modular Monolith (System, HumanResource, Master, etc.)
+│   │   ├── 03.Apps/             # Entry points (WebApi, IdentityServer, Worker)
+│   │   ├── 04.Tools/            # CodeGen & Utilities
 │   │   └── UniManage.sln        # Backend solution
 │   │
 │   └── scripts/                # Database Migration Scripts (*.sql)
@@ -94,14 +92,14 @@ UniManage/                         # Monorepo root
     - Command: `dotnet run --project backend/src/UniManage.Core -- encrypt "your_password"`
 3.  **Chạy IdentityServer** (cho Authentication):
     ```bash
-    cd backend/src
-    dotnet run --project UniManage.IdentityServer
+    cd backend/src/03.Apps/UniManage.IdentityServer
+    dotnet run
     ```
     IdentityServer sẽ chạy tại: `http://localhost:5000`
 4.  **Chạy API**:
     ```bash
-    cd backend/src
-    dotnet run --project UniManage.Api
+    cd backend/src/03.Apps/UniManage.WebApi
+    dotnet run
     ```
     API sẽ chạy tại: `http://localhost:5297`
 
