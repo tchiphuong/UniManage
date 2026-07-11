@@ -1,5 +1,9 @@
-import { DashboardLayout } from "@/components";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
-export default function SystemLayout({ children }: { children: React.ReactNode }) {
+export default function SystemLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     return <DashboardLayout>{children}</DashboardLayout>;
 }

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useCallback,
+    ReactNode,
+} from "react";
 import { Modal, Button, AlertDialog } from "@heroui/react";
 // import { Icon } from "@iconify/react"; // Not needed if using AlertDialog.Icon
 import { useTranslations } from "next-intl";
@@ -24,18 +30,20 @@ const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
 
 // 3. Provider Component
 export function ConfirmProvider({ children }: { children: ReactNode }) {
-    const t = useTranslations("confirmDialog");
+    const t = useTranslations("common.confirmDialog");
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState<ConfirmOptions>({
         message: "",
         title: "",
         confirmLabel: "",
         cancelLabel: "",
-        variant: "danger"
+        variant: "danger",
     });
 
     // Store the resolve function of the promise
-    const [resolver, setResolver] = useState<((value: boolean) => void) | null>(null);
+    const [resolver, setResolver] = useState<((value: boolean) => void) | null>(
+        null,
+    );
 
     const confirm = useCallback((opts: ConfirmOptions) => {
         setOptions({
@@ -44,7 +52,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             confirmLabel: opts.confirmLabel,
             cancelLabel: opts.cancelLabel,
             variant: opts.variant || "danger",
-            icon: opts.icon
+            icon: opts.icon,
         });
         setIsOpen(true);
 
@@ -63,23 +71,33 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         setIsOpen(false);
     }, [resolver]);
 
-    const handleOpenChange = useCallback((open: boolean) => {
-        if (!open) handleCancel();
-    }, [handleCancel]);
+    const handleOpenChange = useCallback(
+        (open: boolean) => {
+            if (!open) handleCancel();
+        },
+        [handleCancel],
+    );
 
     // Map variant to AlertDialog status
     const getStatus = () => {
         switch (options.variant) {
-            case "danger": return "danger";
-            case "warning": return "warning";
-            case "success": return "success";
-            case "info": return "accent";
-            default: return "danger";
+            case "danger":
+                return "danger";
+            case "warning":
+                return "warning";
+            case "success":
+                return "success";
+            case "info":
+                return "accent";
+            default:
+                return "danger";
         }
     };
 
     const getColor = () => {
-        return options.variant === "info" ? "primary" : options.variant || "danger";
+        return options.variant === "info"
+            ? "primary"
+            : options.variant || "danger";
     };
 
     return (
@@ -98,21 +116,25 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                             {/* @ts-expect-error: Type mismatch fix */}
                             <AlertDialog.Icon status={getStatus()} />
                             {/* @ts-expect-error: Type mismatch fix */}
-                            <AlertDialog.Heading>{options.title || t("title")}</AlertDialog.Heading>
+                            <AlertDialog.Heading>
+                                {options.title || t("lbl.title")}
+                            </AlertDialog.Heading>
                         </AlertDialog.Header>
                         {/* @ts-expect-error: Type mismatch fix */}
                         <AlertDialog.Body>
-                            <p className="text-default-500">{options.message || t("message")}</p>
+                            <p className="text-default-500">
+                                {options.message || t("msg.message")}
+                            </p>
                         </AlertDialog.Body>
                         {/* @ts-expect-error: Type mismatch fix */}
                         <AlertDialog.Footer>
                             {/* @ts-expect-error: Type mismatch fix */}
                             <Button variant="light" onPress={handleCancel}>
-                                {options.cancelLabel || t("cancel")}
+                                {options.cancelLabel || t("btn.cancel")}
                             </Button>
                             {/* @ts-expect-error: Type mismatch fix */}
                             <Button color={getColor()} onPress={handleConfirm}>
-                                {options.confirmLabel || t("confirm")}
+                                {options.confirmLabel || t("btn.confirm")}
                             </Button>
                         </AlertDialog.Footer>
                     </AlertDialog.Dialog>
@@ -130,5 +152,3 @@ export function useConfirm() {
     }
     return context.confirm;
 }
-
-

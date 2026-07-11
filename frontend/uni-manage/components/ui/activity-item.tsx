@@ -6,7 +6,13 @@ interface ActivityItemProps {
     icon: string;
 }
 
-export function ActivityItem({ type, description, time, color, icon }: ActivityItemProps) {
+export function ActivityItem({
+    type,
+    description,
+    time,
+    color,
+    icon,
+}: ActivityItemProps) {
     const getColorClasses = (color: string) => {
         const colorMap: Record<string, { bg: string; text: string }> = {
             blue: {
@@ -50,7 +56,12 @@ export function ActivityItem({ type, description, time, color, icon }: ActivityI
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                 >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icon} />
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d={icon}
+                    />
                 </svg>
             </div>
             <div className="flex-1">
@@ -63,7 +74,7 @@ export function ActivityItem({ type, description, time, color, icon }: ActivityI
                             {description}
                         </p>
                     </div>
-                    <span className="ml-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                    <span className="ml-4 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
                         {time}
                     </span>
                 </div>

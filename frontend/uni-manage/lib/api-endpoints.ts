@@ -10,6 +10,7 @@ const API_VERSION = "/api/v1";
  */
 export const AUTH_ENDPOINTS = {
     LOGIN: `${API_VERSION}/auth/login`,
+    REGISTER: `${API_VERSION}/auth/register`,
     LOGOUT: `${API_VERSION}/auth/logout`,
     REFRESH_TOKEN: `${API_VERSION}/auth/refresh`,
     ME: `${API_VERSION}/auth/me`,

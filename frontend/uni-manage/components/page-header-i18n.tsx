@@ -1,6 +1,5 @@
 "use client";
 
-
 import { LanguageSwitcher } from "./language-switcher";
 
 import { Button } from "@heroui/react";
@@ -25,11 +24,15 @@ export function PageHeaderI18n({
     showLanguageSwitcher = false,
 }: PageHeaderProps) {
     return (
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
             <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {title}
+                </h1>
                 {description && (
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {description}
+                    </p>
                 )}
             </div>
             <div className="flex items-center gap-4">

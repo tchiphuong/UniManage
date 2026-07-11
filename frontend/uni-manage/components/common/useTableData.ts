@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { SortDescriptor } from '@heroui/react';
-import { TableFilter } from './Table';
+import { useState, useCallback, useEffect, useRef } from "react";
+import { SortDescriptor } from "@heroui/react";
+import { TableFilter } from "./Table";
 
 // ==================== TYPES ====================
 
@@ -30,14 +30,16 @@ export interface FetchParams {
     pageSize: number;
     search?: string;
     sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
+    sortDirection?: "asc" | "desc";
     filters?: TableFilter;
 }
 
 // Hook options
 export interface UseTableDataOptions<T> {
     // API endpoint or fetch function
-    fetchFn: (params: FetchParams) => Promise<ApiResponse<PagedResult<T>> | PagedResult<T>>;
+    fetchFn: (
+        params: FetchParams,
+    ) => Promise<ApiResponse<PagedResult<T>> | PagedResult<T>>;
 
     // Initial values
     initialPage?: number;
@@ -90,12 +92,14 @@ export interface UseTableDataReturn<T> {
 
 // ==================== HOOK ====================
 
-export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataReturn<T> {
+export function useTableData<T>(
+    options: UseTableDataOptions<T>,
+): UseTableDataReturn<T> {
     const {
         fetchFn,
         initialPage = 1,
         initialPageSize = 20,
-        initialSearch = '',
+        initialSearch = "",
         initialSort,
         initialFilters = {},
         onError,
@@ -113,7 +117,9 @@ export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataRe
     const [page, setPage] = useState(initialPage);
     const [pageSize, setPageSize] = useState(initialPageSize);
     const [search, setSearch] = useState(initialSearch);
-    const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor | undefined>(initialSort);
+    const [sortDescriptor, setSortDescriptor] = useState<
+        SortDescriptor | undefined
+    >(initialSort);
     const [filters, setFilters] = useState<TableFilter>(initialFilters);
 
     // Refs for debouncing
@@ -138,10 +144,10 @@ export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataRe
                 search: search || undefined,
                 sortBy: sortDescriptor?.column as string | undefined,
                 sortDirection:
-                    sortDescriptor?.direction === 'ascending'
-                        ? 'asc'
-                        : sortDescriptor?.direction === 'descending'
-                          ? 'desc'
+                    sortDescriptor?.direction === "ascending"
+                        ? "asc"
+                        : sortDescriptor?.direction === "descending"
+                          ? "desc"
                           : undefined,
                 filters: Object.keys(filters).length > 0 ? filters : undefined,
             };
@@ -150,10 +156,10 @@ export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataRe
 
             // Handle both ApiResponse<PagedResult<T>> and PagedResult<T>
             let result: PagedResult<T>;
-            if ('returnCode' in response) {
+            if ("returnCode" in response) {
                 // ApiResponse format
                 if (response.returnCode !== 0) {
-                    throw new Error(response.message || 'API Error');
+                    throw new Error(response.message || "API Error");
                 }
                 result = response.data;
             } else {
@@ -165,16 +171,26 @@ export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataRe
             setTotal(result.paging.totalItems);
             onSuccess?.(result);
         } catch (err) {
-            if ((err as Error).name === 'AbortError') {
+            if ((err as Error).name === "AbortError") {
                 return; // Ignore aborted requests
             }
-            const error = err instanceof Error ? err : new Error('Unknown error');
+            const error =
+                err instanceof Error ? err : new Error("Unknown error");
             setError(error);
             onError?.(error);
         } finally {
             setIsLoading(false);
         }
-    }, [fetchFn, page, pageSize, search, sortDescriptor, filters, onError, onSuccess]);
+    }, [
+        fetchFn,
+        page,
+        pageSize,
+        search,
+        sortDescriptor,
+        filters,
+        onError,
+        onSuccess,
+    ]);
 
     // Debounced search effect
     useEffect(() => {
@@ -201,17 +217,20 @@ export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataRe
     }, [search, filters]);
 
     // Set single filter
-    const setFilter = useCallback((key: string, value: string | number | undefined) => {
-        setFilters((prev) => ({
-            ...prev,
-            [key]: value,
-        }));
-    }, []);
+    const setFilter = useCallback(
+        (key: string, value: string | number | undefined) => {
+            setFilters((prev) => ({
+                ...prev,
+                [key]: value,
+            }));
+        },
+        [],
+    );
 
     // Clear all filters
     const clearFilters = useCallback(() => {
         setFilters({});
-        setSearch('');
+        setSearch("");
     }, []);
 
     // Refresh data
@@ -226,7 +245,13 @@ export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataRe
         setSearch(initialSearch);
         setSortDescriptor(initialSort);
         setFilters(initialFilters);
-    }, [initialPage, initialPageSize, initialSearch, initialSort, initialFilters]);
+    }, [
+        initialPage,
+        initialPageSize,
+        initialSearch,
+        initialSort,
+        initialFilters,
+    ]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -278,24 +303,24 @@ export function useTableData<T>(options: UseTableDataOptions<T>): UseTableDataRe
 export function buildQueryString(params: FetchParams): string {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('pageIndex', String(params.page));
-    searchParams.set('pageSize', String(params.pageSize));
+    searchParams.set("pageIndex", String(params.page));
+    searchParams.set("pageSize", String(params.pageSize));
 
     if (params.search) {
-        searchParams.set('keyword', params.search);
+        searchParams.set("keyword", params.search);
     }
 
     if (params.sortBy) {
-        searchParams.set('sortBy', params.sortBy);
+        searchParams.set("sortBy", params.sortBy);
     }
 
     if (params.sortDirection) {
-        searchParams.set('sortDirection', params.sortDirection);
+        searchParams.set("sortDirection", params.sortDirection);
     }
 
     if (params.filters) {
         Object.entries(params.filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== '') {
+            if (value !== undefined && value !== "") {
                 searchParams.set(key, String(value));
             }
         });
@@ -308,16 +333,16 @@ export function buildQueryString(params: FetchParams): string {
 
 export function createApiFetch<T>(
     baseUrl: string,
-    options?: RequestInit
+    options?: RequestInit,
 ): (params: FetchParams) => Promise<ApiResponse<PagedResult<T>>> {
     return async (params: FetchParams) => {
         const queryString = buildQueryString(params);
         const url = `${baseUrl}?${queryString}`;
 
         const response = await fetch(url, {
-            method: 'GET',
+            method: "GET",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
                 ...options?.headers,
             },
             ...options,

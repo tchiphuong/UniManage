@@ -1,0 +1,490 @@
+# ERP
+
+- Dashboard
+    - Overview
+        - Executive Dashboard
+        - Sales Dashboard
+        - Production Dashboard
+        - Finance Dashboard
+    - My Workspace
+        - My Tasks
+        - Pending Approvals
+        - Notifications
+    - Quick Reports
+        - Sales Summary
+        - Inventory Summary
+        - Financial Summary
+        - Production Summary
+
+- Master Data
+    - Organization
+        - Company
+        - Branch
+        - Plant
+        - Business Unit
+        - Department
+        - Section
+        - Team
+        - Cost Center
+        - Profit Center
+        - Work Center
+    - Business Partners
+        - Customer
+        - Customer Group
+        - Supplier
+        - Supplier Group
+        - Contact Person
+        - Carrier
+        - Distributor
+    - Inventory
+        - Item
+        - Item Category
+        - Item Group
+        - Brand
+        - Manufacturer
+        - Unit
+        - Unit Conversion
+        - Barcode
+        - Packaging
+        - Warehouse
+        - Warehouse Zone
+        - Warehouse Location
+        - Lot Rule
+        - Serial Rule
+    - Purchasing
+        - Buyer
+        - Purchase Category
+        - Payment Term
+        - Delivery Term
+        - Incoterms
+        - Purchase Price List
+    - Sales
+        - Salesperson
+        - Sales Region
+        - Sales Channel
+        - Customer Price Group
+        - Sales Price List
+        - Discount Group
+        - Delivery Method
+    - Production
+        - BOM
+        - BOM Version
+        - Routing
+        - Routing Version
+        - Operation
+        - Production Line
+        - Machine
+        - Mold
+        - Tool
+    - Quality
+        - Inspection Item
+        - Inspection Standard
+        - Defect Category
+        - Defect Code
+        - Sampling Rule
+        - Inspection Method
+    - Finance
+        - Chart of Accounts
+        - Account Group
+        - Currency
+        - Exchange Rate
+        - Tax Code
+        - Tax Rate
+        - Bank
+        - Bank Branch
+        - Payment Method
+    - Human Resources
+        - Position
+        - Job Title
+        - Employee Type
+        - Contract Type
+        - Shift
+        - Shift Pattern
+        - Leave Type
+        - Overtime Type
+        - Payroll Group
+    - Assets
+        - Asset Category
+        - Asset Type
+        - Asset Location
+        - Depreciation Method
+    - Projects
+        - Project Type
+        - Project Stage
+        - Project Category
+    - Common
+        - Country
+        - State / Province
+        - City
+        - Language
+        - Time Zone
+        - Calendar
+        - Holiday
+        - Reason
+        - Priority
+
+- Sales
+    - Quotation
+        - Quotations
+        - Create Quotation
+        - Approve Quotation
+    - Sales Order
+        - Sales Orders
+        - Create Sales Order
+        - Approve Sales Order
+    - Delivery
+        - Delivery Order
+        - Delivery Confirmation
+        - Proof of Delivery
+    - Return
+        - Return Request
+        - Return Receipt
+        - Credit Note
+    - Invoice
+        - Sales Invoice
+        - Invoice Adjustment
+        - Invoice Cancellation
+    - Reports
+        - Sales Analysis
+        - Profit Analysis
+        - Outstanding Orders
+        - Sales Performance
+
+- Purchasing
+    - Purchase Request
+        - Requests
+        - Create Request
+        - Approval
+    - RFQ
+        - Request for Quotation
+        - Quotation Comparison
+        - Supplier Selection
+    - Purchase Order
+        - Purchase Orders
+        - Create Purchase Order
+        - Approval
+    - Goods Receipt
+        - Goods Receipt Note
+        - Receiving Inspection
+        - Stock Receipt
+    - Supplier Return
+        - Return Request
+        - Return Shipment
+        - Supplier Credit
+    - Reports
+        - Purchase Analysis
+        - Supplier Performance
+        - Delivery Performance
+        - Outstanding Purchase Orders
+
+- Inventory
+    - Receiving
+        - Purchase Receipt
+        - Production Receipt
+        - Return Receipt
+        - Miscellaneous Receipt
+    - Issuing
+        - Sales Issue
+        - Production Issue
+        - Return Issue
+        - Miscellaneous Issue
+    - Transfer
+        - Transfer Request
+        - Stock Transfer
+        - Transfer Confirmation
+    - Stock Count
+        - Count Plan
+        - Stock Count
+        - Stock Adjustment
+    - Lot & Serial
+        - Lot Tracking
+        - Serial Tracking
+        - Traceability
+    - Reports
+        - Stock Balance
+        - Inventory Movement
+        - Inventory Aging
+        - Expiring Inventory
+
+- Production
+    - Planning
+        - Production Plan
+        - MRP
+        - Capacity Planning
+        - Production Schedule
+    - Production Order
+        - Production Orders
+        - Release Order
+        - Close Order
+    - Material Issue
+        - Material Request
+        - Material Issue
+        - Material Return
+    - Shop Floor
+        - Production Report
+        - Scrap Report
+        - Machine Time
+        - Labor Time
+    - Finished Goods
+        - Finished Goods Receipt
+        - Semi-Finished Goods
+        - Packaging
+    - Reports
+        - Production Output
+        - Machine Efficiency
+        - Scrap Analysis
+        - Production Progress
+
+- Quality Management
+    - Incoming Inspection
+        - Inspection Plan
+        - Inspection Result
+        - Acceptance
+    - In-Process Inspection
+        - Process Inspection
+        - Defect Recording
+        - Corrective Action
+    - Final Inspection
+        - Final Inspection
+        - Quality Certificate
+        - Shipment Approval
+    - Non-Conformance
+        - NCR
+        - Root Cause Analysis
+        - CAPA
+    - Reports
+        - Quality Performance
+        - Defect Analysis
+        - Supplier Quality
+        - Cost of Quality
+
+- Finance & Accounting
+    - General Ledger
+        - Journal Entry
+        - Closing
+        - Fiscal Period
+    - Accounts Receivable
+        - Customer Invoice
+        - Customer Receipt
+        - AR Aging
+    - Accounts Payable
+        - Supplier Invoice
+        - Supplier Payment
+        - AP Aging
+    - Cash
+        - Cash Receipt
+        - Cash Payment
+        - Cash Book
+    - Bank
+        - Bank Receipt
+        - Bank Payment
+        - Bank Reconciliation
+    - Fixed Assets
+        - Asset Register
+        - Depreciation
+        - Asset Disposal
+    - Budget
+        - Budget Planning
+        - Budget Allocation
+        - Budget Control
+    - Reports
+        - Balance Sheet
+        - Income Statement
+        - Cash Flow
+        - General Ledger
+
+- Human Resources
+    - Employee
+        - Employee List
+        - Employee Profile
+        - Employment Contract
+    - Recruitment
+        - Recruitment Request
+        - Candidate
+        - Interview
+    - Attendance
+        - Attendance Log
+        - Attendance Sheet
+        - Attendance Adjustment
+    - Leave
+        - Leave Request
+        - Leave Approval
+        - Leave Balance
+    - Overtime
+        - Overtime Request
+        - Overtime Approval
+        - Overtime Summary
+    - Payroll
+        - Payroll Calculation
+        - Payslip
+        - Payroll Adjustment
+    - Performance
+        - KPI
+        - Performance Review
+        - Employee Evaluation
+    - Training
+        - Training Plan
+        - Training Course
+        - Certification
+    - Reports
+        - Headcount
+        - Turnover
+        - Payroll Summary
+        - Attendance Summary
+
+- CRM
+    - Lead
+        - Lead List
+        - Assignment
+        - Conversion
+    - Opportunity
+        - Opportunity List
+        - Sales Pipeline
+        - Forecast
+    - Activities
+        - Call
+        - Meeting
+        - Task
+    - Campaign
+        - Campaign
+        - Target List
+        - Campaign Result
+    - Customer Service
+        - Support Ticket
+        - Customer Complaint
+        - Interaction History
+
+- Project Management
+    - Project
+        - Project List
+        - Create Project
+        - Close Project
+    - Planning
+        - WBS
+        - Milestone
+        - Resource Plan
+    - Execution
+        - Task
+        - Timesheet
+        - Issue
+    - Cost
+        - Budget
+        - Actual Cost
+        - Revenue
+    - Reports
+        - Project Progress
+        - Resource Utilization
+        - Project Cost
+
+- Asset Management
+    - Assets
+        - Asset Register
+        - Asset Transfer
+        - Asset Disposal
+    - Assignment
+        - Asset Assignment
+        - Asset Return
+        - Asset Handover
+    - Maintenance
+        - Maintenance Plan
+        - Work Order
+        - Maintenance History
+    - Inventory
+        - Asset Count
+        - Asset Adjustment
+        - Asset Status
+    - Reports
+        - Asset Summary
+        - Depreciation
+        - Maintenance Cost
+
+- Workflow
+    - Approval
+        - My Requests
+        - Pending Approval
+        - Approval History
+    - Workflow
+        - Workflow Definition
+        - Approval Level
+        - Approver
+    - Delegation
+        - Delegate Approval
+        - Active Delegations
+        - Delegation History
+
+- Document Management
+    - Documents
+        - Document List
+        - Upload
+        - Version Control
+    - Categories
+        - Document Category
+        - Document Type
+        - Tags
+    - Approval
+        - Pending Documents
+        - Approved Documents
+        - Expired Documents
+    - Search
+        - Search Documents
+        - Recent Documents
+        - My Documents
+
+- Reports
+    - Operational Reports
+        - Sales
+        - Purchasing
+        - Inventory
+        - Production
+    - Financial Reports
+        - AR/AP
+        - Cash Flow
+        - Profit & Loss
+        - Balance Sheet
+    - Management Reports
+        - KPI Dashboard
+        - Performance Analysis
+        - Executive Reports
+    - Custom Reports
+        - Report Designer
+        - Scheduled Reports
+        - Report Library
+
+- System
+    - Security
+        - User
+        - User Group
+        - Role
+        - Permission
+    - Navigation
+        - Menu
+        - Function
+        - Action
+    - Configuration
+        - System Parameters
+        - Company Settings
+        - Email Settings
+        - Storage Settings
+    - Numbering
+        - Document Type
+        - Numbering Rule
+        - Sequence
+    - Templates
+        - Report Template
+        - Email Template
+        - Notification Template
+        - Import / Export Template
+    - Integration
+        - API Client
+        - Webhook
+        - Data Synchronization
+    - Audit
+        - Audit Log
+        - Login Log
+        - Error Log
+        - Change Log
+    - Utilities
+        - Data Import
+        - Data Export
+        - Backup
+        - Restore

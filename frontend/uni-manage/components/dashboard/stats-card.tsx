@@ -1,23 +1,73 @@
-interface StatsCardProps {
+import { Card } from "@heroui/react";
+
+export interface StatItem {
     title: string;
-    value: string | number;
+    value: number | string;
+    prefix?: string;
+    suffix?: string;
+    icon: string; // Tên icon hoặc URL hình ảnh trực tiếp từ Icons8
+    color: string;
     change?: string;
-    changeType?: "positive" | "negative";
-    colorClass?: string;
+    changeType?: "up" | "down" | "neutral";
 }
 
-export function StatsCard({ title, value, change, changeType, colorClass = "text-blue-600" }: StatsCardProps) {
+interface StatsCardProps {
+    stat: StatItem;
+}
+
+export function StatsCard({ stat }: StatsCardProps) {
+    const { title, value, prefix, suffix, icon, change, changeType } = stat;
+
+    // Use the direct URL if it starts with http, otherwise fallback to the slug guesser
+    const iconUrl = icon.startsWith("http")
+        ? icon
+        : `https://img.icons8.com/color-glass/96/${icon}.png`;
+
     return (
-        <div className="rounded-lg bg-white p-4 shadow-md dark:bg-gray-800">
-            <div className="overflow-hidden">
-                <h3 className="mb-2 text-lg font-semibold text-gray-700 dark:text-gray-300">{title}</h3>
-                <p className={`text-3xl font-bold ${colorClass}`}>{value}</p>
-                {change && (
-                    <p className={`mt-2 text-sm ${changeType === "positive" ? "text-green-500" : "text-red-500"}`}>
-                        {changeType === "positive" ? "↑" : "↓"} {change}
-                    </p>
-                )}
+        <Card className="border border-white/20 bg-white/40 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/40">
+            <div className="p-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                            {title}
+                        </p>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <h3 className="text-3xl font-bold tracking-tight text-zinc-800 dark:text-white">
+                                {prefix}
+                                {value}
+                                {suffix}
+                            </h3>
+                            {change && (
+                                <span
+                                    className={`text-xs font-semibold ${
+                                        changeType === "up"
+                                            ? "text-success-500"
+                                            : changeType === "down"
+                                              ? "text-danger-500"
+                                              : "text-zinc-500"
+                                    }`}
+                                >
+                                    {changeType === "up"
+                                        ? "↑"
+                                        : changeType === "down"
+                                          ? "↓"
+                                          : ""}{" "}
+                                    {change}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex h-16 w-16 items-center justify-center drop-shadow-md">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={iconUrl}
+                            alt={title}
+                            className="h-14 w-14 object-contain"
+                        />
+                    </div>
+                </div>
             </div>
-        </div>
+        </Card>
     );
 }

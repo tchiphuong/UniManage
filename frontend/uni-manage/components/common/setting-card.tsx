@@ -11,12 +11,25 @@ interface SettingCardProps {
  * Reusable Setting Card Component
  * Provides consistent styling for settings sections
  */
-export function SettingCard({ title, description, children, className = "" }: SettingCardProps) {
+export function SettingCard({
+    title,
+    description,
+    children,
+    className = "",
+}: SettingCardProps) {
     return (
-        <div className={`bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm ${className}`}>
+        <div
+            className={`rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800 ${className}`}
+        >
             <div className="mb-6">
-                <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-                {description && <p className="text-sm text-default-500 mt-1">{description}</p>}
+                <h2 className="text-foreground text-xl font-semibold">
+                    {title}
+                </h2>
+                {description && (
+                    <p className="text-default-500 mt-1 text-sm">
+                        {description}
+                    </p>
+                )}
             </div>
             {children}
         </div>

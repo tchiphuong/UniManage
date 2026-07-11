@@ -6,32 +6,31 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "UniManage",
-  description: "University Management System",
+    title: "UniManage",
+    description: "University Management System",
 };
 
 export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const locale = await getLocale();
-  const messages = await getMessages();
+    children,
+}: Readonly<{
+    children: React.ReactNode;
+}>) {
+    const locale = await getLocale();
+    const messages = await getMessages();
 
-  return (
-    <html lang={locale} suppressHydrationWarning className={inter.variable}>
-      <body className="antialiased">
-        <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
-        </NextIntlClientProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang={locale} suppressHydrationWarning className={inter.variable} data-scrollbar="thin">
+            <body className="bg-background text-foreground antialiased">
+                <NextIntlClientProvider messages={messages}>
+                    <Providers>{children}</Providers>
+                </NextIntlClientProvider>
+            </body>
+        </html>
+    );
 }
-

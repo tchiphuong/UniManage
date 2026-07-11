@@ -31,14 +31,22 @@ export function Switch({
                 isDisabled={disabled}
                 className="flex items-center"
             >
-                <HeroSwitch.Control className="w-11 h-6 bg-default-200 rounded-full relative transition-colors data-[state=checked]:bg-primary">
-                    <HeroSwitch.Thumb className="block w-5 h-5 bg-white rounded-full shadow-sm transition-transform data-[state=checked]:translate-x-5 translate-x-0.5" />
+                <HeroSwitch.Control className="bg-default-200 data-[state=checked]:bg-primary relative h-6 w-11 rounded-full transition-colors">
+                    <HeroSwitch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform data-[state=checked]:translate-x-5" />
                 </HeroSwitch.Control>
             </HeroSwitch>
             {(label || description) && (
                 <div className="flex flex-col">
-                    {label && <Label className="text-sm font-medium text-default-700">{label}</Label>}
-                    {description && <p className="text-xs text-default-500 mt-0.5">{description}</p>}
+                    {label && (
+                        <Label className="text-default-700 text-sm font-medium">
+                            {label}
+                        </Label>
+                    )}
+                    {description && (
+                        <p className="text-default-500 mt-0.5 text-xs">
+                            {description}
+                        </p>
+                    )}
                 </div>
             )}
         </div>

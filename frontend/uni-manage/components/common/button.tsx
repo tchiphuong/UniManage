@@ -1,4 +1,7 @@
-import { Button as HeroButton, ButtonProps as HeroButtonProps } from '@heroui/react';
+import {
+    Button as HeroButton,
+    ButtonProps as HeroButtonProps,
+} from "@heroui/react";
 
 export interface ButtonProps extends HeroButtonProps {
     isIconOnlyMobile?: boolean;
@@ -6,8 +9,8 @@ export interface ButtonProps extends HeroButtonProps {
 
 export function Button({
     children,
-    radius = 'full',
-    className = '',
+    radius = "full",
+    className = "",
     isIconOnlyMobile,
     startContent,
     ...props
@@ -22,7 +25,9 @@ export function Button({
                 <div className="flex items-center gap-2">
                     {/* Show icon always, but size might need adjustment if passed manually */}
                     {startContent ? (
-                        <span className="flex items-center justify-center">{startContent}</span>
+                        <span className="flex items-center justify-center">
+                            {startContent}
+                        </span>
                     ) : null}
                     {/* Hide text on mobile */}
                     <span className="hidden sm:inline">{children}</span>

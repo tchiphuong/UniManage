@@ -1,166 +1,263 @@
 {
-    "common": {
-        "appName": "UniManage",
-        "appDescription": "Hệ thống quản lý đại học toàn diện",
-        "loading": "Đang tải...",
-        "save": "Lưu",
-        "cancel": "Hủy",
-        "delete": "Xóa",
-        "edit": "Sửa",
-        "add": "Thêm",
-        "search": "Tìm kiếm",
-        "filter": "Lọc",
-        "export": "Xuất dữ liệu",
-        "import": "Nhập dữ liệu",
-        "confirm": "Xác nhận",
-        "back": "Quay lại",
-        "next": "Tiếp theo",
-        "previous": "Trước",
-        "submit": "Gửi",
-        "reset": "Đặt lại",
-        "dashboard": "Trang chủ",
-        "users": "Người dùng",
-        "settings": "Cài đặt",
-        "logout": "Đăng xuất",
-        "close": "Đóng",
-        "yes": "Có",
-        "no": "Không",
-        "language": "Ngôn ngữ",
-        "languageVietnamese": "Tiếng Việt",
-        "languageEnglish": "Tiếng Anh",
-        "languageSelect": "Chọn ngôn ngữ",
-        "noResults": "Không tìm thấy kết quả"
-    },
     "auth": {
-        "login": "Đăng nhập",
-        "logout": "Đăng xuất",
-        "register": "Đăng ký",
-        "forgotPassword": "Quên mật khẩu?",
-        "resetPassword": "Đặt lại mật khẩu",
-        "changePassword": "Đổi mật khẩu",
-        "username": "Tên đăng nhập",
-        "password": "Mật khẩu",
-        "email": "Email",
-        "rememberMe": "Ghi nhớ đăng nhập",
-        "loginSuccess": "Đăng nhập thành công",
-        "loginFailed": "Đăng nhập thất bại",
-        "logoutSuccess": "Đăng xuất thành công",
-        "loginTitle": "Chào mừng trở lại",
-        "loginSubtitle": "Đăng nhập vào tài khoản của bạn",
-        "usernamePlaceholder": "Nhập tên đăng nhập",
-        "passwordPlaceholder": "Nhập mật khẩu",
-        "loggingIn": "Đang đăng nhập...",
-        "noAccount": "Chưa có tài khoản?",
-        "createAccount": "Tạo tài khoản",
-        "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không đúng",
-        "requiredField": "Trường này là bắt buộc",
-        "orContinueWith": "Hoặc tiếp tục với",
-        "signInWithGoogle": "Đăng nhập với Google"
-    },
-    "nav": {
-        "dashboard": "Tổng quan",
-        "students": "Sinh viên",
-        "teachers": "Giảng viên",
-        "courses": "Khóa học",
-        "classes": "Lớp học",
-        "schedules": "Thời khóa biểu",
-        "grades": "Điểm số",
-        "finance": "Tài chính",
-        "reports": "Báo cáo",
-        "settings": "Cài đặt",
-        "profile": "Hồ sơ cá nhân"
-    },
-    "home": {
-        "title": "UniManage - Hệ thống Quản lý Đại học",
-        "learnMore": "Tìm hiểu thêm",
-        "students": {
-            "title": "Quản lý Sinh viên",
-            "description": "Quản lý thông tin, điểm số và hoạt động của sinh viên"
+        "global": {
+            "btn": {
+                "changePassword": "Đổi mật khẩu",
+                "logout": "Đăng xuất",
+                "resetPassword": "Đặt lại mật khẩu"
+            },
+            "msg": {
+                "logoutSuccess": "Đăng xuất thành công"
+            }
         },
-        "teachers": {
-            "title": "Quản lý Giảng viên",
-            "description": "Quản lý hồ sơ, lịch giảng và nghiên cứu khoa học"
+        "login": {
+            "btn": {
+                "createAccount": "Tạo tài khoản",
+                "forgotPassword": "Quên mật khẩu?",
+                "login": "Đăng nhập",
+                "signInWithGoogle": "Đăng nhập với Google"
+            },
+            "err": {
+                "failed": "Đăng nhập thất bại",
+                "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không đúng",
+                "passwordRequired": "Vui lòng nhập mật khẩu",
+                "usernameRequired": "Vui lòng nhập tên đăng nhập"
+            },
+            "lbl": {
+                "noAccount": "Chưa có tài khoản?",
+                "orContinueWith": "Hoặc tiếp tục với",
+                "password": "Mật khẩu",
+                "rememberMe": "Ghi nhớ đăng nhập",
+                "subtitle": "Đăng nhập vào tài khoản của bạn",
+                "title": "Chào mừng trở lại",
+                "username": "Tên đăng nhập"
+            },
+            "msg": {
+                "loggingIn": "Đang đăng nhập...",
+                "success": "Đăng nhập thành công"
+            },
+            "ph": {
+                "password": "Nhập mật khẩu",
+                "username": "Nhập tên đăng nhập"
+            }
         },
-        "courses": {
-            "title": "Quản lý Khóa học",
-            "description": "Quản lý chương trình đào tạo và thời khóa biểu"
+        "register": {
+            "btn": {
+                "login": "Đăng nhập",
+                "register": "Đăng ký"
+            },
+            "err": {
+                "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+                "failed": "Đăng ký thất bại. Vui lòng thử lại.",
+                "fullNameRequired": "Vui lòng nhập họ và tên",
+                "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+                "passwordsDoNotMatch": "Mật khẩu không khớp",
+                "usernameMinLength": "Tên đăng nhập phải có ít nhất 3 ký tự"
+            },
+            "lbl": {
+                "agreeToTerms": "Tôi đồng ý với các Điều khoản và Điều kiện",
+                "alreadyHaveAccount": "Đã có tài khoản?",
+                "confirmPassword": "Xác nhận mật khẩu",
+                "email": "Email",
+                "fullName": "Họ và tên",
+                "password": "Mật khẩu",
+                "subtitle": "Tham gia với chúng tôi ngay hôm nay",
+                "username": "Tên đăng nhập"
+            },
+            "msg": {
+                "termsRequired": "Bạn phải đồng ý với các điều khoản"
+            },
+            "ph": {
+                "confirmPassword": "Nhập lại mật khẩu",
+                "fullName": "Nhập họ và tên",
+                "password": "Nhập mật khẩu",
+                "username": "Nhập tên đăng nhập"
+            }
         }
     },
-    "validation": {
-        "required": "{field} là bắt buộc",
-        "email": "Email không hợp lệ",
-        "phone": "Số điện thoại không hợp lệ",
-        "minLength": "{field} phải có ít nhất {min} ký tự",
-        "maxLength": "{field} không được vượt quá {max} ký tự",
-        "min": "{field} phải lớn hơn hoặc bằng {min}",
-        "max": "{field} phải nhỏ hơn hoặc bằng {max}"
-    },
-    "error": {
-        "general": "Đã có lỗi xảy ra",
-        "network": "Lỗi kết nối mạng",
-        "unauthorized": "Bạn không có quyền truy cập",
-        "notFound": "Không tìm thấy dữ liệu",
-        "serverError": "Lỗi máy chủ",
-        "tryAgain": "Vui lòng thử lại"
-    },
-    "success": {
-        "saved": "Lưu thành công",
-        "deleted": "Xóa thành công",
-        "updated": "Cập nhật thành công",
-        "created": "Tạo mới thành công"
-    },
-    "pagination": {
-        "showing": "Hiển thị",
-        "of": "của",
-        "results": "kết quả",
-        "page": "Trang",
-        "rowsPerPage": "Số dòng mỗi trang"
+    "common": {
+        "confirmDialog": {
+            "btn": {
+                "cancel": "Hủy",
+                "confirm": "Xác nhận"
+            },
+            "lbl": {
+                "deleteTitle": "Xác nhận xóa",
+                "discardTitle": "Hủy thay đổi",
+                "saveTitle": "Lưu thay đổi",
+                "title": "Xác nhận hành động"
+            },
+            "msg": {
+                "deleteMessage": "Dữ liệu này sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?",
+                "discardMessage": "Bạn có chắc chắn muốn hủy các thay đổi? Hành động này không thể hoàn tác.",
+                "message": "Bạn có chắc chắn muốn thực hiện hành động này?",
+                "saveMessage": "Bạn có muốn lưu các thay đổi không?"
+            }
+        },
+        "error": {
+            "msg": {
+                "general": "Đã có lỗi xảy ra",
+                "network": "Lỗi kết nối mạng",
+                "notFound": "Không tìm thấy dữ liệu",
+                "serverError": "Lỗi máy chủ",
+                "tryAgain": "Vui lòng thử lại",
+                "unauthorized": "Bạn không có quyền truy cập"
+            }
+        },
+        "global": {
+            "btn": {
+                "add": "Thêm",
+                "back": "Quay lại",
+                "cancel": "Hủy",
+                "close": "Đóng",
+                "confirm": "Xác nhận",
+                "delete": "Xóa",
+                "edit": "Sửa",
+                "export": "Xuất dữ liệu",
+                "filter": "Lọc",
+                "import": "Nhập dữ liệu",
+                "markAllAsRead": "Đánh dấu tất cả đã đọc",
+                "next": "Tiếp theo",
+                "no": "Không",
+                "previous": "Trước",
+                "reset": "Đặt lại",
+                "save": "Lưu",
+                "search": "Tìm kiếm",
+                "signOut": "Đăng xuất",
+                "submit": "Gửi",
+                "yes": "Có"
+            },
+            "lbl": {
+                "appDescription": "Hệ thống quản lý đại học toàn diện",
+                "appName": "UniManage",
+                "favorites": "Yêu thích",
+                "language": "Ngôn ngữ",
+                "languageEnglish": "Tiếng Anh",
+                "languageSelect": "Chọn ngôn ngữ",
+                "languageVietnamese": "Tiếng Việt",
+                "loading": "Đang tải...",
+                "noResults": "Không tìm thấy kết quả",
+                "notifications": "Thông báo",
+                "profile": "Hồ sơ cá nhân",
+                "requiredField": "Trường này là bắt buộc",
+                "search": "Tìm kiếm"
+            },
+            "msg": {
+                "unreadNotifications": "{count} thông báo chưa đọc"
+            }
+        },
+        "menu": {
+            "lbl": {
+                "attendance": "Điểm danh",
+                "customers": "Khách hàng",
+                "dashboard": "Trang chủ",
+                "departments": "Phòng ban",
+                "employees": "Nhân viên",
+                "hr": "Nhân sự",
+                "inventory": "Kho",
+                "items": "Sản phẩm",
+                "main": "Tổng quan",
+                "orders": "Đơn hàng",
+                "positions": "Chức vụ",
+                "roles": "Phân quyền",
+                "salaries": "Lương",
+                "sales": "Bán hàng",
+                "settings": "Cài đặt",
+                "system": "Hệ thống",
+                "users": "Người dùng"
+            }
+        },
+        "nav": {
+            "lbl": {
+                "classes": "Lớp học",
+                "courses": "Môn học",
+                "dashboard": "Trang chủ",
+                "finance": "Tài chính",
+                "grades": "Điểm số",
+                "profile": "Hồ sơ",
+                "reports": "Báo cáo",
+                "schedules": "Thời khóa biểu",
+                "settings": "Cài đặt",
+                "students": "Sinh viên",
+                "teachers": "Giảng viên"
+            }
+        },
+        "pagination": {
+            "lbl": {
+                "of": "của",
+                "page": "Trang",
+                "results": "kết quả",
+                "rowsPerPage": "Số dòng mỗi trang",
+                "showing": "Đang xem"
+            }
+        },
+        "success": {
+            "msg": {
+                "created": "Tạo mới thành công",
+                "deleted": "Xóa thành công",
+                "saved": "Lưu thành công",
+                "updated": "Cập nhật thành công"
+            }
+        },
+        "validation": {
+            "err": {
+                "email": "Địa chỉ email không hợp lệ",
+                "max": "{field} phải nhỏ hơn hoặc bằng {max}",
+                "maxLength": "{field} không được vượt quá {max} ký tự",
+                "min": "{field} phải lớn hơn hoặc bằng {min}",
+                "minLength": "{field} phải có ít nhất {min} ký tự",
+                "phone": "Số điện thoại không hợp lệ",
+                "required": "{field} là bắt buộc"
+            }
+        }
     },
     "dashboard": {
-        "title": "Tổng quan",
-        "welcome": "Chào mừng trở lại! Đây là những gì đang diễn ra hôm nay.",
-        "totalUsers": "Tổng người dùng",
-        "revenue": "Doanh thu",
-        "activeSessions": "Phiên hoạt động",
-        "pendingTasks": "Công việc chờ xử lý",
-        "recentActivity": "Hoạt động gần đây",
-        "quickActions": "Thao tác nhanh",
-        "refresh": "Làm mới",
-        "addUser": "Thêm người dùng",
-        "newReport": "Báo cáo mới",
-        "support": "Hỗ trợ"
+        "overview": {
+            "btn": {
+                "addUser": "Thêm Người Dùng",
+                "newReport": "Báo Cáo Mới",
+                "refresh": "Làm Mới",
+                "support": "Hỗ Trợ"
+            },
+            "lbl": {
+                "activeSessions": "Phiên Hoạt Động",
+                "conversionRate": "Tỉ Lệ Chuyển Đổi",
+                "customer": "Khách Hàng",
+                "orderId": "Mã Đơn",
+                "orders": "Đơn Hàng",
+                "pendingTasks": "Công Việc Chờ",
+                "quickActions": "Thao Tác Nhanh",
+                "recentActivity": "Hoạt Động Gần Đây",
+                "recentOrders": "Đơn Hàng Gần Đây",
+                "revenue": "Doanh Thu",
+                "salesOverview": "Tổng Quan Bán Hàng",
+                "status": "Trạng Thái",
+                "title": "Tổng quan",
+                "total": "Tổng Cộng",
+                "totalUsers": "Tổng Người Dùng",
+                "userGrowth": "Tăng Trưởng Người Dùng"
+            },
+            "msg": {
+                "areaChartPlaceholder": "Khu vực biểu đồ Area",
+                "barChartPlaceholder": "Khu vực biểu đồ Bar",
+                "welcome": "Chào mừng trở lại! Dưới đây là tình hình hôm nay."
+            }
+        }
     },
-    "menu": {
-        "group": {
-            "main": "Tổng quan",
-            "hr": "Nhân sự",
-            "sales": "Bán hàng",
-            "inventory": "Kho hàng",
-            "system": "Hệ thống"
-        },
-        "dashboard": "Trang chủ",
-        "employees": "Nhân viên",
-        "departments": "Phòng ban",
-        "positions": "Chức vụ",
-        "attendance": "Chấm công",
-        "salaries": "Bảng lương",
-        "customers": "Khách hàng",
-        "orders": "Đơn hàng",
-        "items": "Sản phẩm",
-        "users": "Người dùng",
-        "roles": "Phân quyền",
-        "settings": "Cài đặt"
-    },
-    "confirmDialog": {
-        "title": "Xác nhận hành động",
-        "message": "Bạn có chắc chắn muốn thực hiện hành động này không?",
-        "confirm": "Đồng ý",
-        "cancel": "Hủy bỏ",
-        "deleteTitle": "Xác nhận xóa",
-        "deleteMessage": "Dữ liệu này sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?",
-        "saveTitle": "Lưu thay đổi",
-        "saveMessage": "Bạn có muốn lưu các thay đổi không?",
-        "discardTitle": "Hủy thay đổi",
-        "discardMessage": "Bạn có chắc chắn muốn hủy các thay đổi? Hành động này không thể hoàn tác."
+    "home": {
+        "landing": {
+            "btn": {
+                "learnMore": "Tìm hiểu thêm"
+            },
+            "lbl": {
+                "coursesDesc": "Quản lý chương trình đào tạo và lịch học",
+                "coursesTitle": "Quản lý môn học",
+                "studentsDesc": "Quản lý thông tin, điểm số và hoạt động của sinh viên",
+                "studentsTitle": "Quản lý sinh viên",
+                "teachersDesc": "Quản lý hồ sơ, lịch giảng dạy và nghiên cứu",
+                "teachersTitle": "Quản lý giảng viên",
+                "title": "UniManage - Hệ thống quản lý đại học"
+            }
+        }
     }
 }

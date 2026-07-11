@@ -57,6 +57,7 @@ export function useMenu() {
         revalidateOnFocus: false,
         revalidateOnReconnect: true,
         dedupingInterval: 60000, // Cache 60s
+        errorRetryCount: 3, // Giới hạn retry tối đa 3 lần nếu API lỗi (tránh lag khi BE offline)
     });
 
     return {

@@ -9,7 +9,12 @@ interface FormInputProps extends React.ComponentProps<typeof HeroInput> {
     label?: string;
 }
 
-export function FormInput({ name, label, className, ...props }: FormInputProps) {
+export function FormInput({
+    name,
+    label,
+    className,
+    ...props
+}: FormInputProps) {
     const { control } = useFormContext();
 
     return (

@@ -4,7 +4,11 @@ interface PerformanceMetricProps {
     color: "blue" | "green" | "purple" | "yellow";
 }
 
-export function PerformanceMetric({ label, value, color }: PerformanceMetricProps) {
+export function PerformanceMetric({
+    label,
+    value,
+    color,
+}: PerformanceMetricProps) {
     const getColorClass = (color: string) => {
         const colorMap: Record<string, string> = {
             blue: "bg-blue-600 dark:bg-blue-400",
@@ -21,7 +25,9 @@ export function PerformanceMetric({ label, value, color }: PerformanceMetricProp
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {label}
                 </span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white">{value}%</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    {value}%
+                </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                 <div

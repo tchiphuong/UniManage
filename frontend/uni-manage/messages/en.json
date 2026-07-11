@@ -1,166 +1,263 @@
 {
-    "common": {
-        "appName": "UniManage",
-        "appDescription": "Comprehensive University Management System",
-        "loading": "Loading...",
-        "save": "Save",
-        "cancel": "Cancel",
-        "delete": "Delete",
-        "edit": "Edit",
-        "add": "Add",
-        "search": "Search",
-        "filter": "Filter",
-        "export": "Export",
-        "import": "Import",
-        "confirm": "Confirm",
-        "back": "Back",
-        "next": "Next",
-        "previous": "Previous",
-        "submit": "Submit",
-        "reset": "Reset",
-        "dashboard": "Dashboard",
-        "users": "Users",
-        "settings": "Settings",
-        "logout": "Logout",
-        "close": "Close",
-        "yes": "Yes",
-        "no": "No",
-        "language": "Language",
-        "languageVietnamese": "Vietnamese",
-        "languageEnglish": "English",
-        "languageSelect": "Select language",
-        "noResults": "No results found"
-    },
     "auth": {
-        "login": "Login",
-        "logout": "Logout",
-        "register": "Register",
-        "forgotPassword": "Forgot Password?",
-        "resetPassword": "Reset Password",
-        "changePassword": "Change Password",
-        "username": "Username",
-        "password": "Password",
-        "email": "Email",
-        "rememberMe": "Remember me",
-        "loginSuccess": "Login successful",
-        "loginFailed": "Login failed",
-        "logoutSuccess": "Logout successful",
-        "loginTitle": "Welcome back",
-        "loginSubtitle": "Sign in to your account",
-        "usernamePlaceholder": "Enter your username",
-        "passwordPlaceholder": "Enter your password",
-        "loggingIn": "Logging in...",
-        "noAccount": "Don't have an account?",
-        "createAccount": "Create account",
-        "invalidCredentials": "Invalid username or password",
-        "requiredField": "This field is required",
-        "orContinueWith": "Or continue with",
-        "signInWithGoogle": "Sign in with Google"
-    },
-    "nav": {
-        "dashboard": "Dashboard",
-        "students": "Students",
-        "teachers": "Teachers",
-        "courses": "Courses",
-        "classes": "Classes",
-        "schedules": "Schedules",
-        "grades": "Grades",
-        "finance": "Finance",
-        "reports": "Reports",
-        "settings": "Settings",
-        "profile": "Profile"
-    },
-    "home": {
-        "title": "UniManage - University Management System",
-        "learnMore": "Learn More",
-        "students": {
-            "title": "Student Management",
-            "description": "Manage student information, grades and activities"
+        "global": {
+            "btn": {
+                "changePassword": "Change Password",
+                "logout": "Logout",
+                "resetPassword": "Reset Password"
+            },
+            "msg": {
+                "logoutSuccess": "Logout successful"
+            }
         },
-        "teachers": {
-            "title": "Teacher Management",
-            "description": "Manage profiles, teaching schedules and research"
+        "login": {
+            "btn": {
+                "createAccount": "Create account",
+                "forgotPassword": "Forgot Password?",
+                "login": "Login",
+                "signInWithGoogle": "Sign in with Google"
+            },
+            "err": {
+                "failed": "Login failed",
+                "invalidCredentials": "Invalid username or password",
+                "passwordRequired": "Please enter your password",
+                "usernameRequired": "Please enter your username"
+            },
+            "lbl": {
+                "noAccount": "Don't have an account?",
+                "orContinueWith": "Or continue with",
+                "password": "Password",
+                "rememberMe": "Remember me",
+                "subtitle": "Sign in to your account",
+                "title": "Welcome back",
+                "username": "Username"
+            },
+            "msg": {
+                "loggingIn": "Logging in...",
+                "success": "Login successful"
+            },
+            "ph": {
+                "password": "Enter your password",
+                "username": "Enter your username"
+            }
         },
-        "courses": {
-            "title": "Course Management",
-            "description": "Manage curriculum and course schedules"
+        "register": {
+            "btn": {
+                "login": "Login",
+                "register": "Register"
+            },
+            "err": {
+                "confirmPasswordRequired": "Please confirm your password",
+                "failed": "Registration failed. Please try again.",
+                "fullNameRequired": "Please enter your full name",
+                "passwordMinLength": "Password must be at least 6 characters",
+                "passwordsDoNotMatch": "Passwords do not match",
+                "usernameMinLength": "Username must be at least 3 characters"
+            },
+            "lbl": {
+                "agreeToTerms": "I agree to the Terms and Conditions",
+                "alreadyHaveAccount": "Already have an account?",
+                "confirmPassword": "Confirm Password",
+                "email": "Email",
+                "fullName": "Full Name",
+                "password": "Password",
+                "subtitle": "Join us today",
+                "username": "Username"
+            },
+            "msg": {
+                "termsRequired": "You must agree to the terms and conditions"
+            },
+            "ph": {
+                "confirmPassword": "Re-enter your password",
+                "fullName": "Enter your full name",
+                "password": "Enter your password",
+                "username": "Enter your username"
+            }
         }
     },
-    "validation": {
-        "required": "{field} is required",
-        "email": "Invalid email address",
-        "phone": "Invalid phone number",
-        "minLength": "{field} must be at least {min} characters",
-        "maxLength": "{field} must not exceed {max} characters",
-        "min": "{field} must be greater than or equal to {min}",
-        "max": "{field} must be less than or equal to {max}"
-    },
-    "error": {
-        "general": "An error occurred",
-        "network": "Network connection error",
-        "unauthorized": "You don't have permission to access",
-        "notFound": "Data not found",
-        "serverError": "Server error",
-        "tryAgain": "Please try again"
-    },
-    "success": {
-        "saved": "Saved successfully",
-        "deleted": "Deleted successfully",
-        "updated": "Updated successfully",
-        "created": "Created successfully"
-    },
-    "pagination": {
-        "showing": "Showing",
-        "of": "of",
-        "results": "results",
-        "page": "Page",
-        "rowsPerPage": "Rows per page"
+    "common": {
+        "confirmDialog": {
+            "btn": {
+                "cancel": "Cancel",
+                "confirm": "Confirm"
+            },
+            "lbl": {
+                "deleteTitle": "Confirm Deletion",
+                "discardTitle": "Discard Changes",
+                "saveTitle": "Save Changes",
+                "title": "Confirm Action"
+            },
+            "msg": {
+                "deleteMessage": "This data will be permanently deleted and cannot be recovered. Are you sure you want to continue?",
+                "discardMessage": "Are you sure you want to discard your changes? This action cannot be undone.",
+                "message": "Are you sure you want to proceed with this action?",
+                "saveMessage": "Do you want to save your changes?"
+            }
+        },
+        "error": {
+            "msg": {
+                "general": "An error occurred",
+                "network": "Network connection error",
+                "notFound": "Data not found",
+                "serverError": "Server error",
+                "tryAgain": "Please try again",
+                "unauthorized": "You don't have permission to access"
+            }
+        },
+        "global": {
+            "btn": {
+                "add": "Add",
+                "back": "Back",
+                "cancel": "Cancel",
+                "close": "Close",
+                "confirm": "Confirm",
+                "delete": "Delete",
+                "edit": "Edit",
+                "export": "Export",
+                "filter": "Filter",
+                "import": "Import",
+                "markAllAsRead": "Mark all as read",
+                "next": "Next",
+                "no": "No",
+                "previous": "Previous",
+                "reset": "Reset",
+                "save": "Save",
+                "search": "Search",
+                "signOut": "Sign Out",
+                "submit": "Submit",
+                "yes": "Yes"
+            },
+            "lbl": {
+                "appDescription": "Comprehensive University Management System",
+                "appName": "UniManage",
+                "favorites": "Favorites",
+                "language": "Language",
+                "languageEnglish": "English",
+                "languageSelect": "Select language",
+                "languageVietnamese": "Vietnamese",
+                "loading": "Loading...",
+                "noResults": "No results found",
+                "notifications": "Notifications",
+                "profile": "Profile",
+                "requiredField": "This field is required",
+                "search": "Search"
+            },
+            "msg": {
+                "unreadNotifications": "{count} unread notifications"
+            }
+        },
+        "menu": {
+            "lbl": {
+                "attendance": "Attendance",
+                "customers": "Customers",
+                "dashboard": "Dashboard",
+                "departments": "Departments",
+                "employees": "Employees",
+                "hr": "Human Resources",
+                "inventory": "Inventory",
+                "items": "Items",
+                "main": "Overview",
+                "orders": "Orders",
+                "positions": "Positions",
+                "roles": "Roles",
+                "salaries": "Salaries",
+                "sales": "Sales",
+                "settings": "Settings",
+                "system": "System",
+                "users": "Users"
+            }
+        },
+        "nav": {
+            "lbl": {
+                "classes": "Classes",
+                "courses": "Courses",
+                "dashboard": "Dashboard",
+                "finance": "Finance",
+                "grades": "Grades",
+                "profile": "Profile",
+                "reports": "Reports",
+                "schedules": "Schedules",
+                "settings": "Settings",
+                "students": "Students",
+                "teachers": "Teachers"
+            }
+        },
+        "pagination": {
+            "lbl": {
+                "of": "of",
+                "page": "Page",
+                "results": "results",
+                "rowsPerPage": "Rows per page",
+                "showing": "Showing"
+            }
+        },
+        "success": {
+            "msg": {
+                "created": "Created successfully",
+                "deleted": "Deleted successfully",
+                "saved": "Saved successfully",
+                "updated": "Updated successfully"
+            }
+        },
+        "validation": {
+            "err": {
+                "email": "Invalid email address",
+                "max": "{field} must be less than or equal to {max}",
+                "maxLength": "{field} must not exceed {max} characters",
+                "min": "{field} must be greater than or equal to {min}",
+                "minLength": "{field} must be at least {min} characters",
+                "phone": "Invalid phone number",
+                "required": "{field} is required"
+            }
+        }
     },
     "dashboard": {
-        "title": "Overview",
-        "welcome": "Welcome back! Here's what's happening today.",
-        "totalUsers": "Total Users",
-        "revenue": "Revenue",
-        "activeSessions": "Active Sessions",
-        "pendingTasks": "Pending Tasks",
-        "recentActivity": "Recent Activity",
-        "quickActions": "Quick Actions",
-        "refresh": "Refresh",
-        "addUser": "Add User",
-        "newReport": "New Report",
-        "support": "Support"
+        "overview": {
+            "btn": {
+                "addUser": "Add User",
+                "newReport": "New Report",
+                "refresh": "Refresh",
+                "support": "Support"
+            },
+            "lbl": {
+                "activeSessions": "Active Sessions",
+                "conversionRate": "Conversion Rate",
+                "customer": "Customer",
+                "orderId": "Order ID",
+                "orders": "Orders",
+                "pendingTasks": "Pending Tasks",
+                "quickActions": "Quick Actions",
+                "recentActivity": "Recent Activity",
+                "recentOrders": "Recent Orders",
+                "revenue": "Revenue",
+                "salesOverview": "Sales Overview",
+                "status": "Status",
+                "title": "Dashboard Overview",
+                "total": "Total",
+                "totalUsers": "Total Users",
+                "userGrowth": "User Growth"
+            },
+            "msg": {
+                "areaChartPlaceholder": "Area Chart Placeholder",
+                "barChartPlaceholder": "Bar Chart Placeholder",
+                "welcome": "Welcome back! Here's what's happening today."
+            }
+        }
     },
-    "menu": {
-        "group": {
-            "main": "Overview",
-            "hr": "Human Resources",
-            "sales": "Sales",
-            "inventory": "Inventory",
-            "system": "System"
-        },
-        "dashboard": "Dashboard",
-        "employees": "Employees",
-        "departments": "Departments",
-        "positions": "Positions",
-        "attendance": "Attendance",
-        "salaries": "Salaries",
-        "customers": "Customers",
-        "orders": "Orders",
-        "items": "Items",
-        "users": "Users",
-        "roles": "Roles",
-        "settings": "Settings"
-    },
-    "confirmDialog": {
-        "title": "Confirm Action",
-        "message": "Are you sure you want to proceed with this action?",
-        "confirm": "Confirm",
-        "cancel": "Cancel",
-        "deleteTitle": "Confirm Deletion",
-        "deleteMessage": "This data will be permanently deleted and cannot be recovered. Are you sure you want to continue?",
-        "saveTitle": "Save Changes",
-        "saveMessage": "Do you want to save your changes?",
-        "discardTitle": "Discard Changes",
-        "discardMessage": "Are you sure you want to discard your changes? This action cannot be undone."
+    "home": {
+        "landing": {
+            "btn": {
+                "learnMore": "Learn More"
+            },
+            "lbl": {
+                "coursesDesc": "Manage curriculum and course schedules",
+                "coursesTitle": "Course Management",
+                "studentsDesc": "Manage student information, grades and activities",
+                "studentsTitle": "Student Management",
+                "teachersDesc": "Manage profiles, teaching schedules and research",
+                "teachersTitle": "Teacher Management",
+                "title": "UniManage - University Management System"
+            }
+        }
     }
 }

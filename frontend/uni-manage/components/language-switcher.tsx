@@ -2,8 +2,11 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useSearchParams } from "next/navigation";
-import { type Locale } from "@/i18n/config";
+import type { Locale } from "@/i18n/config";
 import Cookies from "js-cookie";
+import { Select, ListBox } from "@heroui/react";
+import type { Key } from "react";
+import { Icon } from "@iconify/react";
 
 interface LanguageSwitcherProps {
     className?: string;
@@ -22,15 +25,17 @@ const languages = [
     },
 ];
 
-export function LanguageSwitcher({ className = "" }: LanguageSwitcherProps) {
-    const t = useTranslations("common");
+export function LanguageSwitcher({
+    className = "",
+}: Readonly<LanguageSwitcherProps>) {
+    const t = useTranslations("common.global.lbl");
     const locale = useLocale() as Locale;
 
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const handleSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newLocale = e.target.value as Locale;
+    const handleSelectionChange = (key: Key | Key[] | null) => {
+        const newLocale = key as Locale;
         if (!newLocale || newLocale === locale) return;
 
         // Set cookie so server-side i18n can pick the selected locale on next request
@@ -47,23 +52,65 @@ export function LanguageSwitcher({ className = "" }: LanguageSwitcherProps) {
 
     return (
         <div className={`relative ${className}`}>
-            <select
+            <Select
+                aria-label={t("languageSelect")}
                 value={locale}
                 onChange={handleSelectionChange}
-                className="appearance-none w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                aria-label={t("languageSelect")}
+                className="w-48"
             >
-                {languages.map((lang) => (
-                    <option key={lang.code} value={lang.code}>
-                        {lang.flag} {t(lang.nameKey)}
-                    </option>
-                ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-200">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                </svg>
-            </div>
+                <Select.Trigger>
+                    <Select.Value>
+                        {({ defaultChildren, isPlaceholder, state }) => {
+                            // Cập nhật để khi đóng Select vẫn hiển thị cờ bên ngoài
+                            const selectedItem = state.selectedItems[0];
+                            if (isPlaceholder || !selectedItem)
+                                return defaultChildren;
+                            return (
+                                <div className="flex items-center gap-2">
+                                    <Icon
+                                        icon={`circle-flags:${selectedItem.key === "vi" ? "vn" : "us"}`}
+                                        className="text-xl"
+                                    />
+                                    <span>{selectedItem.textValue}</span>
+                                </div>
+                            );
+                        }}
+                    </Select.Value>
+                    <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                    <ListBox>
+                        <ListBox.Item
+                            key="vi"
+                            id="vi"
+                            textValue={t("languageVietnamese")}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Icon
+                                    icon="circle-flags:vn"
+                                    className="text-xl"
+                                />
+                                <span>{t("languageVietnamese")}</span>
+                            </div>
+                            <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                        <ListBox.Item
+                            key="en"
+                            id="en"
+                            textValue={t("languageEnglish")}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Icon
+                                    icon="circle-flags:us"
+                                    className="text-xl"
+                                />
+                                <span>{t("languageEnglish")}</span>
+                            </div>
+                            <ListBox.ItemIndicator />
+                        </ListBox.Item>
+                    </ListBox>
+                </Select.Popover>
+            </Select>
         </div>
     );
 }

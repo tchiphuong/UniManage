@@ -16,21 +16,21 @@ export function AuthFormWrapper({
     backToLogin = true,
 }: AuthFormWrapperProps) {
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4">
             {/* Background effects */}
             <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-                <div className="absolute top-40 left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+                <div className="animate-blob absolute -top-40 -right-40 h-80 w-80 rounded-full bg-purple-500 opacity-20 mix-blend-multiply blur-xl filter"></div>
+                <div className="animate-blob animation-delay-2000 absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-500 opacity-20 mix-blend-multiply blur-xl filter"></div>
+                <div className="animate-blob animation-delay-4000 absolute top-40 left-40 h-80 w-80 rounded-full bg-pink-500 opacity-20 mix-blend-multiply blur-xl filter"></div>
             </div>
 
             {/* Form card */}
             <div className="relative w-full max-w-md">
-                <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-8 shadow-2xl border border-white/20">
+                <div className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
                     {/* Logo and title */}
-                    <div className="text-center mb-8">
-                        <div className="flex justify-center mb-4">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <div className="mb-8 text-center">
+                        <div className="mb-4 flex justify-center">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
                                 <Image
                                     src="/logo.svg"
                                     alt="UniManage Logo"
@@ -41,9 +41,13 @@ export function AuthFormWrapper({
                             </div>
                         </div>
 
-                        <h1 className="text-3xl font-bold text-white mb-2">{title}</h1>
+                        <h1 className="mb-2 text-3xl font-bold text-white">
+                            {title}
+                        </h1>
                         {description && (
-                            <p className="text-gray-300 text-sm">{description}</p>
+                            <p className="text-sm text-gray-300">
+                                {description}
+                            </p>
                         )}
                     </div>
 
@@ -55,7 +59,7 @@ export function AuthFormWrapper({
                         <div className="mt-6 text-center">
                             <Link
                                 href="/auth/login"
-                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                                className="text-sm text-blue-400 transition-colors hover:text-blue-300"
                             >
                                 ← Quay lại đăng nhập
                             </Link>
@@ -66,4 +70,3 @@ export function AuthFormWrapper({
         </div>
     );
 }
-

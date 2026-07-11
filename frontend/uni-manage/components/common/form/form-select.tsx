@@ -9,13 +9,22 @@ interface Option {
     value: string | number;
 }
 
-interface FormSelectProps extends Omit<React.ComponentProps<typeof Select>, "children"> {
+interface FormSelectProps extends Omit<
+    React.ComponentProps<typeof Select>,
+    "children"
+> {
     name: string;
     label?: string;
     options: Option[];
 }
 
-export function FormSelect({ name, label, options, className, ...props }: FormSelectProps) {
+export function FormSelect({
+    name,
+    label,
+    options,
+    className,
+    ...props
+}: FormSelectProps) {
     const { control } = useFormContext();
 
     return (

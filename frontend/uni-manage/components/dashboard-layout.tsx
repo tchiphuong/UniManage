@@ -21,12 +21,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
 
     return (
-        <div className="flex h-screen flex-col overflow-hidden bg-gray-100 dark:bg-zinc-900 transition-colors duration-300">
+        <div className="flex h-screen flex-col overflow-hidden bg-background">
             <Header />
             <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-100 dark:bg-gray-900">
-                    <div className="container mx-auto gap-3 p-6">{children}</div>
+                <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <div className="container mx-auto gap-3 p-6">
+                        {children}
+                    </div>
                 </main>
             </div>
         </div>

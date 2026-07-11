@@ -1,64 +1,102 @@
 "use client";
 
+import { Table, Chip } from "@heroui/react";
+import { useTranslations } from "next-intl";
+
 const rows = [
-  {
-    id: "1",
-    customer: "John Doe",
-    total: "$234.50",
-    status: "Completed",
-  },
-  {
-    id: "2",
-    customer: "Jane Smith",
-    total: "$125.99",
-    status: "Processing",
-  },
-  {
-    id: "3",
-    customer: "Bob Johnson",
-    total: "$456.75",
-    status: "Shipped",
-  },
-  {
-    id: "4",
-    customer: "Alice Brown",
-    total: "$789.20",
-    status: "Completed",
-  },
-  {
-    id: "5",
-    customer: "Charlie Wilson",
-    total: "$55.50",
-    status: "Processing",
-  },
+    {
+        id: "1",
+        customer: "John Doe",
+        total: "$234.50",
+        status: "Completed",
+    },
+    {
+        id: "2",
+        customer: "Jane Smith",
+        total: "$125.99",
+        status: "Processing",
+    },
+    {
+        id: "3",
+        customer: "Bob Johnson",
+        total: "$456.75",
+        status: "Shipped",
+    },
+    {
+        id: "4",
+        customer: "Alice Brown",
+        total: "$789.20",
+        status: "Completed",
+    },
+    {
+        id: "5",
+        customer: "Charlie Wilson",
+        total: "$55.50",
+        status: "Processing",
+    },
 ];
 
+const statusColorMap: Record<string, "success" | "warning" | "accent"> = {
+    Completed: "success",
+    Processing: "warning",
+    Shipped: "accent",
+};
+
 export function RecentOrders() {
-  return (
-    <div className="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-      <h3 className="mb-4 text-lg font-semibold text-gray-700 dark:text-gray-200">Recent Orders</h3>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Order ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Customer</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Total</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Status</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{row.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{row.customer}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{row.total}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{row.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+    const t = useTranslations();
+
+    return (
+        <div className="p-4">
+            <h3 className="text-foreground mb-4 text-lg font-semibold tracking-tight">
+                {t("dashboard.overview.lbl.recentOrders")}
+            </h3>
+            <Table className="bg-transparent shadow-none p-0">
+                <Table.ScrollContainer>
+                    <Table.Content
+                        aria-label={t("dashboard.overview.lbl.recentOrders")}
+                    >
+                        <Table.Header>
+                            <Table.Column isRowHeader>
+                                {t("dashboard.overview.lbl.orderId")}
+                            </Table.Column>
+                            <Table.Column>
+                                {t("dashboard.overview.lbl.customer")}
+                            </Table.Column>
+                            <Table.Column>
+                                {t("dashboard.overview.lbl.total")}
+                            </Table.Column>
+                            <Table.Column>
+                                {t("dashboard.overview.lbl.status")}
+                            </Table.Column>
+                        </Table.Header>
+                        <Table.Body items={rows}>
+                            {(item) => (
+                                <Table.Row key={item.id}>
+                                    <Table.Cell className="text-foreground font-medium">
+                                        #{item.id}
+                                    </Table.Cell>
+                                    <Table.Cell>{item.customer}</Table.Cell>
+                                    <Table.Cell className="font-mono">
+                                        {item.total}
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                        <Chip
+                                            size="sm"
+                                            variant="soft"
+                                            color={
+                                                statusColorMap[item.status] ||
+                                                "default"
+                                            }
+                                        >
+                                            {item.status}
+                                        </Chip>
+                                    </Table.Cell>
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table.Content>
+                </Table.ScrollContainer>
+            </Table>
+        </div>
+    );
 }

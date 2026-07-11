@@ -1,235 +1,282 @@
-import { useRef, useState, useEffect } from 'react';
-import { useRouter } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import useSWR from "swr";
+import { useTheme } from "next-themes";
+import { useSidebar } from "@/contexts/sidebar-context";
+import { Notification, User } from "@/types";
+import { Dropdown, Avatar, Button } from "@heroui/react";
 import {
-    MoonIcon,
     SunIcon,
+    MoonIcon,
     BellIcon,
     ChevronDownIcon,
     UserIcon,
     Cog6ToothIcon,
-    ArrowRightOnRectangleIcon,
-} from '@heroicons/react/24/outline';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useSidebar } from '@/contexts/SidebarContext';
-import { useClickOutside } from '@/hooks';
-import { Notification, User } from '@/types';
+    ArrowRightStartOnRectangleIcon,
+} from "@heroicons/react/24/outline";
 
 export function Header() {
     const t = useTranslations();
-    const { darkMode, toggleDarkMode } = useTheme();
+    const { theme, setTheme, resolvedTheme } = useTheme();
+    const darkMode = resolvedTheme === "dark";
+    const toggleDarkMode = () => setTheme(darkMode ? "light" : "dark");
     const { sidebarOpen, toggleSidebar } = useSidebar();
     const router = useRouter();
 
-    // Notifications state
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [notificationOpen, setNotificationOpen] = useState(false);
-    const notificationRef = useRef<HTMLDivElement>(null);
-    useClickOutside(notificationRef as React.RefObject<HTMLElement>, () => setNotificationOpen(false));
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
-    // User state
-    const [user, setUser] = useState<User | null>(null);
-    const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const userMenuRef = useRef<HTMLDivElement>(null);
-    useClickOutside(userMenuRef as React.RefObject<HTMLElement>, () => setUserMenuOpen(false));
+    // Fetch notifications with SWR
+    const { data: notificationsData, mutate: mutateNotifications } = useSWR<Notification[]>(
+        "https://jsonplaceholder.typicode.com/comments?_limit=5",
+        (url) => fetch(url).then((res) => res.json()),
+        { revalidateOnFocus: false, dedupingInterval: 600000 }
+    );
+    const notifications = notificationsData || [];
 
-    // Fetch notifications
-    useEffect(() => {
-        const randomLimit = Math.floor(Math.random() * 50) + 1;
-        fetch(`https://jsonplaceholder.typicode.com/comments?_limit=${randomLimit}`)
-            .then((res) => res.json())
-            .then((data: Notification[]) => setNotifications(data))
-            .catch(console.error);
-    }, []);
-
-    // Fetch user
-    useEffect(() => {
-        fetch('https://randomuser.me/api/')
-            .then((res) => res.json())
-            .then((data) => setUser(data.results[0]))
-            .catch(console.error);
-    }, []);
+    // Fetch user with SWR
+    const { data: userData } = useSWR(
+        "https://randomuser.me/api/",
+        (url) => fetch(url).then((res) => res.json()),
+        { revalidateOnFocus: false, dedupingInterval: 600000 }
+    );
+    const user: User | null = userData?.results?.[0] || null;
 
     const markAllAsRead = () => {
-        setNotifications([]);
-        setNotificationOpen(false);
+        mutateNotifications([], false);
     };
 
     // User menu handlers
     const handleProfile = () => {
-        setUserMenuOpen(false);
-        router.push('/dashboard/profile');
+        router.push("/dashboard/profile");
     };
 
     const handleSettings = () => {
-        setUserMenuOpen(false);
-        router.push('/dashboard/settings');
+        router.push("/dashboard/settings");
     };
 
     const handleSignOut = () => {
-        setUserMenuOpen(false);
-        // TODO: Clear auth state/tokens here if needed
-        router.push('/auth/login');
+        router.push("/auth/login");
+    };
+
+    const renderThemeIcon = () => {
+        if (!mounted) return <div className="h-6 w-6" />;
+        if (darkMode) {
+            return <SunIcon className="h-6 w-6 text-yellow-500" />;
+        }
+        return <MoonIcon className="h-6 w-6 text-blue-500" />;
     };
 
     return (
-        <header className="z-50 h-16 bg-white shadow-md transition-colors duration-300 dark:bg-zinc-800">
+        <header className="z-50 h-16 bg-surface text-surface-foreground shadow-md transition-colors duration-300">
             <div className="mx-auto h-full px-4">
                 <div className="flex h-full items-center justify-between">
                     <div className="flex items-center space-x-4">
                         {/* Hamburger/X button */}
                         <button
                             onClick={toggleSidebar}
-                            className="relative h-8 w-8 cursor-pointer text-gray-600 transition-colors hover:text-gray-800 focus:outline-none dark:text-gray-300 dark:hover:text-gray-100"
+                            className="relative h-8 w-8 cursor-pointer text-muted transition-colors hover:text-foreground focus:outline-none"
                         >
                             <span
-                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${sidebarOpen ? 'top-3.5 rotate-45' : 'top-2'
+                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${sidebarOpen ? "top-3.5 rotate-45" : "top-2"
                                     }`}
                             />
                             <span
-                                className={`absolute block h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-in-out ${sidebarOpen ? 'opacity-0' : 'top-4'
+                                className={`absolute block h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-in-out ${sidebarOpen ? "opacity-0" : "top-4"
                                     }`}
                             />
                             <span
-                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${sidebarOpen ? 'top-3.5 -rotate-45' : 'top-6'
+                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${sidebarOpen ? "top-3.5 -rotate-45" : "top-6"
                                     }`}
                             />
                         </button>
 
                         <img
-                            src="https://images.freeimages.com/vhq/images/previews/214/generic-logo-140952.png"
-                            alt="Company Logo"
-                            className="h-8 max-w-20 object-contain"
+                            src="/imgs/logo-horizontal.png"
+                            alt="UniManage Logo"
+                            className="h-8 max-w-32 object-contain"
                         />
                     </div>
 
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center gap-2">
                         {/* Dark mode toggle */}
-                        <button
+                        <Button
+                            isIconOnly
+                            variant="ghost"
                             onClick={toggleDarkMode}
-                            className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500 focus:outline-none dark:text-white dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                            className="rounded-full text-muted hover:text-foreground"
                         >
-                            {darkMode ? (
-                                <SunIcon className="h-5 w-5 text-yellow-500" />
-                            ) : (
-                                <MoonIcon className="h-5 w-5 text-blue-500" />
-                            )}
-                        </button>
+                            {renderThemeIcon()}
+                        </Button>
 
-                        {/* Notification Bell */}
-                        <div ref={notificationRef} className="relative">
-                            <button
-                                onClick={() => setNotificationOpen(!notificationOpen)}
-                                className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-500 focus:outline-none dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
-                            >
-                                <BellIcon className="h-5 w-5" />
-                            </button>
-                            {notifications.length > 0 && (
-                                <span className="absolute top-0 right-0 inline-flex translate-x-1/4 -translate-y-1/4 transform items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs leading-none font-bold text-white">
-                                    {notifications.length > 99 ? '99+' : notifications.length}
-                                </span>
-                            )}
-                            {notificationOpen && (
-                                <div className="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-xl border border-zinc-100 bg-white shadow-xl shadow-gray-200/50 transition-all duration-200 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:shadow-zinc-900/50">
-                                    <div className="border-b border-zinc-100 px-4 py-3 text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:text-zinc-200">
-                                        {t('common.notifications')}
-                                    </div>
-                                    <div className="max-h-60 overflow-y-auto">
-                                        {notifications.slice(0, 10).map((notification) => (
-                                            <a
-                                                key={notification.id}
-                                                href="#"
-                                                className="block border-b border-zinc-50 px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-700 dark:text-gray-300 dark:hover:bg-gray-700"
-                                            >
-                                                <p
-                                                    className="line-clamp-1 font-medium"
-                                                    title={notification.name}
-                                                >
-                                                    {notification.name}
-                                                </p>
-                                                <p className="mt-0.5 line-clamp-1 text-xs text-gray-500 italic">
-                                                    {notification.email}
-                                                </p>
-                                                <p className="mt-1 line-clamp-2 text-xs text-gray-500">
-                                                    {notification.body}
-                                                </p>
-                                            </a>
-                                        ))}
-                                    </div>
-                                    <div className="border-t border-zinc-100 px-4 py-2 text-center text-sm text-gray-500 dark:border-zinc-700 dark:text-gray-400">
-                                        {t('common.unreadNotifications', {
-                                            count: notifications.length,
-                                        })}
-                                    </div>
-                                    <button
-                                        onClick={markAllAsRead}
-                                        className="block w-full rounded-b-xl px-4 py-2.5 text-center text-sm font-medium text-blue-600 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                        {/* Notification Dropdown */}
+                        <Dropdown>
+                            <Dropdown.Trigger>
+                                <div className="relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-visible rounded-full text-muted hover:text-foreground focus:outline-none">
+                                    <BellIcon className="h-6 w-6 text-current" />
+                                    {notifications.length > 0 && (
+                                        <span className="bg-danger-500 absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white shadow-sm">
+                                            {notifications.length > 99
+                                                ? "99+"
+                                                : notifications.length}
+                                        </span>
+                                    )}
+                                </div>
+                            </Dropdown.Trigger>
+                            <Dropdown.Popover placement="bottom end">
+                                <Dropdown.Menu
+                                    aria-label="Notifications"
+                                    className="w-80 gap-4"
+                                >
+                                    <Dropdown.Item
+                                        key="header"
+                                        className="h-10 gap-2 opacity-100"
                                     >
-                                        {t('common.markAllAsRead')}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                                        <div className="flex w-full items-center justify-between">
+                                            <span className="text-sm font-semibold text-foreground">
+                                                {t(
+                                                    "common.global.lbl.notifications",
+                                                )}
+                                            </span>
+                                            <span className="text-xs text-muted">
+                                                {t(
+                                                    "common.global.msg.unreadNotifications",
+                                                    {
+                                                        count: notifications.length,
+                                                    },
+                                                )}
+                                            </span>
+                                        </div>
+                                    </Dropdown.Item>
 
-                        {/* User Info */}
-                        <div ref={userMenuRef} className="relative">
-                            <button
-                                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                className="flex items-center rounded-lg p-1 transition-colors hover:bg-gray-100 focus:outline-none lg:space-x-2 dark:hover:bg-gray-700"
-                            >
-                                <img
-                                    src={user?.picture?.medium || 'https://via.placeholder.com/150'}
-                                    alt="User avatar"
-                                    className="h-9 w-9 rounded-full border-2 border-zinc-200 object-cover dark:border-zinc-600"
-                                />
-                                <div className="hidden flex-col items-start lg:flex">
-                                    <span className="line-clamp-1 text-left text-sm font-medium text-gray-900 dark:text-zinc-100">
-                                        {user
-                                            ? `${user.name.first} ${user.name.last}`
-                                            : t('common.loading')}
-                                    </span>
-                                    <span className="line-clamp-1 text-left text-xs text-gray-500 dark:text-zinc-400">
-                                        {user?.email || t('common.loading')}
-                                    </span>
-                                </div>
-                                <ChevronDownIcon className="ml-1 h-4 w-4 text-gray-400" />
-                            </button>
-                            {userMenuOpen && (
-                                <div className="absolute right-0 z-50 mt-2 w-48 rounded-xl border border-zinc-100 bg-white py-1 shadow-xl shadow-gray-200/50 transition-all duration-200 dark:border-zinc-700 dark:bg-zinc-800 dark:shadow-zinc-900/50">
-                                    <div className="flex flex-col items-start border-b border-zinc-100 px-4 py-2 text-sm text-gray-700 lg:hidden dark:border-zinc-700 dark:text-zinc-300">
-                                        <span className="line-clamp-1 text-sm font-medium text-gray-900 dark:text-zinc-100">
+                                    {notifications.length === 0 ? (
+                                        <Dropdown.Item
+                                            key="empty"
+                                            className="py-4 text-center text-muted"
+                                        >
+                                            No new notifications
+                                        </Dropdown.Item>
+                                    ) : (
+                                        notifications
+                                            .slice(0, 5)
+                                            .map((notification) => (
+                                                <Dropdown.Item
+                                                    key={notification.id}
+                                                    textValue={
+                                                        notification.name
+                                                    }
+                                                >
+                                                    <div className="flex flex-col gap-1">
+                                                        <p className="line-clamp-1 text-sm font-medium">
+                                                            {notification.name}
+                                                        </p>
+                                                        <p className="line-clamp-1 text-xs italic text-muted">
+                                                            {notification.email}
+                                                        </p>
+                                                        <p className="line-clamp-2 text-xs text-muted">
+                                                            {notification.body}
+                                                        </p>
+                                                    </div>
+                                                </Dropdown.Item>
+                                            ))
+                                    )}
+
+                                    <Dropdown.Item
+                                        key="mark-all"
+                                        className="text-center font-medium text-accent"
+                                        onPress={markAllAsRead}
+                                    >
+                                        {t("common.global.btn.markAllAsRead")}
+                                    </Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
+                        </Dropdown>
+
+                        {/* User Profile Dropdown */}
+                        <Dropdown>
+                            <Dropdown.Trigger>
+                                <div className="flex h-auto cursor-pointer items-center gap-2 rounded-lg p-1 transition-colors hover:bg-default focus:outline-none">
+                                    <Avatar
+                                        className="ring-accent ring-2"
+                                        color="accent"
+                                        size="sm"
+                                    >
+                                        <Avatar.Image
+                                            src={user?.picture?.medium || ""}
+                                            alt={user?.name?.first || "User"}
+                                        />
+                                        <Avatar.Fallback>
+                                            {user?.name?.first?.[0] || "U"}
+                                        </Avatar.Fallback>
+                                    </Avatar>
+                                    <div className="hidden flex-col items-start sm:flex">
+                                        <span className="line-clamp-1 text-left text-sm font-medium text-foreground">
                                             {user
                                                 ? `${user.name.first} ${user.name.last}`
-                                                : t('common.loading')}
+                                                : t("common.global.lbl.loading")}
                                         </span>
-                                        <span className="line-clamp-1 text-xs text-gray-500 dark:text-zinc-400">
-                                            {user?.email || t('common.loading')}
+                                        <span className="line-clamp-1 text-left text-xs text-muted">
+                                            {user?.email ||
+                                                t("common.global.lbl.loading")}
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={handleProfile}
-                                        className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                                    >
-                                        <UserIcon className="mr-3 h-5 w-5 text-gray-400" />
-                                        {t('common.profile')}
-                                    </button>
-                                    <button
-                                        onClick={handleSettings}
-                                        className="flex w-full items-center px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                                    >
-                                        <Cog6ToothIcon className="mr-3 h-5 w-5 text-gray-400" />
-                                        {t('common.settings')}
-                                    </button>
-                                    <button
-                                        onClick={handleSignOut}
-                                        className="flex w-full items-center rounded-b-xl px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                                    >
-                                        <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
-                                        {t('common.signOut')}
-                                    </button>
                                 </div>
-                            )}
-                        </div>
+                            </Dropdown.Trigger>
+                            <Dropdown.Popover placement="bottom end">
+                                <Dropdown.Menu aria-label="Profile Actions">
+                                    <Dropdown.Item
+                                        key="profile_info"
+                                        className="h-14 gap-2 opacity-100 sm:hidden"
+                                    >
+                                        <p className="font-semibold">
+                                            {user
+                                                ? `${user.name.first} ${user.name.last}`
+                                                : t(
+                                                    "common.global.lbl.loading",
+                                                )}
+                                        </p>
+                                        <p className="text-xs text-muted">
+                                            {user?.email ||
+                                                t("common.global.lbl.loading")}
+                                        </p>
+                                    </Dropdown.Item>
+                                    <Dropdown.Item
+                                        key="profile"
+                                        textValue={t("common.global.lbl.profile")}
+                                        onPress={handleProfile}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <UserIcon className="h-5 w-5 text-current" />
+                                            <span>{t("common.global.lbl.profile")}</span>
+                                        </div>
+                                    </Dropdown.Item>
+                                    <Dropdown.Item
+                                        key="settings"
+                                        textValue={t("common.menu.lbl.settings")}
+                                        onPress={handleSettings}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Cog6ToothIcon className="h-5 w-5 text-current" />
+                                            <span>{t("common.menu.lbl.settings")}</span>
+                                        </div>
+                                    </Dropdown.Item>
+                                    <Dropdown.Item
+                                        key="logout"
+                                        variant="danger"
+                                        textValue={t("common.global.btn.signOut")}
+                                        onPress={handleSignOut}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <ArrowRightStartOnRectangleIcon className="h-5 w-5 text-current" />
+                                            <span>{t("common.global.btn.signOut")}</span>
+                                        </div>
+                                    </Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
+                        </Dropdown>
                     </div>
                 </div>
             </div>

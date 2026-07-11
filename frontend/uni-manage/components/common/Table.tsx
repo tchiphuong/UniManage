@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useCallback } from 'react';
+import { ReactNode, useMemo, useCallback } from "react";
 import {
     Table as HeroTable,
     TableHeader,
@@ -18,8 +18,8 @@ import {
     SelectItem,
     Skeleton,
     Spinner,
-} from '@heroui/react';
-import { Select } from '@/components/common';
+} from "@heroui/react";
+import { Select } from "@/components/common";
 import {
     ArrowPathIcon,
     EyeIcon,
@@ -27,7 +27,7 @@ import {
     TrashIcon,
     MagnifyingGlassIcon,
     ChevronDownIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 // ==================== TYPES ====================
 
@@ -36,10 +36,10 @@ export interface TableColumn<T> {
     key: string;
     label: string;
     width?: number;
-    align?: 'start' | 'center' | 'end';
+    align?: "start" | "center" | "end";
     sortable?: boolean;
     filterable?: boolean;
-    filterType?: 'text' | 'select' | 'date' | 'number';
+    filterType?: "text" | "select" | "date" | "number";
     filterOptions?: { key: string; label: string }[];
     render?: (item: T, index: number) => ReactNode;
 }
@@ -49,7 +49,8 @@ export interface TableAction<T> {
     key: string;
     label: string;
     icon?: ReactNode;
-    color?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+    color?:
+        "default" | "primary" | "secondary" | "success" | "warning" | "danger";
     onClick: (item: T) => void;
     isVisible?: (item: T) => boolean;
     isDisabled?: (item: T) => boolean;
@@ -68,7 +69,7 @@ export interface TablePagination {
 // Sort info
 export interface TableSort {
     column: string;
-    direction: 'ascending' | 'descending';
+    direction: "ascending" | "descending";
 }
 
 // Filter value
@@ -107,7 +108,7 @@ export interface CommonTableProps<T> {
     onFilterChange?: (filters: TableFilter) => void;
 
     // Column visibility
-    visibleColumns?: Set<string> | 'all';
+    visibleColumns?: Set<string> | "all";
     onVisibleColumnsChange?: (columns: Set<string>) => void;
     showColumnToggle?: boolean;
 
@@ -124,9 +125,9 @@ export interface CommonTableProps<T> {
     // Styling
     isStriped?: boolean;
     isCompact?: boolean;
-    selectionMode?: 'none' | 'single' | 'multiple';
-    selectedKeys?: Iterable<string | number> | 'all';
-    onSelectionChange?: (keys: 'all' | Set<string | number>) => void;
+    selectionMode?: "none" | "single" | "multiple";
+    selectedKeys?: Iterable<string | number> | "all";
+    onSelectionChange?: (keys: "all" | Set<string | number>) => void;
 
     // Custom top/bottom content
     topContent?: ReactNode;
@@ -137,7 +138,7 @@ export interface CommonTableProps<T> {
     maxHeight?: string; // e.g. "400px" or "calc(100vh - 200px)"
 
     // Aria
-    'aria-label'?: string;
+    "aria-label"?: string;
 }
 
 // ==================== DEFAULT VALUES ====================
@@ -150,11 +151,11 @@ const defaultIcons: Record<string, ReactNode> = {
 
 const defaultColors: Record<
     string,
-    'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
+    "default" | "primary" | "secondary" | "success" | "warning" | "danger"
 > = {
-    view: 'default',
-    edit: 'primary',
-    delete: 'danger',
+    view: "default",
+    edit: "primary",
+    delete: "danger",
 };
 
 // ==================== COMPONENT ====================
@@ -166,42 +167,46 @@ export function Table<T>({
     isLoading = false,
     enableSkeleton = true,
     skeletonRows = 10,
-    emptyContent = 'No data found',
+    emptyContent = "No data found",
     loadingContent,
     pagination,
     showPaginationInfo = true,
     sortDescriptor,
     onSortChange,
     showSearch = false,
-    searchPlaceholder = 'Search...',
-    searchValue = '',
+    searchPlaceholder = "Search...",
+    searchValue = "",
     onSearchChange,
     showFilters = false,
     filters = {},
     onFilterChange,
-    visibleColumns = 'all',
+    visibleColumns = "all",
     onVisibleColumnsChange,
     showColumnToggle = false,
     actions,
-    actionsLabel = 'Actions',
+    actionsLabel = "Actions",
     actionsWidth = 120,
     toolbarContent,
     showRefresh = false,
     onRefresh,
     isStriped = true,
     isCompact = false,
-    selectionMode = 'none',
+    selectionMode = "none",
     selectedKeys,
     onSelectionChange,
     topContent,
     bottomContent,
     isHeaderSticky = true,
     maxHeight,
-    'aria-label': ariaLabel = 'Data table',
+    "aria-label": ariaLabel = "Data table",
 }: CommonTableProps<T>) {
     // Calculate pagination info
-    const totalPages = pagination ? Math.ceil(pagination.total / pagination.pageSize) : 0;
-    const startItem = pagination ? (pagination.page - 1) * pagination.pageSize + 1 : 0;
+    const totalPages = pagination
+        ? Math.ceil(pagination.total / pagination.pageSize)
+        : 0;
+    const startItem = pagination
+        ? (pagination.page - 1) * pagination.pageSize + 1
+        : 0;
     const endItem = pagination
         ? Math.min(pagination.page * pagination.pageSize, pagination.total)
         : items.length;
@@ -223,14 +228,17 @@ export function Table<T>({
     const tableIsLoading = isLoading && !showSkeleton;
 
     // Get filterable columns
-    const filterableColumns = useMemo(() => columns.filter((col) => col.filterable), [columns]);
+    const filterableColumns = useMemo(
+        () => columns.filter((col) => col.filterable),
+        [columns],
+    );
 
     // Handle sort change
     const handleSortChange = useCallback(
         (descriptor: SortDescriptor) => {
             onSortChange?.(descriptor);
         },
-        [onSortChange]
+        [onSortChange],
     );
 
     // Handle filter change
@@ -241,7 +249,7 @@ export function Table<T>({
                 [key]: value || undefined,
             });
         },
-        [filters, onFilterChange]
+        [filters, onFilterChange],
     );
 
     // Render cell content
@@ -256,7 +264,7 @@ export function Table<T>({
         }
 
         // Actions column
-        if (columnKey === '_actions' && actions) {
+        if (columnKey === "_actions" && actions) {
             return (
                 <div className="flex items-center gap-1">
                     {actions.map((action) => {
@@ -264,15 +272,20 @@ export function Table<T>({
                             return null;
                         }
 
-                        const isDisabled = action.isDisabled ? action.isDisabled(item) : false;
+                        const isDisabled = action.isDisabled
+                            ? action.isDisabled(item)
+                            : false;
                         const icon = action.icon || defaultIcons[action.key];
-                        const color = action.color || defaultColors[action.key] || 'default';
+                        const color =
+                            action.color ||
+                            defaultColors[action.key] ||
+                            "default";
 
                         return (
                             <Tooltip
                                 key={action.key}
                                 content={action.label}
-                                color={color === 'default' ? undefined : color}
+                                color={color === "default" ? undefined : color}
                             >
                                 <Button
                                     isIconOnly
@@ -311,7 +324,7 @@ export function Table<T>({
 
     // Get visible columns for rendering
     const displayColumns = useMemo(() => {
-        if (visibleColumns === 'all') return columns;
+        if (visibleColumns === "all") return columns;
         return columns.filter((col) => visibleColumns.has(col.key));
     }, [columns, visibleColumns]);
 
@@ -320,10 +333,16 @@ export function Table<T>({
         () => [
             ...displayColumns,
             ...(actions && actions.length > 0
-                ? [{ key: '_actions', label: actionsLabel, width: actionsWidth }]
+                ? [
+                      {
+                          key: "_actions",
+                          label: actionsLabel,
+                          width: actionsWidth,
+                      },
+                  ]
                 : []),
         ],
-        [displayColumns, actions, actionsLabel, actionsWidth]
+        [displayColumns, actions, actionsLabel, actionsWidth],
     );
 
     const defaultTopContent = (
@@ -337,9 +356,11 @@ export function Table<T>({
                             isClearable
                             className="w-full sm:max-w-50"
                             placeholder={searchPlaceholder}
-                            startContent={<MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />}
+                            startContent={
+                                <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                            }
                             value={searchValue}
-                            onClear={() => onSearchChange?.('')}
+                            onClear={() => onSearchChange?.("")}
                             onValueChange={onSearchChange}
                             variant="bordered"
                             radius="lg"
@@ -350,12 +371,17 @@ export function Table<T>({
                     {/* Inline filter dropdowns */}
                     {showFilters &&
                         filterableColumns.map((column) => {
-                            if (column.filterType === 'select' && column.filterOptions) {
+                            if (
+                                column.filterType === "select" &&
+                                column.filterOptions
+                            ) {
                                 return (
                                     <Dropdown key={column.key}>
                                         <DropdownTrigger className="hidden sm:flex">
                                             <Button
-                                                endContent={<ChevronDownIcon className="h-4 w-4" />}
+                                                endContent={
+                                                    <ChevronDownIcon className="h-4 w-4" />
+                                                }
                                                 variant="flat"
                                                 size="sm"
                                                 radius="lg"
@@ -374,20 +400,27 @@ export function Table<T>({
                                             closeOnSelect
                                             selectedKeys={
                                                 filters[column.key]
-                                                    ? new Set([String(filters[column.key])])
+                                                    ? new Set([
+                                                          String(
+                                                              filters[
+                                                                  column.key
+                                                              ],
+                                                          ),
+                                                      ])
                                                     : new Set()
                                             }
                                             selectionMode="single"
                                             onSelectionChange={(keys) => {
-                                                const selected = Array.from(keys)[0];
+                                                const selected =
+                                                    Array.from(keys)[0];
                                                 handleFilterChange(
                                                     column.key,
-                                                    (selected as string) || ''
+                                                    (selected as string) || "",
                                                 );
                                             }}
                                         >
                                             {[
-                                                { key: '', label: 'All' },
+                                                { key: "", label: "All" },
                                                 ...column.filterOptions,
                                             ].map((opt) => (
                                                 <DropdownItem key={opt.key}>
@@ -406,7 +439,9 @@ export function Table<T>({
                         <Dropdown>
                             <DropdownTrigger className="hidden sm:flex">
                                 <Button
-                                    endContent={<ChevronDownIcon className="h-4 w-4" />}
+                                    endContent={
+                                        <ChevronDownIcon className="h-4 w-4" />
+                                    }
                                     variant="flat"
                                     size="sm"
                                     radius="lg"
@@ -419,17 +454,22 @@ export function Table<T>({
                                 aria-label="Toggle columns"
                                 closeOnSelect={false}
                                 selectedKeys={
-                                    visibleColumns === 'all'
+                                    visibleColumns === "all"
                                         ? new Set(columns.map((c) => c.key))
                                         : visibleColumns
                                 }
                                 selectionMode="multiple"
                                 onSelectionChange={(keys) => {
-                                    onVisibleColumnsChange?.(keys as Set<string>);
+                                    onVisibleColumnsChange?.(
+                                        keys as Set<string>,
+                                    );
                                 }}
                             >
                                 {columns.map((column) => (
-                                    <DropdownItem key={column.key} className="capitalize">
+                                    <DropdownItem
+                                        key={column.key}
+                                        className="capitalize"
+                                    >
                                         {column.label}
                                     </DropdownItem>
                                 ))}
@@ -452,13 +492,17 @@ export function Table<T>({
                         <div className="flex items-center gap-1">
                             {/* <div className="text-small text-default-400">Rows per page:</div> */}
                             <Select
-                                items={(pagination.pageSizeOptions || [5, 10, 20, 50]).map(
-                                    (size) => ({
-                                        key: String(size),
-                                        label: String(size),
-                                    })
-                                )}
-                                selectedKeys={new Set([String(pagination.pageSize)])}
+                                items={(
+                                    pagination.pageSizeOptions || [
+                                        5, 10, 20, 50,
+                                    ]
+                                ).map((size) => ({
+                                    key: String(size),
+                                    label: String(size),
+                                }))}
+                                selectedKeys={
+                                    new Set([String(pagination.pageSize)])
+                                }
                                 disallowEmptySelection
                                 aria-label="Rows per page"
                                 size="sm"
@@ -466,12 +510,17 @@ export function Table<T>({
                                 onSelectionChange={(keys) => {
                                     const selected = Array.from(keys)[0];
                                     if (selected) {
-                                        pagination.onPageSizeChange?.(Number(selected));
+                                        pagination.onPageSizeChange?.(
+                                            Number(selected),
+                                        );
                                     }
                                 }}
                             >
                                 {(item) => (
-                                    <SelectItem key={item.key} textValue={item.label}>
+                                    <SelectItem
+                                        key={item.key}
+                                        textValue={item.label}
+                                    >
                                         {item.label}
                                     </SelectItem>
                                 )}
@@ -490,7 +539,7 @@ export function Table<T>({
                                 onPress={onRefresh}
                             >
                                 <ArrowPathIcon
-                                    className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+                                    className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
                                 />
                             </Button>
                         </Tooltip>
@@ -528,7 +577,11 @@ export function Table<T>({
     return (
         <div className="flex flex-col gap-4">
             {/* Top content / Toolbar */}
-            {(showSearch || showFilters || showColumnToggle || toolbarContent || showRefresh) &&
+            {(showSearch ||
+                showFilters ||
+                showColumnToggle ||
+                toolbarContent ||
+                showRefresh) &&
                 (topContent || defaultTopContent)}
 
             {/* Table */}
@@ -544,9 +597,9 @@ export function Table<T>({
                 onSortChange={handleSortChange}
                 classNames={{
                     wrapper: `rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 ${
-                        maxHeight ? 'overflow-y-auto' : ''
+                        maxHeight ? "overflow-y-auto" : ""
                     }`,
-                    th: 'bg-gray-50 dark:bg-zinc-700/50 text-gray-600 dark:text-gray-300 font-semibold',
+                    th: "bg-gray-50 dark:bg-zinc-700/50 text-gray-600 dark:text-gray-300 font-semibold",
                 }}
                 style={{
                     maxHeight: maxHeight,

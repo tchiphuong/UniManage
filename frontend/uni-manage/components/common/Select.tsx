@@ -1,12 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Select as HeroSelect, SelectProps as HeroSelectProps, Spinner } from '@heroui/react';
-import { FetchParams, PagedResult, ApiResponse } from './useTableData';
+import { useState, useEffect, useCallback } from "react";
+import {
+    Select as HeroSelect,
+    SelectProps as HeroSelectProps,
+    Spinner,
+} from "@heroui/react";
+import { FetchParams, PagedResult, ApiResponse } from "./useTableData";
 
 export interface SelectProps<T extends object = object> extends Omit<
     HeroSelectProps<T>,
-    'children'
+    "children"
 > {
-    fetchFn?: (params: FetchParams) => Promise<ApiResponse<PagedResult<T>> | PagedResult<T>>;
+    fetchFn?: (
+        params: FetchParams,
+    ) => Promise<ApiResponse<PagedResult<T>> | PagedResult<T>>;
     pageSize?: number;
     dependencies?: any[];
     children?: React.ReactNode | ((item: T) => React.ReactNode);
@@ -14,9 +20,9 @@ export interface SelectProps<T extends object = object> extends Omit<
 
 export function Select<T extends object = object>({
     children,
-    radius = 'full',
-    variant = 'bordered',
-    labelPlacement = 'outside-top',
+    radius = "full",
+    variant = "bordered",
+    labelPlacement = "outside-top",
     classNames,
     fetchFn,
     pageSize = 10,
@@ -42,7 +48,7 @@ export function Select<T extends object = object>({
             setIsLoading(true);
             try {
                 const result = await fetchFn({ page: 1, pageSize });
-                const data = 'data' in result ? result.data : result;
+                const data = "data" in result ? result.data : result;
 
                 if (active) {
                     setItems(data.items);
@@ -51,7 +57,7 @@ export function Select<T extends object = object>({
                     setInitialLoaded(true);
                 }
             } catch (error) {
-                console.error('Failed to load select items', error);
+                console.error("Failed to load select items", error);
             } finally {
                 if (active) setIsLoading(false);
             }
@@ -80,13 +86,13 @@ export function Select<T extends object = object>({
         try {
             const nextPage = page + 1;
             const result = await fetchFn({ page: nextPage, pageSize });
-            const data = 'data' in result ? result.data : result;
+            const data = "data" in result ? result.data : result;
 
             setItems((prev) => [...prev, ...data.items]);
             setHasMore(data.items.length >= pageSize);
             setPage(nextPage);
         } catch (error) {
-            console.error('Failed to load more select items', error);
+            console.error("Failed to load more select items", error);
         } finally {
             setIsLoading(false);
         }

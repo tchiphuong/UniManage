@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { ReactNode } from "react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 interface PageHeaderProps {
     title: string;
@@ -14,14 +14,16 @@ export function PageHeader({
     description,
     breadcrumbs,
     actions,
-    className = '',
+    className = "",
 }: PageHeaderProps) {
     return (
         <div className={`mb-6 ${className}`}>
             {breadcrumbs && <Breadcrumb items={breadcrumbs} />}
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {title}
+                    </h1>
                     {description && (
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                             {description}

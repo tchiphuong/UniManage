@@ -13,21 +13,26 @@ interface ColorPickerProps {
  * Reusable Color Picker Component
  * Combines native color input with text input for hex values
  */
-export function ColorPicker({ label, value, onChange, className = "" }: ColorPickerProps) {
+export function ColorPicker({
+    label,
+    value,
+    onChange,
+    className = "",
+}: ColorPickerProps) {
     return (
         <div className={className}>
-            <Label className="text-sm font-medium mb-2 block">{label}</Label>
-            <div className="flex gap-2 items-center">
+            <Label className="mb-2 block text-sm font-medium">{label}</Label>
+            <div className="flex items-center gap-2">
                 <input
                     type="color"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-12 h-12 rounded-lg cursor-pointer border-2 border-default-200"
+                    className="border-default-200 h-12 w-12 cursor-pointer rounded-lg border-2"
                 />
                 <Input
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-default-100 hover:bg-default-200 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                    className="bg-default-100 hover:bg-default-200 focus:ring-primary-500 flex-1 rounded-lg px-3 py-2 transition-all outline-none focus:ring-2"
                     placeholder="#000000"
                 />
             </div>

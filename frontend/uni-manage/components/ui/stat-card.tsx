@@ -52,7 +52,9 @@ export function StatCard({
     return (
         <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 shadow-lg transition-all duration-300 hover:shadow-xl dark:border-gray-600 dark:from-gray-800 dark:to-gray-700">
             <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">{title}</h3>
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                    {title}
+                </h3>
                 <div
                     className={`flex h-12 w-12 items-center justify-center rounded-full ${colors.bg}`}
                 >

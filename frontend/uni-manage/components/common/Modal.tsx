@@ -4,8 +4,8 @@ import {
     ModalHeader,
     ModalBody,
     ModalFooter,
-} from '@heroui/react';
-import { ReactNode } from 'react';
+} from "@heroui/react";
+import { ReactNode } from "react";
 
 export interface ModalProps {
     isOpen: boolean;
@@ -13,8 +13,18 @@ export interface ModalProps {
     title: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
-    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full';
-    scrollBehavior?: 'inside' | 'outside' | 'normal';
+    size?:
+        | "xs"
+        | "sm"
+        | "md"
+        | "lg"
+        | "xl"
+        | "2xl"
+        | "3xl"
+        | "4xl"
+        | "5xl"
+        | "full";
+    scrollBehavior?: "inside" | "outside" | "normal";
     className?: string;
 }
 
@@ -24,8 +34,8 @@ export function Modal({
     title,
     children,
     footer,
-    size = 'md',
-    scrollBehavior = 'inside',
+    size = "md",
+    scrollBehavior = "inside",
     className,
 }: ModalProps) {
     return (
@@ -40,7 +50,9 @@ export function Modal({
             <ModalContent>
                 {() => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1">{title}</ModalHeader>
+                        <ModalHeader className="flex flex-col gap-1">
+                            {title}
+                        </ModalHeader>
                         <ModalBody>{children}</ModalBody>
                         {footer && <ModalFooter>{footer}</ModalFooter>}
                     </>

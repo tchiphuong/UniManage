@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ChatBubbleBottomCenterTextIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import { Button } from '@heroui/react';
-import { Quote } from '@/types';
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+    ChatBubbleBottomCenterTextIcon,
+    ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import { Button } from "@heroui/react";
+import { Quote } from "@/types";
 
 export function DashboardQuote() {
     const { t } = useTranslation();
@@ -14,11 +17,11 @@ export function DashboardQuote() {
     const loadQuote = async () => {
         setLoading(true);
         try {
-            const res = await fetch('https://dummyjson.com/quotes/random');
+            const res = await fetch("https://dummyjson.com/quotes/random");
             const data: Quote = await res.json();
             setQuote(data);
         } catch (error) {
-            console.error('Error loading quote:', error);
+            console.error("Error loading quote:", error);
         } finally {
             setLoading(false);
         }
@@ -35,7 +38,7 @@ export function DashboardQuote() {
                     <div className="mb-2 flex items-center gap-2 opacity-80">
                         <ChatBubbleBottomCenterTextIcon className="h-5 w-5" />
                         <span className="text-sm font-medium tracking-wider uppercase">
-                            {t('widgets.inspiration')}
+                            {t("widgets.inspiration")}
                         </span>
                     </div>
                     {loading ? (
@@ -46,7 +49,9 @@ export function DashboardQuote() {
                                 <p className="mb-2 font-serif text-xl leading-relaxed italic md:text-2xl">
                                     "{quote.quote}"
                                 </p>
-                                <p className="font-medium opacity-90">— {quote.author}</p>
+                                <p className="font-medium opacity-90">
+                                    — {quote.author}
+                                </p>
                             </>
                         )
                     )}
@@ -54,7 +59,7 @@ export function DashboardQuote() {
                 <Button
                     isIconOnly
                     variant="ghost"
-                    className="text-white hover:bg-white/20 rounded-full"
+                    className="rounded-full text-white hover:bg-white/20"
                     onPress={loadQuote}
                     isPending={loading}
                 >

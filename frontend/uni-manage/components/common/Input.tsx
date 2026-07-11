@@ -1,13 +1,16 @@
-import { Input as HeroInput, InputProps as HeroInputProps } from '@heroui/react';
+import {
+    Input as HeroInput,
+    InputProps as HeroInputProps,
+} from "@heroui/react";
 
 export interface InputProps extends HeroInputProps {
     // Add any specific props if needed
 }
 
 export function Input({
-    radius = 'full',
-    variant = 'flat',
-    labelPlacement = 'outside-top',
+    radius = "full",
+    variant = "flat",
+    labelPlacement = "outside-top",
     classNames,
     ...props
 }: InputProps) {

@@ -3,8 +3,8 @@ import {
     Tab as HeroTab,
     TabsProps as HeroTabsProps,
     TabItemProps,
-} from '@heroui/react';
-import { ReactNode } from 'react';
+} from "@heroui/react";
+import { ReactNode } from "react";
 
 export interface TabsProps extends HeroTabsProps {
     children: ReactNode;

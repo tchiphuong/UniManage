@@ -43,7 +43,12 @@ export function PasswordInput({
     // Calculate password strength
     const strength = useMemo((): PasswordStrength => {
         if (!value) {
-            return { score: 0, label: "", color: "bg-danger-500", percentage: 0 };
+            return {
+                score: 0,
+                label: "",
+                color: "bg-danger-500",
+                percentage: 0,
+            };
         }
 
         let score = 0;
@@ -100,33 +105,47 @@ export function PasswordInput({
                 value={value}
                 onChange={onChange}
             >
-                <Label className="text-sm font-medium text-default-700">{label}</Label>
+                <Label className="text-default-700 text-sm font-medium">
+                    {label}
+                </Label>
                 <div className="relative">
                     <Input
-                        className="flex w-full px-3 py-2 pr-10 bg-default-100 hover:bg-default-200 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 transition-all border-none data-[invalid=true]:ring-danger-500 data-[invalid=true]:bg-danger-50"
+                        className="bg-default-100 hover:bg-default-200 focus:ring-primary-500 data-[invalid=true]:ring-danger-500 data-[invalid=true]:bg-danger-50 flex w-full rounded-lg border-none px-3 py-2 pr-10 transition-all outline-none focus:ring-2"
                         placeholder={placeholder}
                         autoComplete={autoComplete}
                     />
                     <button
-                        className="absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none"
+                        className="absolute top-1/2 right-3 -translate-y-1/2 focus:outline-none"
                         type="button"
                         onClick={toggleVisibility}
                         aria-label={isVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     >
                         {isVisible ? (
-                            <Icon icon="solar:eye-closed-bold" className="text-xl text-default-400" width={20} />
+                            <Icon
+                                icon="solar:eye-closed-bold"
+                                className="text-default-400 text-xl"
+                                width={20}
+                            />
                         ) : (
-                            <Icon icon="solar:eye-bold" className="text-xl text-default-400" width={20} />
+                            <Icon
+                                icon="solar:eye-bold"
+                                className="text-default-400 text-xl"
+                                width={20}
+                            />
                         )}
                     </button>
                 </div>
-                {error && <FieldError className="text-tiny text-danger-500">{error}</FieldError>}
+                {error && (
+                    <FieldError className="text-tiny text-danger-500">
+                        {error}
+                    </FieldError>
+                )}
             </TextField>
 
             {showStrength && value && (
                 <div className="space-y-1.5">
                     {/* Strength bar */}
-                    <div className="w-full h-1.5 bg-default-200 rounded-full overflow-hidden">
+                    <div className="bg-default-200 h-1.5 w-full overflow-hidden rounded-full">
                         <div
                             className={`h-full transition-all duration-300 ${strength.color}`}
                             style={{ width: `${strength.percentage}%` }}
@@ -142,4 +161,3 @@ export function PasswordInput({
         </div>
     );
 }
-
