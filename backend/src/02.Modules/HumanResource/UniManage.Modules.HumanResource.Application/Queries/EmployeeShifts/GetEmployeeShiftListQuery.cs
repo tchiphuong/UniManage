@@ -129,7 +129,7 @@ namespace UniManage.Modules.HumanResource.Application.Queries.EmployeeShifts
 
                     var (orderBy, _) = QueryHelper.BuildOrderByClause(
                         request.SortBy,
-                        request.SortDirection ?? "DESC",
+                        request.SortDirection ?? SortDirection.Desc,
                         columnMappings);
 
                     sql.AppendLine($"ORDER BY {orderBy}");

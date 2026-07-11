@@ -3,20 +3,17 @@
 <#@ assembly name="System.Data" #>
 <#@ assembly name="System.Data.Common" #>
 <#@ assembly name="System.Data" #>
-<#@ assembly name="Newtonsoft.Json" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Data" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Data.SqlClient" #>
-<#@ import namespace="Newtonsoft.Json.Linq" #>
-<#@ output extension=".cs" encoding="utf-8" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ output extension=".g.cs" encoding="utf-8" #>
 <#
     // Đọc connection string từ appsettings.Development.json
-    string projectPath = Host.ResolveAssemblyReference("$(ProjectDir)");
-    string webApiPath = Path.Combine(projectPath, "..", "..", "03. Apps", "UniManage.WebApi");
-    string configPath = Path.Combine(webApiPath, "appsettings.Development.json");
+    string configPath = Host.ResolvePath("..\\..\\03.Apps\\UniManage.WebApi\\appsettings.Development.json");
     
     string connectionString = "";
     
@@ -24,20 +21,15 @@
     {
         if (File.Exists(configPath))
         {
-            string json = File.ReadAllText(configPath);
-            var config = JObject.Parse(json);
-            var dbConfig = config["Database"];
+            var content = File.ReadAllText(configPath);
+            string dbServer = Regex.Match(content, @"""Server""\s*:\s*""([^""]+)""").Groups[1].Value.Replace("\\\\", "\\");
+            string dbDatabase = Regex.Match(content, @"""DefaultDatabase""\s*:\s*""([^""]+)""").Groups[1].Value;
+            string dbUser = Regex.Match(content, @"""UserId""\s*:\s*""([^""]+)""").Groups[1].Value;
+            string dbPassword = Regex.Match(content, @"""Password""\s*:\s*""([^""]+)""").Groups[1].Value;
+            string trustCertStr = Regex.Match(content, @"""TrustServerCertificate""\s*:\s*(true|false)", RegexOptions.IgnoreCase).Groups[1].Value;
+            bool trustCert = string.IsNullOrEmpty(trustCertStr) || trustCertStr.ToLower() == "true";
             
-            if (dbConfig != null)
-            {
-                string server = dbConfig["Server"]?.ToString() ?? "localhost";
-                string database = dbConfig["DefaultDatabase"]?.ToString() ?? "UniManage_Dev";
-                string userId = dbConfig["UserId"]?.ToString() ?? "sa";
-                string password = dbConfig["Password"]?.ToString() ?? "";
-                bool trustCert = dbConfig["TrustServerCertificate"]?.ToObject<bool>() ?? true;
-                
-                connectionString = $"Server={server};Database={database};User Id={userId};Password={password};TrustServerCertificate={trustCert};";
-            }
+            connectionString = $"Server={dbServer};Database={dbDatabase};User Id={dbUser};Password={dbPassword};TrustServerCertificate={trustCert};";
         }
     }
     catch (Exception ex)

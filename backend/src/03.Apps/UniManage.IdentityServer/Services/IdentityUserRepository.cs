@@ -1,33 +1,63 @@
-﻿using Dapper;
+using Dapper;
 using UniManage.Shared.Infrastructure.Constant;
 using UniManage.Shared.Infrastructure.Database;
 using UniManage.Shared.Infrastructure.Logging;
 
 namespace UniManage.IdentityServer.Services
 {
-    public class IdentityUserDto
+    /// <summary>
+    /// Thông tin người dùng sử dụng cho hệ thống Identity.
+    /// </summary>
+    public class IdentityUserModel
     {
+        /// <summary>
+        /// Mã định danh của người dùng.
+        /// </summary>
         public int Id { get; set; }
+
+        /// <summary>
+        /// Tên đăng nhập.
+        /// </summary>
         public string UserName { get; set; } = default!;
+
+        /// <summary>
+        /// Mật khẩu đã mã hóa.
+        /// </summary>
         public string Password { get; set; } = default!;
+
+        /// <summary>
+        /// Mã nhân viên (nếu có).
+        /// </summary>
         public string? EmployeeCode { get; set; }
+
+        /// <summary>
+        /// Mã vai trò hệ thống.
+        /// </summary>
         public string? RoleCode { get; set; }
+
+        /// <summary>
+        /// Địa chỉ email.
+        /// </summary>
         public string? Email { get; set; }
+
+        /// <summary>
+        /// Trạng thái hoạt động của tài khoản.
+        /// </summary>
         public string Status { get; set; } = default!;
     }
 
     public interface IIdentityUserRepository
     {
-        Task<IdentityUserDto?> FindByUsernameAsync(string username);
-        Task<IdentityUserDto?> FindByIdAsync(int userId);
+        Task<IdentityUserModel?> FindByUsernameAsync(string username);
+        Task<IdentityUserModel?> FindByIdAsync(int userId);
         Task<bool> IsUserActiveAsync(int userId);
-        Task<IdentityUserDto?> FindByExternalProviderAsync(string provider, string providerKey);
+        Task<IdentityUserModel?> FindByExternalProviderAsync(string provider, string providerKey);
         Task LinkExternalLoginAsync(long userId, string provider, string providerKey, string? displayName);
     }
 
     public class IdentityUserRepository : IIdentityUserRepository
     {
-        public async Task<IdentityUserDto?> FindByUsernameAsync(string username)
+        public async Task<IdentityUserModel?> FindByUsernameAsync(string username)
         {
             try
             {
@@ -38,7 +68,7 @@ namespace UniManage.IdentityServer.Services
                     FROM [dbo].[SyUsers]
                     WHERE [UserName] = @UserName AND [Status] = @ActiveStatus";
 
-                return await dbContext.QueryFirstOrDefaultAsync<IdentityUserDto>(
+                return await dbContext.QueryFirstOrDefaultAsync<IdentityUserModel>(
                     sql,
                     new { UserName = username, ActiveStatus = CoreCommon.Value.Commonstatus.Active });
             }
@@ -49,7 +79,7 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
-        public async Task<IdentityUserDto?> FindByIdAsync(int userId)
+        public async Task<IdentityUserModel?> FindByIdAsync(int userId)
         {
             try
             {
@@ -60,7 +90,7 @@ namespace UniManage.IdentityServer.Services
                     FROM [dbo].[SyUsers]
                     WHERE [Id] = @UserId AND [Status] = @ActiveStatus";
 
-                return await dbContext.QueryFirstOrDefaultAsync<IdentityUserDto>(
+                return await dbContext.QueryFirstOrDefaultAsync<IdentityUserModel>(
                     sql,
                     new { UserId = userId, ActiveStatus = CoreCommon.Value.Commonstatus.Active });
             }
@@ -94,7 +124,7 @@ namespace UniManage.IdentityServer.Services
             }
         }
 
-        public async Task<IdentityUserDto?> FindByExternalProviderAsync(string provider, string providerKey)
+        public async Task<IdentityUserModel?> FindByExternalProviderAsync(string provider, string providerKey)
         {
             try
             {
@@ -106,7 +136,7 @@ namespace UniManage.IdentityServer.Services
                     WHERE l.[LoginProvider] = @Provider AND l.[ProviderKey] = @ProviderKey 
                     AND u.[Status] = @ActiveStatus";
 
-                return await dbContext.QueryFirstOrDefaultAsync<IdentityUserDto>(
+                return await dbContext.QueryFirstOrDefaultAsync<IdentityUserModel>(
                     sql,
                     new { Provider = provider, ProviderKey = providerKey, ActiveStatus = CoreCommon.Value.Commonstatus.Active });
             }

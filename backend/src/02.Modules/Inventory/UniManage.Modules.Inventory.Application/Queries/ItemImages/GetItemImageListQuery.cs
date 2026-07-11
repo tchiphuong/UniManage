@@ -101,7 +101,7 @@ namespace UniManage.Modules.Inventory.Application.Queries.ItemImages
 
                     var (orderBy, _) = QueryHelper.BuildOrderByClause(
                         request.SortBy,
-                        request.SortDirection ?? "ASC",
+                        request.SortDirection,
                         columnMappings);
 
                     sql.AppendLine($"ORDER BY {orderBy}");

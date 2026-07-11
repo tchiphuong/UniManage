@@ -21,7 +21,7 @@ Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Util
 - ✅ **ResponseHelper**: Success(), Error(), NotFound(), Forbidden(), PagedSuccess(), PagedError()
 - ✅ **Validation**: ALWAYS use `DependentRules()` for complex validation chains in FluentValidation.
 - ✅ **Summary Comments**: ALWAYS provide XML `<summary>` comments for all public classes, methods, and properties.
-- ✅ **Localization**: ALL API response messages MUST be localized using `CoreResource`.
+- ✅ **Localization**: ALL API response messages MUST be localized using `CoreResource`. Naming rule: `module.screen.{lbl|msg|btn|...}.text` (camelCase for text).
 - ✅ **Shared Validation**: Dùng `.All.Contains(status)` từ `CoreCommon.Value` auto-generated cho các danh sách giá trị.
 - ✅ **StringHelper**: ToSlug(), ToCamelCase(), RemoveDiacritics(), MaskSensitiveData(), GenerateCode()
 - ✅ **DateTimeHelper**: ToVietnamTime(), CalculateAge(), GetRelativeTime(), AddBusinessDays()
@@ -50,6 +50,7 @@ Trước khi viết bất kỳ logic nào, PHẢI kiểm tra UniManage.Core/Util
 - **Validator Resources**: LUÔN dùng `CoreResource` cho tất cả nhãn và thông báo lỗi (mẫu: `string.Format(CoreResource.validation_required, CoreResource.lbl_username)`).
 - **Logging Standard**: LUÔN dùng `nameof(request.PropertyName)` cho tên tham số trong `CoreParamModel`.
 - **Caching Standard**: Tất cả cache key BẮT BUỘC phải được khai báo constant trong `CacheKeyConstant.cs` (`UniManage.Core.Constant`). Tuyệt đối không hardcode cache string rác trong code (VD: `$"System_CurrentUser_{id}"`).
+- **Postman Update**: MỖI LẦN tạo hoặc sửa đổi API, BẮT BUỘC phải cập nhật lại Postman Collection (thêm request, ghi chú tham số, url) và lưu vào thư mục `postman` của dự án.
 
 Tech stack (bắt buộc)
 Backend: ASP.NET Core .NET 9

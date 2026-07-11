@@ -43,3 +43,9 @@ next-env.d.ts
 # Build output
 hero.js
 hero.ts
+
+# IDE & Config
+.vscode
+.github
+.heroui-docs
+AGENTS.md

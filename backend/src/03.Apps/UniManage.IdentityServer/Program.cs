@@ -1,4 +1,7 @@
-﻿using UniManage.IdentityServer.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using UniManage.IdentityServer.Interfaces;
+using UniManage.IdentityServer.Services;
 using UniManage.Shared.Infrastructure.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,29 +12,20 @@ builder.Configuration.SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-// Configure Logging (Serilog)
+// Configure Logging (Serilog / log4net)
 UniLogManager.Initialize(builder.Configuration["AppSettings:LogPath"] ?? "logs");
 
 // Configure services
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
-// Register Identity User Repository
+// Register Custom Identity Server Services
+builder.Services.AddSingleton<IKeyManagementService, KeyManagementService>();
 builder.Services.AddScoped<IIdentityUserRepository, IdentityUserRepository>();
-// builder.Services.AddScoped<UniManage.Core.Services.IAuthService, UniManage.Core.Services.AuthService>(); // Xóa do không tồn tại
-
-// Add IdentityServer with Dapper stores
-builder.Services.AddIdentityServer(options =>
-    {
-        options.EmitStaticAudienceClaim = true;
-    })
-    .AddClientStore<DapperClientStore>()
-    .AddResourceStore<DapperResourceStore>()
-    .AddPersistedGrantStore<DapperPersistedGrantStore>()
-    .AddDeviceFlowStore<DapperDeviceFlowStore>()
-    .AddProfileService<CustomProfileService>()
-    .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>()
-    .AddDeveloperSigningCredential();
+builder.Services.AddScoped<IClientStore, DapperClientStore>();
+builder.Services.AddScoped<IResourceStore, DapperResourceStore>();
+builder.Services.AddScoped<IPersistedGrantStore, DapperPersistedGrantStore>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 // Add CORS for API communication
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
@@ -46,34 +40,37 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddAuthentication()
-    .AddGoogle(options =>
+// Configure JWT Authentication (For /connect/userinfo and potentially other secured endpoints)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        options.SignInScheme = Duende.IdentityServer.IdentityServerConstants.ExternalCookieAuthenticationScheme;
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "dummy-google-id";
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "dummy-google-secret";
-    })
-    .AddFacebook(options =>
-    {
-        options.SignInScheme = Duende.IdentityServer.IdentityServerConstants.ExternalCookieAuthenticationScheme;
-        options.AppId = builder.Configuration["Authentication:Facebook:AppId"] ?? "dummy-fb-id";
-        options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"] ?? "dummy-fb-secret";
+        var keyManagementService = builder.Services.BuildServiceProvider().GetRequiredService<IKeyManagementService>();
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["IdentityServer:Authority"] ?? "https://identity.unimanage.com",
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            IssuerSigningKey = keyManagementService.GetSigningKey(),
+            ClockSkew = TimeSpan.Zero
+        };
     });
 
 var app = builder.Build();
 
 // Configure pipeline
+app.UseHttpsRedirection();
 app.UseCors();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseIdentityServer();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapRazorPages();
 
-app.MapGet("/", () => "IdentityServer is running!");
+app.MapGet("/", () => "Custom IdentityServer is running!");
 
 app.Run();
 

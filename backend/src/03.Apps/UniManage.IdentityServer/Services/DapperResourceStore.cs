@@ -1,43 +1,22 @@
-﻿using Dapper;
-using Duende.IdentityServer.Models;
-using Duende.IdentityServer.Stores;
+using Dapper;
+using UniManage.IdentityServer.Interfaces;
+using UniManage.IdentityServer.Models;
 using UniManage.Shared.Infrastructure.Database;
 using UniManage.Shared.Infrastructure.Logging;
 
 namespace UniManage.IdentityServer.Services
 {
     /// <summary>
-    /// Store quản lý các tài nguyên (Identity, API Resources, Scopes) trong IdentityServer sử dụng Dapper.
+    /// Store quản lý các tài nguyên (Identity, API Resources, Scopes) sử dụng Dapper.
     /// </summary>
     public class DapperResourceStore : IResourceStore
     {
         /// <summary>
-        /// Lấy tất cả các tài nguyên có trong hệ thống.
-        /// </summary>
-        /// <returns>Đối tượng Resources chứa tất cả Identity và API resources.</returns>
-        public async Task<Resources> GetAllResourcesAsync()
-        {
-            try
-            {
-                var identityResources = await GetIdentityResourcesFromDbAsync();
-                var apiResources = await GetApiResourcesFromDbAsync();
-                var apiScopes = await GetApiScopesFromDbAsync();
-
-                return new Resources(identityResources, apiResources, apiScopes);
-            }
-            catch (Exception ex)
-            {
-                UniLogger.Error("Error fetching all resources from Dapper store", ex);
-                return new Resources();
-            }
-        }
-
-        /// <summary>
         /// Tìm kiếm các tài nguyên API dựa trên tên resource.
         /// </summary>
         /// <param name="apiResourceNames">Danh sách tên các API resource cần tìm.</param>
-        /// <returns>Danh sách các ApiResource tìm thấy.</returns>
-        public async Task<IEnumerable<ApiResource>> FindApiResourcesByNameAsync(IEnumerable<string> apiResourceNames)
+        /// <returns>Danh sách các ApiResourceModel tìm thấy.</returns>
+        public async Task<IEnumerable<ApiResourceModel>> FindApiResourcesByNameAsync(IEnumerable<string> apiResourceNames)
         {
             try
             {
@@ -47,7 +26,7 @@ namespace UniManage.IdentityServer.Services
             catch (Exception ex)
             {
                 UniLogger.Error("Error fetching API resources by name", ex);
-                return Enumerable.Empty<ApiResource>();
+                return Enumerable.Empty<ApiResourceModel>();
             }
         }
 
@@ -55,8 +34,8 @@ namespace UniManage.IdentityServer.Services
         /// Tìm kiếm các tài nguyên API dựa trên tên scope.
         /// </summary>
         /// <param name="scopeNames">Danh sách tên các scope cần tìm.</param>
-        /// <returns>Danh sách các ApiResource tìm thấy.</returns>
-        public async Task<IEnumerable<ApiResource>> FindApiResourcesByScopeNameAsync(IEnumerable<string> scopeNames)
+        /// <returns>Danh sách các ApiResourceModel tìm thấy.</returns>
+        public async Task<IEnumerable<ApiResourceModel>> FindApiResourcesByScopeNameAsync(IEnumerable<string> scopeNames)
         {
             try
             {
@@ -66,7 +45,7 @@ namespace UniManage.IdentityServer.Services
             catch (Exception ex)
             {
                 UniLogger.Error("Error fetching API resources by scope name", ex);
-                return Enumerable.Empty<ApiResource>();
+                return Enumerable.Empty<ApiResourceModel>();
             }
         }
 
@@ -74,8 +53,8 @@ namespace UniManage.IdentityServer.Services
         /// Tìm kiếm API Scope dựa trên tên.
         /// </summary>
         /// <param name="scopeNames">Danh sách tên các scope cần tìm.</param>
-        /// <returns>Danh sách các ApiScope tìm thấy.</returns>
-        public async Task<IEnumerable<ApiScope>> FindApiScopesByNameAsync(IEnumerable<string> scopeNames)
+        /// <returns>Danh sách các ApiScopeModel tìm thấy.</returns>
+        public async Task<IEnumerable<ApiScopeModel>> FindApiScopesByNameAsync(IEnumerable<string> scopeNames)
         {
             try
             {
@@ -85,7 +64,7 @@ namespace UniManage.IdentityServer.Services
             catch (Exception ex)
             {
                 UniLogger.Error("Error fetching API scopes by name", ex);
-                return Enumerable.Empty<ApiScope>();
+                return Enumerable.Empty<ApiScopeModel>();
             }
         }
 
@@ -93,8 +72,8 @@ namespace UniManage.IdentityServer.Services
         /// Tìm kiếm các tài nguyên Identity dựa trên tên scope.
         /// </summary>
         /// <param name="scopeNames">Danh sách tên các scope cần tìm.</param>
-        /// <returns>Danh sách các IdentityResource tìm thấy.</returns>
-        public async Task<IEnumerable<IdentityResource>> FindIdentityResourcesByScopeNameAsync(IEnumerable<string> scopeNames)
+        /// <returns>Danh sách các IdentityResourceModel tìm thấy.</returns>
+        public async Task<IEnumerable<IdentityResourceModel>> FindIdentityResourcesByScopeNameAsync(IEnumerable<string> scopeNames)
         {
             try
             {
@@ -104,105 +83,93 @@ namespace UniManage.IdentityServer.Services
             catch (Exception ex)
             {
                 UniLogger.Error("Error fetching identity resources by scope name", ex);
-                return Enumerable.Empty<IdentityResource>();
+                return Enumerable.Empty<IdentityResourceModel>();
             }
         }
 
         /// <summary>
-        /// Truy vấn danh sách Identity Resource từ database.
+        /// Lấy danh sách Identity Resources từ cơ sở dữ liệu.
         /// </summary>
-        private async Task<List<IdentityResource>> GetIdentityResourcesFromDbAsync()
+        /// <returns>Danh sách IdentityResourceModel.</returns>
+        private async Task<List<IdentityResourceModel>> GetIdentityResourcesFromDbAsync()
         {
             using var dbContext = new DbContext();
-            var sql = "SELECT [Name], [DisplayName], [Description], [Required], [Emphasize], [ShowInDiscoveryDocument] FROM [dbo].[is_identity_resources]";
-            var dtoList = await dbContext.QueryAsync<IdentityResourceDto>(sql);
+            var sql = @"
+                SELECT 
+                    [Name], 
+                    [DisplayName] 
+                FROM [dbo].[is_identity_resources]";
+            var dtoList = await dbContext.QueryAsync<IdentityResourceDbModel>(sql);
             
-            return dtoList.Select(dto => new IdentityResource
+            return dtoList.Select(dto => new IdentityResourceModel
             {
                 Name = dto.Name,
-                DisplayName = dto.DisplayName,
-                Description = dto.Description,
-                Required = dto.Required,
-                Emphasize = dto.Emphasize,
-                ShowInDiscoveryDocument = dto.ShowInDiscoveryDocument
+                DisplayName = dto.DisplayName
             }).ToList();
         }
 
         /// <summary>
-        /// Truy vấn danh sách API Resource từ database.
+        /// Lấy danh sách API Resources từ cơ sở dữ liệu.
         /// </summary>
-        private async Task<List<ApiResource>> GetApiResourcesFromDbAsync()
+        /// <returns>Danh sách ApiResourceModel.</returns>
+        private async Task<List<ApiResourceModel>> GetApiResourcesFromDbAsync()
         {
             using var dbContext = new DbContext();
-            var sql = "SELECT [Name], [DisplayName], [Description], [ShowInDiscoveryDocument], [AllowedAccessTokenSigningAlgorithms] FROM [dbo].[is_api_resources]";
-            var dtoList = await dbContext.QueryAsync<ApiResourceDto>(sql);
+            var sql = @"
+                SELECT 
+                    [Name], 
+                    [DisplayName] 
+                FROM [dbo].[is_api_resources]";
+            var dtoList = await dbContext.QueryAsync<ApiResourceDbModel>(sql);
             
             var scopeSql = "SELECT [Name] FROM [dbo].[is_api_scopes]";
             var allScopes = (await dbContext.QueryAsync<string>(scopeSql)).ToList();
 
-            return dtoList.Select(dto => new ApiResource(dto.Name, dto.DisplayName)
+            return dtoList.Select(dto => new ApiResourceModel
             {
-                Description = dto.Description,
-                ShowInDiscoveryDocument = dto.ShowInDiscoveryDocument,
-                AllowedAccessTokenSigningAlgorithms = dto.AllowedAccessTokenSigningAlgorithms?.Split(',').ToList() ?? new List<string>(),
+                Name = dto.Name,
+                DisplayName = dto.DisplayName,
                 Scopes = allScopes
             }).ToList();
         }
 
         /// <summary>
-        /// Truy vấn danh sách API Scope từ database.
+        /// Lấy danh sách API Scopes từ cơ sở dữ liệu.
         /// </summary>
-        private async Task<List<ApiScope>> GetApiScopesFromDbAsync()
+        /// <returns>Danh sách ApiScopeModel.</returns>
+        private async Task<List<ApiScopeModel>> GetApiScopesFromDbAsync()
         {
             using var dbContext = new DbContext();
-            var sql = "SELECT [Name], [DisplayName], [Description], [Required], [Emphasize], [ShowInDiscoveryDocument] FROM [dbo].[is_api_scopes]";
-            var dtoList = await dbContext.QueryAsync<ApiScopeDto>(sql);
+            var sql = @"
+                SELECT 
+                    [Name], 
+                    [DisplayName] 
+                FROM [dbo].[is_api_scopes]";
+            var dtoList = await dbContext.QueryAsync<ApiScopeDbModel>(sql);
             
-            return dtoList.Select(dto => new ApiScope(dto.Name, dto.DisplayName)
+            return dtoList.Select(dto => new ApiScopeModel
             {
-                Description = dto.Description,
-                Required = dto.Required,
-                Emphasize = dto.Emphasize,
-                ShowInDiscoveryDocument = dto.ShowInDiscoveryDocument
+                Name = dto.Name,
+                DisplayName = dto.DisplayName
             }).ToList();
         }
 
-        /// <summary>
-        /// DTO cho IdentityResource.
-        /// </summary>
-        private class IdentityResourceDto
+        private class IdentityResourceDbModel
         {
             public string Name { get; set; } = default!;
             public string? DisplayName { get; set; }
-            public string? Description { get; set; }
-            public bool Required { get; set; }
-            public bool Emphasize { get; set; }
-            public bool ShowInDiscoveryDocument { get; set; }
         }
 
-        /// <summary>
-        /// DTO cho ApiResource.
-        /// </summary>
-        private class ApiResourceDto
+        private class ApiResourceDbModel
         {
             public string Name { get; set; } = default!;
             public string? DisplayName { get; set; }
-            public string? Description { get; set; }
-            public bool ShowInDiscoveryDocument { get; set; }
-            public string? AllowedAccessTokenSigningAlgorithms { get; set; }
         }
 
-        /// <summary>
-        /// DTO cho ApiScope.
-        /// </summary>
-        private class ApiScopeDto
+        private class ApiScopeDbModel
         {
             public string Name { get; set; } = default!;
             public string? DisplayName { get; set; }
-            public string? Description { get; set; }
-            public bool Required { get; set; }
-            public bool Emphasize { get; set; }
-            public bool ShowInDiscoveryDocument { get; set; }
         }
     }
 }

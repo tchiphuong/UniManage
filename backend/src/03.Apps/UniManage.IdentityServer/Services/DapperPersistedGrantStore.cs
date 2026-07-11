@@ -1,13 +1,13 @@
-﻿using Dapper;
-using Duende.IdentityServer.Models;
-using Duende.IdentityServer.Stores;
+using Dapper;
+using UniManage.IdentityServer.Interfaces;
+using UniManage.IdentityServer.Models;
 using UniManage.Shared.Infrastructure.Database;
 using UniManage.Shared.Infrastructure.Logging;
 
 namespace UniManage.IdentityServer.Services
 {
     /// <summary>
-    /// Store quản lý các PersistedGrant (Authorization Code, Refresh Token, ...) trong IdentityServer sử dụng Dapper.
+    /// Store quản lý các PersistedGrant (Refresh Token) sử dụng Dapper.
     /// </summary>
     public class DapperPersistedGrantStore : IPersistedGrantStore
     {
@@ -15,7 +15,7 @@ namespace UniManage.IdentityServer.Services
         /// Lưu trữ một PersistedGrant mới hoặc cập nhật nếu đã tồn tại.
         /// </summary>
         /// <param name="grant">Thông tin PersistedGrant cần lưu.</param>
-        public async Task StoreAsync(PersistedGrant grant)
+        public async Task StoreAsync(PersistedGrantModel grant)
         {
             try
             {
@@ -30,14 +30,33 @@ namespace UniManage.IdentityServer.Services
                             [SubjectId] = @SubjectId,
                             [SessionId] = @SessionId,
                             [ClientId] = @ClientId,
-                            [Description] = @Description,
                             [CreationTime] = @CreationTime,
                             [Expiration] = @Expiration,
                             [ConsumedTime] = @ConsumedTime,
                             [Data] = @Data
                     WHEN NOT MATCHED THEN
-                        INSERT ([Key], [Type], [SubjectId], [SessionId], [ClientId], [Description], [CreationTime], [Expiration], [ConsumedTime], [Data])
-                        VALUES (@Key, @Type, @SubjectId, @SessionId, @ClientId, @Description, @CreationTime, @Expiration, @ConsumedTime, @Data);";
+                        INSERT (
+                            [Key], 
+                            [Type], 
+                            [SubjectId], 
+                            [SessionId], 
+                            [ClientId], 
+                            [CreationTime], 
+                            [Expiration], 
+                            [ConsumedTime], 
+                            [Data]
+                        )
+                        VALUES (
+                            @Key, 
+                            @Type, 
+                            @SubjectId, 
+                            @SessionId, 
+                            @ClientId, 
+                            @CreationTime, 
+                            @Expiration, 
+                            @ConsumedTime, 
+                            @Data
+                        );";
 
                 await dbContext.ExecuteAsync(sql, new
                 {
@@ -46,7 +65,6 @@ namespace UniManage.IdentityServer.Services
                     grant.SubjectId,
                     grant.SessionId,
                     grant.ClientId,
-                    grant.Description,
                     grant.CreationTime,
                     grant.Expiration,
                     grant.ConsumedTime,
@@ -66,67 +84,30 @@ namespace UniManage.IdentityServer.Services
         /// </summary>
         /// <param name="key">Mã định danh duy nhất của grant.</param>
         /// <returns>Thông tin grant nếu tìm thấy, ngược lại trả về null.</returns>
-        public async Task<PersistedGrant?> GetAsync(string key)
+        public async Task<PersistedGrantModel?> GetAsync(string key)
         {
             try
             {
                 using var dbContext = new DbContext();
-                var sql = "SELECT * FROM [dbo].[is_persisted_grants] WHERE [Key] = @Key";
-                return await dbContext.QueryFirstOrDefaultAsync<PersistedGrant>(sql, new { Key = key });
+                var sql = @"
+                    SELECT 
+                        [Key], 
+                        [Type], 
+                        [SubjectId], 
+                        [SessionId], 
+                        [ClientId], 
+                        [CreationTime], 
+                        [Expiration], 
+                        [ConsumedTime], 
+                        [Data] 
+                    FROM [dbo].[is_persisted_grants] 
+                    WHERE [Key] = @Key";
+                return await dbContext.QueryFirstOrDefaultAsync<PersistedGrantModel>(sql, new { Key = key });
             }
             catch (Exception ex)
             {
                 UniLogger.Error($"Error getting persisted grant {key}", ex);
                 return null;
-            }
-        }
-
-        /// <summary>
-        /// Lấy danh sách PersistedGrant dựa trên bộ lọc.
-        /// </summary>
-        /// <param name="filter">Bộ lọc chứa SubjectId, ClientId, Type, ...</param>
-        /// <returns>Danh sách các grant khớp với bộ lọc.</returns>
-        public async Task<IEnumerable<PersistedGrant>> GetAllAsync(PersistedGrantFilter filter)
-        {
-            try
-            {
-                using var dbContext = new DbContext();
-                var conditions = new List<string>();
-                var parameters = new DynamicParameters();
-
-                if (!string.IsNullOrWhiteSpace(filter.SubjectId))
-                {
-                    conditions.Add("[SubjectId] = @SubjectId");
-                    parameters.Add("SubjectId", filter.SubjectId);
-                }
-                if (!string.IsNullOrWhiteSpace(filter.SessionId))
-                {
-                    conditions.Add("[SessionId] = @SessionId");
-                    parameters.Add("SessionId", filter.SessionId);
-                }
-                if (!string.IsNullOrWhiteSpace(filter.ClientId))
-                {
-                    conditions.Add("[ClientId] = @ClientId");
-                    parameters.Add("ClientId", filter.ClientId);
-                }
-                if (!string.IsNullOrWhiteSpace(filter.Type))
-                {
-                    conditions.Add("[Type] = @Type");
-                    parameters.Add("Type", filter.Type);
-                }
-
-                var sql = "SELECT * FROM [dbo].[is_persisted_grants]";
-                if (conditions.Any())
-                {
-                    sql += " WHERE " + string.Join(" AND ", conditions);
-                }
-
-                return await dbContext.QueryAsync<PersistedGrant>(sql, parameters);
-            }
-            catch (Exception ex)
-            {
-                UniLogger.Error("Error getting all persisted grants with filter", ex);
-                return Enumerable.Empty<PersistedGrant>();
             }
         }
 
@@ -150,42 +131,33 @@ namespace UniManage.IdentityServer.Services
         }
 
         /// <summary>
-        /// Xóa danh sách PersistedGrant dựa trên bộ lọc.
+        /// Xóa danh sách PersistedGrant dựa trên SubjectId, ClientId và Type.
         /// </summary>
-        /// <param name="filter">Bộ lọc xác định các grant cần xóa.</param>
-        public async Task RemoveAllAsync(PersistedGrantFilter filter)
+        /// <param name="subjectId">Id của User.</param>
+        /// <param name="clientId">Mã định danh Client.</param>
+        /// <param name="type">Loại Token (ví dụ: refresh_token).</param>
+        public async Task RemoveAllAsync(string? subjectId, string clientId, string? type = null)
         {
             try
             {
                 using var dbContext = new DbContext(openTransaction: true);
-                var conditions = new List<string>();
+                var sql = new System.Text.StringBuilder("DELETE FROM [dbo].[is_persisted_grants] WHERE [ClientId] = @ClientId");
                 var parameters = new DynamicParameters();
+                parameters.Add("ClientId", clientId);
 
-                if (!string.IsNullOrWhiteSpace(filter.SubjectId))
+                if (!string.IsNullOrWhiteSpace(subjectId))
                 {
-                    conditions.Add("[SubjectId] = @SubjectId");
-                    parameters.Add("SubjectId", filter.SubjectId);
+                    sql.Append(" AND [SubjectId] = @SubjectId");
+                    parameters.Add("SubjectId", subjectId);
                 }
-                if (!string.IsNullOrWhiteSpace(filter.SessionId))
+                
+                if (!string.IsNullOrWhiteSpace(type))
                 {
-                    conditions.Add("[SessionId] = @SessionId");
-                    parameters.Add("SessionId", filter.SessionId);
-                }
-                if (!string.IsNullOrWhiteSpace(filter.ClientId))
-                {
-                    conditions.Add("[ClientId] = @ClientId");
-                    parameters.Add("ClientId", filter.ClientId);
-                }
-                if (!string.IsNullOrWhiteSpace(filter.Type))
-                {
-                    conditions.Add("[Type] = @Type");
-                    parameters.Add("Type", filter.Type);
+                    sql.Append(" AND [Type] = @Type");
+                    parameters.Add("Type", type);
                 }
 
-                if (!conditions.Any()) return; // Prevent deleting all records if no filter is provided
-
-                var sql = "DELETE FROM [dbo].[is_persisted_grants] WHERE " + string.Join(" AND ", conditions);
-                await dbContext.ExecuteAsync(sql, parameters);
+                await dbContext.ExecuteAsync(sql.ToString(), parameters);
                 await dbContext.CommitAsync();
             }
             catch (Exception ex)

@@ -103,7 +103,7 @@ namespace UniManage.Modules.Inventory.Application.Queries.ItemDetails
 
                     var (orderBy, _) = QueryHelper.BuildOrderByClause(
                         request.SortBy,
-                        request.SortDirection ?? "DESC",
+                        request.SortDirection ?? SortDirection.Desc,
                         columnMappings);
 
                     sql.AppendLine($"ORDER BY {orderBy}");

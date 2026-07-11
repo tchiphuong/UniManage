@@ -1,6 +1,6 @@
-﻿using Dapper;
-using Duende.IdentityServer.Models;
-using Duende.IdentityServer.Stores;
+using Dapper;
+using UniManage.IdentityServer.Interfaces;
+using UniManage.IdentityServer.Models;
 using UniManage.Shared.Infrastructure.Database;
 using UniManage.Shared.Infrastructure.Logging;
 
@@ -16,7 +16,7 @@ namespace UniManage.IdentityServer.Services
         /// </summary>
         /// <param name="clientId">Mã định danh của Client.</param>
         /// <returns>Thông tin Client nếu tìm thấy, ngược lại trả về null.</returns>
-        public async Task<Client?> FindClientByIdAsync(string clientId)
+        public async Task<ClientModel?> FindClientByIdAsync(string clientId)
         {
             try
             {
@@ -24,19 +24,29 @@ namespace UniManage.IdentityServer.Services
                 
                 var sql = @"
                     SELECT TOP 1 
-                        [ClientId], [ClientName], [ClientSecret], [AllowedGrantTypes], 
-                        [AllowedScopes], [AccessTokenLifetime], [AllowOfflineAccess],
-                        [IdentityTokenLifetime], [AuthorizationCodeLifetime],
-                        [AbsoluteRefreshTokenLifetime], [SlidingRefreshTokenLifetime],
-                        [RefreshTokenUsage], [RefreshTokenExpiration], [RequireClientSecret], [Description]
+                        [ClientId], 
+                        [ClientName], 
+                        [ClientSecret], 
+                        [AllowedGrantTypes], 
+                        [AllowedScopes], 
+                        [AccessTokenLifetime], 
+                        [AllowOfflineAccess],
+                        [IdentityTokenLifetime], 
+                        [AuthorizationCodeLifetime],
+                        [AbsoluteRefreshTokenLifetime], 
+                        [SlidingRefreshTokenLifetime],
+                        [RefreshTokenUsage], 
+                        [RefreshTokenExpiration], 
+                        [RequireClientSecret], 
+                        [Description]
                     FROM [dbo].[is_clients]
                     WHERE [ClientId] = @ClientId";
 
-                var clientDto = await dbContext.QueryFirstOrDefaultAsync<ClientDto>(sql, new { ClientId = clientId });
+                var clientDto = await dbContext.QueryFirstOrDefaultAsync<ClientDbModel>(sql, new { ClientId = clientId });
 
                 if (clientDto == null) return null;
 
-                var client = new Client
+                var client = new ClientModel
                 {
                     ClientId = clientDto.ClientId,
                     ClientName = clientDto.ClientName,
@@ -45,19 +55,10 @@ namespace UniManage.IdentityServer.Services
                     AllowedScopes = clientDto.AllowedScopes?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
                     AccessTokenLifetime = clientDto.AccessTokenLifetime,
                     AllowOfflineAccess = clientDto.AllowOfflineAccess,
-                    IdentityTokenLifetime = clientDto.IdentityTokenLifetime,
-                    AuthorizationCodeLifetime = clientDto.AuthorizationCodeLifetime,
-                    AbsoluteRefreshTokenLifetime = clientDto.AbsoluteRefreshTokenLifetime,
-                    SlidingRefreshTokenLifetime = clientDto.SlidingRefreshTokenLifetime,
-                    RefreshTokenUsage = (TokenUsage)clientDto.RefreshTokenUsage,
-                    RefreshTokenExpiration = (TokenExpiration)clientDto.RefreshTokenExpiration,
-                    RequireClientSecret = clientDto.RequireClientSecret
+                    RefreshTokenLifetime = clientDto.AbsoluteRefreshTokenLifetime > 0 ? clientDto.AbsoluteRefreshTokenLifetime : 2592000,
+                    RequireClientSecret = clientDto.RequireClientSecret,
+                    ClientSecret = clientDto.ClientSecret
                 };
-
-                if (!string.IsNullOrEmpty(clientDto.ClientSecret))
-                {
-                    client.ClientSecrets = new List<Secret> { new Secret(clientDto.ClientSecret) };
-                }
 
                 return client;
             }
@@ -71,7 +72,7 @@ namespace UniManage.IdentityServer.Services
         /// <summary>
         /// DTO thu gọn để map dữ liệu từ bảng is_clients.
         /// </summary>
-        private class ClientDto
+        private class ClientDbModel
         {
             public string ClientId { get; set; } = default!;
             public string? ClientName { get; set; }

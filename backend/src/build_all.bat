@@ -12,9 +12,10 @@ set "ROOT=%~dp0"
 echo Checking project paths...
 
 REM Define paths for .csproj files
-set "API_PATH=%ROOT%UniManage.Api\UniManage.Api.csproj"
-set "IDS_PATH=%ROOT%UniManage.IdentityServer\UniManage.IdentityServer.csproj"
-set "WRK_PATH=%ROOT%UniManage.Worker\UniManage.Worker.csproj"
+set "API_PATH=%ROOT%03.Apps\UniManage.WebApi\UniManage.WebApi.csproj"
+set "IDS_PATH=%ROOT%03.Apps\UniManage.IdentityServer\UniManage.IdentityServer.csproj"
+set "WRK_PATH=%ROOT%03.Apps\UniManage.Worker\UniManage.Worker.csproj"
+set "GEN_PATH=%ROOT%04.Tools\UniManage.Tools.CodeGen\UniManage.Tools.CodeGen.csproj"
 
 REM Define Output folders
 for /f %%i in ('powershell -command "Get-Date -Format yyyyMMdd_HHmm"') do set "BUILD_TIME=%%i"
@@ -56,6 +57,7 @@ echo   2. Build API Only
 echo   3. Build IdentityServer Only
 echo   4. Build Worker Only
 echo   5. Transform T4 Only
+echo   6. Build Code Generator Tool
 echo   ---------------------------------------------
 echo   0. Exit
 echo ===============================================
@@ -68,6 +70,7 @@ if "%CHOICE%"=="2" goto ProcessAPI
 if "%CHOICE%"=="3" goto ProcessIdentity
 if "%CHOICE%"=="4" goto ProcessWorker
 if "%CHOICE%"=="5" goto ProcessT4Only
+if "%CHOICE%"=="6" goto ProcessCodeGen
 
 echo Invalid choice!
 if "%IS_AUTO%"=="1" exit /b 0
@@ -119,6 +122,12 @@ goto Menu
 :ProcessT4Only
 call :TransformT4
 echo [DONE] T4 Transform completed.
+if "%IS_AUTO%"=="1" exit /b 0
+goto Menu
+
+:ProcessCodeGen
+call :BuildCodeGen
+echo [DONE] Code Generator Tool built.
 if "%IS_AUTO%"=="1" exit /b 0
 goto Menu
 
@@ -194,4 +203,15 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1 
 )
 echo   + [OK] Worker Published.
+exit /b 0
+
+:BuildCodeGen
+set "OUT_GEN=%OUT_ROOT%\codegen"
+dotnet publish "%GEN_PATH%" -c Release -o "!OUT_GEN!" /clp:ErrorsOnly /p:UseSharedCompilation=false
+if %ERRORLEVEL% NEQ 0 ( 
+    echo [ERROR] Build Code Generator Failed!
+    pause
+    exit /b 1 
+)
+echo   + [OK] Code Generator Published.
 exit /b 0

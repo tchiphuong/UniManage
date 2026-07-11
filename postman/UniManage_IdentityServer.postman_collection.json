@@ -1,0 +1,261 @@
+{
+	"info": {
+		"_postman_id": "f5505e83-379e-4e41-b856-11f879685a3c",
+		"name": "UniManage IdentityServer",
+		"description": "Bộ collection test cho UniManage IdentityServer (Duende). Bao gồm các request để test Discovery, Token (Client Credentials) và UserInfo.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Discovery Document",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{identity_url}}/.well-known/openid-configuration",
+					"host": [
+						"{{identity_url}}"
+					],
+					"path": [
+						".well-known",
+						"openid-configuration"
+					]
+				},
+				"description": "Lấy thông tin cấu hình của IdentityServer (Endpoints, Scopes, Claims supported...)"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get Token (Client Credentials)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.access_token) {",
+							"    pm.environment.set(\"access_token\", jsonData.access_token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"type": "text"
+						},
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "{{api_scope}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{identity_url}}/connect/token",
+					"host": [
+						"{{identity_url}}"
+					],
+					"path": [
+						"connect",
+						"token"
+					]
+				},
+				"description": "Lấy Access Token dùng cho machine-to-machine giao tiếp (không có user context)."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Get Token (Authorization Code + PKCE)",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"type": "string"
+						},
+						{
+							"key": "tokenName",
+							"value": "UniManage Token",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"type": "string"
+						},
+						{
+							"key": "clientId",
+							"value": "{{client_id_pkce}}",
+							"type": "string"
+						},
+						{
+							"key": "accessTokenUrl",
+							"value": "{{identity_url}}/connect/token",
+							"type": "string"
+						},
+						{
+							"key": "authUrl",
+							"value": "{{identity_url}}/connect/authorize",
+							"type": "string"
+						},
+						{
+							"key": "scope",
+							"value": "openid profile {{api_scope}}",
+							"type": "string"
+						},
+						{
+							"key": "clientAuth",
+							"value": "send_as_basic_auth_header",
+							"type": "string"
+						},
+						{
+							"key": "useBrowser",
+							"value": true,
+							"type": "boolean"
+						},
+						{
+							"key": "challengeAlgorithm",
+							"value": "S256",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{api_url}}/api/v1/users/me",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"me"
+					]
+				},
+				"description": "Request này cấu hình sẵn Authorization tab của Postman để sử dụng luồng Authorization Code + PKCE theo yêu cầu của dự án. Nhấn 'Get New Access Token' ở tab Authorization để đăng nhập qua giao diện web và lấy token."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get User Info",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{identity_url}}/connect/userinfo",
+					"host": [
+						"{{identity_url}}"
+					],
+					"path": [
+						"connect",
+						"userinfo"
+					]
+				},
+				"description": "Lấy thông tin User profile từ Access Token (Yêu cầu token sinh ra từ Authorization Code flow)."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "identity_url",
+			"value": "https://localhost:5001",
+			"type": "string"
+		},
+		{
+			"key": "api_url",
+			"value": "https://localhost:5002",
+			"type": "string"
+		},
+		{
+			"key": "client_id",
+			"value": "m2m.client",
+			"type": "string",
+			"description": "Dùng cho luồng Client Credentials"
+		},
+		{
+			"key": "client_secret",
+			"value": "secret",
+			"type": "string"
+		},
+		{
+			"key": "client_id_pkce",
+			"value": "spa.client",
+			"type": "string",
+			"description": "Dùng cho luồng Authorization Code + PKCE"
+		},
+		{
+			"key": "api_scope",
+			"value": "unimanage.api",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

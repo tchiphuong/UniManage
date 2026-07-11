@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using FluentValidation;
 using MediatR;
 using System.Text;
@@ -115,7 +115,7 @@ namespace UniManage.Modules.System.Application.Queries.Roles
 
                     var (orderBy, _) = QueryHelper.BuildOrderByClause(
                         request.SortBy,
-                        request.SortDirection ?? "ASC",
+                        request.SortDirection ?? SortDirection.Asc,
                         columnMappings);
 
                     sql.AppendLine($"ORDER BY {orderBy}");

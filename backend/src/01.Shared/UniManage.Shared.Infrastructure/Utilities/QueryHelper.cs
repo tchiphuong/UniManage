@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using UniManage.Shared.Application.Models;
 
 namespace UniManage.Shared.Infrastructure.Utilities
 {
@@ -14,12 +15,10 @@ namespace UniManage.Shared.Infrastructure.Utilities
         /// <param name="sortDirection">Sort direction (ASC/DESC).</param>
         /// <param name="columnMappings">Dictionary mapping sort keys to actual column names.</param>
         /// <returns>Tuple containing ORDER BY clause and parameters.</returns>
-        public static (string orderBy, object parameters) BuildOrderByClause(
-            string? sortBy,
-            string? sortDirection,
-            Dictionary<string, string> columnMappings)
+        public static (string orderBy, object parameters) BuildOrderByClause(string? sortBy, SortDirection? sortDirection, Dictionary<string, string> columnMappings)
         {
-            var sortDir = (sortDirection?.ToUpper() == "DESC") ? "DESC" : "ASC";
+            sortDirection ??= SortDirection.Desc;
+            var sortDir = (sortDirection == SortDirection.Desc) ? "DESC" : "ASC";
             var defaultColumn = columnMappings.GetValueOrDefault("default", "(SELECT NULL)");
 
             if (string.IsNullOrEmpty(sortBy) || !columnMappings.ContainsKey(sortBy))
@@ -103,7 +102,7 @@ namespace UniManage.Shared.Infrastructure.Utilities
             string fromClause,
             Dictionary<string, object>? filters = null,
             string? sortBy = null,
-            string? sortDirection = null,
+            SortDirection? sortDirection = null,
             Dictionary<string, string>? columnMappings = null,
             int pageIndex = 1,
             int pageSize = 20)

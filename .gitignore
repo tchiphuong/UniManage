@@ -1,10 +1,18 @@
 # ==========================================
 # 1. FRONTEND PROJECT (React, Next.js, Node)
 # ==========================================
+# Dependencies
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+jspm_packages/
+web_modules/
+
+# Lock files - BÌNH THƯỜNG KHÔNG NÊN IGNORE ĐỂ ĐẢM BẢO ĐỒNG BỘ VERSION
+# Nếu muốn ignore thật thì uncomment các dòng dưới:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Build & Cache outputs
 frontend/build/
 frontend/dist/
 frontend/.next/
@@ -13,30 +21,53 @@ frontend/.nuxt/
 frontend/.cache/
 frontend/coverage/
 dist/
+build/
 coverage/
 *.tsbuildinfo
 .turbo/
 .parcel-cache/
+.eslintcache
+.stylelintcache
+.npm/
 
 # ==========================================
 # 2. BACKEND PROJECT (.NET, C#)
 # ==========================================
 # IDE & User settings
 .vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 *.user
 *.suo
-*.ntvs*
-*.njsproj
+*.userosscache
 *.sln.docstates
 *.sln.DotSettings.user
 *.slnLaunch.user
-.idea/
-.fake
+*.ntvs*
+*.njsproj
+*.DotSettings.user
+*.sln.iml
 
-# Build outputs
-bin/
-obj/
+# Build outputs & caches
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Bb]uild/
 **/Properties/launchSettings.json
+.fake/
+
+# Testing
+[Tt]est[Rr]esults/
+*.coverage
+*.trx
 
 # NuGet packages
 packages/
@@ -55,12 +86,17 @@ packages/
 **/Entities/Generated/
 **/Database/Configurations/Generated/
 
+# Local configuration
+appsettings.Development.json
+appsettings.Local.json
+
 # ==========================================
 # 3. AI TOOLS & AGENT CONFIG
 # ==========================================
 .agent/
 .sixth/
 .gemini/
+.cursor/
 
 # ==========================================
 # 4. REFERENCE / TEMP PROJECTS (không commit)
@@ -77,6 +113,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Environment and Secrets
 .env
@@ -84,30 +121,53 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.backup
 secrets.json
 
 # Database local files
 *.mdf
 *.ldf
+*.ndf
+*.db
+*.sqlite
+*.db-shm
+*.db-wal
 Migrations/
 hangfire.db
 
 # Docker
 .dockerignore
 Dockerfile
+docker-compose.override.yml
 .docker-compose*
 
 # Cache & Publish
 redis-data/
 publish/
 *.pubxml
+*.pubxml.user
+*.publishproj
 *.publishsettings
 
 # OS-specific
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-.vercel/
+desktop.ini
 
-# Temp scripts
+# Temp scripts & backups
 *.ps1
 !backend/scripts/*.ps1
+*.bak
+*.tmp
+*.swp
+*~
+
+# ==========================================
+# 6. AUTO GENERATED CONSTANTS
+# ==========================================
+*.g.cs

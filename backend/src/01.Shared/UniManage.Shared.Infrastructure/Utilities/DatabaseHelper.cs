@@ -236,7 +236,7 @@ namespace UniManage.Shared.Infrastructure.Utilities
 
             var (orderByClause, _) = QueryHelper.BuildOrderByClause(
                 request.SortBy,
-                request.SortDirection ?? "DESC",
+                request.SortDirection ?? SortDirection.Desc,
                 columnMappings);
 
             // Fetch total record count
@@ -310,7 +310,7 @@ namespace UniManage.Shared.Infrastructure.Utilities
 
                 var (generatedOrderBy, _) = QueryHelper.BuildOrderByClause(
                     request.SortBy,
-                    request.SortDirection ?? "DESC",
+                    request.SortDirection ?? SortDirection.Desc,
                     columnMappings);
                 orderByClause = generatedOrderBy;
             }
@@ -392,7 +392,7 @@ namespace UniManage.Shared.Infrastructure.Utilities
 
             var (orderByClause, _) = QueryHelper.BuildOrderByClause(
                 request.SortBy,
-                request.SortDirection ?? "DESC",
+                request.SortDirection ?? SortDirection.Desc,
                 columnMappings);
 
             var countQuery = $@"

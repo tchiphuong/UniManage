@@ -26,7 +26,7 @@ for (int i = 0; i < tables.Count; i++)
     TableMetadata table = tables[i];
     string content = builder.Build(table);
     string moduleFolder = T4TemplateHelper.GetModuleFolder(table.Name);
-    string relativePath = Path.Combine("..", "..", "..", "02.Modules", moduleFolder, $"UniManage.Modules.{moduleFolder}.Infrastructure", "Database", "Configurations", "Generated", table.ClassName + "Configuration.generated.cs");
+    string relativePath = Path.Combine("..", "..", "..", "02.Modules", moduleFolder, $"UniManage.Modules.{moduleFolder}.Infrastructure", "Database", "Configurations", "Generated", table.ClassName + "Configuration.g.cs");
     manager.WriteFile(relativePath, content);
 }
 WriteLine("Multi-file configuration generation completed.");

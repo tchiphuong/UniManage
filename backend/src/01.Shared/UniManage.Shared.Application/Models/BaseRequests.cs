@@ -1,7 +1,16 @@
-﻿using System.Text.Json.Serialization;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using MediatR;
 
 namespace UniManage.Shared.Application.Models
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum SortDirection
+    {
+        Asc,
+        Desc
+    }
+
     public class BaseModel
     {
         /// <summary>
@@ -77,9 +86,29 @@ namespace UniManage.Shared.Application.Models
         public string? SortBy { get; set; }
 
         /// <summary>
-        /// Sort direction (ASC/DESC)
+        /// Sort direction (Asc/Desc)
         /// </summary>
-        public string? SortDirection { get; set; }
+        public SortDirection? SortDirection { get; set; }
+    }
+
+    /// <summary>
+    /// Base class for export queries providing search and sort properties without pagination
+    /// </summary>
+    public abstract class BaseExportQuery : BaseQuery
+    {
+        public string? Keyword { get; set; }
+        public string? SearchFields { get; set; }
+        public string? SortBy { get; set; }
+        public SortDirection? SortDirection { get; set; }
+    }
+
+    /// <summary>
+    /// Base class for import commands providing generic items list and overwrite flag
+    /// </summary>
+    public class BaseImportCommand<T> : BaseCommand, IRequest<ApiResponse<bool>>
+    {
+        public List<T> Items { get; init; } = new();
+        public bool IsOverwrite { get; init; }
     }
 }
 

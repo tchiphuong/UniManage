@@ -41,6 +41,7 @@ alwaysOn: true
   - ĐÚNG: `GET /api/v1/users`, `GET /api/v1/users/{id}`, `POST /api/v1/users`, `PUT /api/v1/users/{id}`
   - SAI: `GET /api/v1/users/getList`, `POST /api/v1/users/create`, `GET /api/v1/menus/tree`
 - Response phải tuân theo chuẩn bọc trong `ApiResponse<T>` hoặc `PagedResponse<T>`.
+- **POSTMAN UPDATE**: MỖI LẦN tạo hoặc sửa đổi API, BẮT BUỘC phải cập nhật lại Postman Collection (thêm request, ghi chú tham số, url) và lưu vào thư mục `postman` của dự án.
 
 ## 6. UTILITIES VÀ HELPERS (KHÔNG TỰ VIẾT LẠI)
 - **DatabaseHelper**: Dùng cho transaction (`ExecuteWithTransactionAsync`), `QueryPagingAsync`.

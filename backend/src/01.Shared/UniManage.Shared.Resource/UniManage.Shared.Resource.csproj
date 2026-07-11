@@ -36,7 +36,7 @@
     </None>
     <None Update="CoreResource.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>CoreResource.cs</LastGenOutput>
+      <LastGenOutput>CoreResource.g.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
@@ -50,7 +50,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>ResourcesGenerator.tt</DependentUpon>
     </Compile>
-    <Compile Update="CoreResource.cs">
+    <Compile Update="CoreResource.g.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>CoreResource.tt</DependentUpon>
