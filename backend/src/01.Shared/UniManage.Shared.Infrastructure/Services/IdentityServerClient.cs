@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
-using UniManage.Shared.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Logging;
 namespace UniManage.Shared.Infrastructure.Services
 {
@@ -109,7 +109,7 @@ namespace UniManage.Shared.Infrastructure.Services
 
         /// <summary>
         /// Parses IdentityServer token response.
-        /// [SECURITY] Domain 9 ΓÇö Raw IdentityServer errors are never exposed to clients.
+        /// [SECURITY] Domain 9 G�� Raw IdentityServer errors are never exposed to clients.
         /// </summary>
         private static async Task<(bool Success, IdentityTokenResponse? Token, string? Error)> ParseTokenResponseAsync(
             HttpResponseMessage response, CancellationToken ct)

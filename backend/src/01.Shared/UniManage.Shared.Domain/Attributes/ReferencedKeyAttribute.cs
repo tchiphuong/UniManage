@@ -1,4 +1,4 @@
-﻿namespace UniManage.Model.Attributes;
+﻿namespace UniManage.Shared.Domain.Attributes;
 
 /// <summary>
 /// Specifies the Principal Key (Unique Key/Alternate Key) column in the referenced table.

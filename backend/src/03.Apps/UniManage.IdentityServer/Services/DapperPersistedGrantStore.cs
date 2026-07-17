@@ -1,7 +1,8 @@
+using UniManage.Shared.Infrastructure.Database;
 using Dapper;
 using UniManage.IdentityServer.Interfaces;
 using UniManage.IdentityServer.Models;
-using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Logging;
 
 namespace UniManage.IdentityServer.Services

@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using UniManage.Shared.Application.Interfaces;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Domain.Entities;
 using DbContext = UniManage.Shared.Infrastructure.Database.DbContext;
 

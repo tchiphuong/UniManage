@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using UniManage.Modules.Inventory.Application.Commands.Product;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Application.Modules.IvProduct.Commands;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.WebApi.Controllers.Inventory
 {
@@ -22,7 +22,6 @@ namespace UniManage.WebApi.Controllers.Inventory
         public async Task<ActionResult<ApiResponse<CreateProductCommand.Response>>> Create([FromBody] CreateProductCommand command, CancellationToken cancellationToken)
         {
             // BẮT BUỘC: Lấy HeaderInfo từ BaseController
-            command.HeaderInfo = HeaderInfo;
 
             var result = await Mediator.Send(command, cancellationToken);
             return Ok(result);

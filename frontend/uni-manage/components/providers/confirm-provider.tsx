@@ -7,7 +7,7 @@ import React, {
     useCallback,
     ReactNode,
 } from "react";
-import { Modal, Button, AlertDialog } from "@heroui/react";
+import { Button, AlertDialog } from "@heroui/react";
 // import { Icon } from "@iconify/react"; // Not needed if using AlertDialog.Icon
 import { useTranslations } from "next-intl";
 
@@ -29,7 +29,7 @@ type ConfirmContextType = {
 const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
 
 // 3. Provider Component
-export function ConfirmProvider({ children }: { children: ReactNode }) {
+export function ConfirmProvider({ children }: Readonly<{ children: ReactNode }>) {
     const t = useTranslations("common.confirmDialog");
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState<ConfirmOptions>({
@@ -94,46 +94,34 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const getColor = () => {
-        return options.variant === "info"
-            ? "primary"
-            : options.variant || "danger";
+    const getButtonVariant = () => {
+        if (options.variant === "danger") return "danger";
+        return "primary";
     };
 
     return (
         <ConfirmContext.Provider value={{ confirm }}>
             {children}
-            {/* @ts-expect-error: Type mismatch fix */}
             <AlertDialog isOpen={isOpen} onOpenChange={handleOpenChange}>
-                {/* @ts-expect-error: Type mismatch fix */}
                 <AlertDialog.Backdrop />
-                {/* @ts-expect-error: Type mismatch fix */}
                 <AlertDialog.Container>
-                    {/* @ts-expect-error: Type mismatch fix */}
                     <AlertDialog.Dialog>
-                        {/* @ts-expect-error: Type mismatch fix */}
                         <AlertDialog.Header>
-                            {/* @ts-expect-error: Type mismatch fix */}
                             <AlertDialog.Icon status={getStatus()} />
-                            {/* @ts-expect-error: Type mismatch fix */}
                             <AlertDialog.Heading>
                                 {options.title || t("lbl.title")}
                             </AlertDialog.Heading>
                         </AlertDialog.Header>
-                        {/* @ts-expect-error: Type mismatch fix */}
                         <AlertDialog.Body>
                             <p className="text-default-500">
                                 {options.message || t("msg.message")}
                             </p>
                         </AlertDialog.Body>
-                        {/* @ts-expect-error: Type mismatch fix */}
                         <AlertDialog.Footer>
-                            {/* @ts-expect-error: Type mismatch fix */}
-                            <Button variant="light" onPress={handleCancel}>
+                            <Button variant="tertiary" onPress={handleCancel}>
                                 {options.cancelLabel || t("btn.cancel")}
                             </Button>
-                            {/* @ts-expect-error: Type mismatch fix */}
-                            <Button color={getColor()} onPress={handleConfirm}>
+                            <Button variant={getButtonVariant()} onPress={handleConfirm}>
                                 {options.confirmLabel || t("btn.confirm")}
                             </Button>
                         </AlertDialog.Footer>

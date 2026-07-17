@@ -1,15 +1,16 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 using UniManage.Shared.Domain;
-using UniManage.Modules.System.Domain;
+
 using UniManage.Shared.Infrastructure.Constant;
-using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Utilities;
 using UniManage.Shared.Resource;
 using DbContext = UniManage.Shared.Infrastructure.Database.DbContext;
+using UniManage.Shared.Domain.Entities;
 
 namespace UniManage.Shared.Infrastructure.Services
 {
@@ -25,7 +26,7 @@ namespace UniManage.Shared.Infrastructure.Services
         /// <param name="log">Log object from the calling API.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Validation result along with user's security information.</returns>
-        public static async Task<(bool Success, string? Error, UserSecurityDto? User)> ValidateUserStatusAsync(string username, ApiLogModel log, CancellationToken ct = default)
+        public static async Task<(bool Success, string? Error, SyUserSecurityModel? User)> ValidateUserStatusAsync(string username, ApiLogModel log, CancellationToken ct = default)
         {
             log.Parameter.Add(new LogParamModel(nameof(username), username));
             using var dbContext = new DbContext();
@@ -40,7 +41,7 @@ namespace UniManage.Shared.Infrastructure.Services
                 return (false, CoreResource.auth_userNotFound, null);
             }
 
-            var user = new UserSecurityDto
+            var user = new SyUserSecurityModel
             {
                 Id = userEntity.Id,
                 Status = userEntity.Status ?? string.Empty,
@@ -48,13 +49,17 @@ namespace UniManage.Shared.Infrastructure.Services
                 FailedLoginCount = userEntity.FailedLoginCount
             };
 
+            Console.WriteLine($"DEBUG: ValidateUserStatusAsync -> Username={username}, Status={user.Status}, FailedLoginCount={user.FailedLoginCount}, LockedUntil={user.LockedUntil}");
+
             if (user.Status != CoreCommon.Value.Commonstatus.Active)
             {
+                Console.WriteLine("DEBUG: Returning auth_accountInactive");
                 return (false, CoreResource.auth_accountInactive, user);
             }
 
             if (user.LockedUntil.HasValue && user.LockedUntil.Value > DateTimeHelper.Now)
             {
+                Console.WriteLine("DEBUG: Returning auth_accountLocked");
                 return (false, CoreResource.auth_accountLocked, user);
             }
 
@@ -227,7 +232,7 @@ namespace UniManage.Shared.Infrastructure.Services
         /// <summary>
         /// Retrieves or creates a new user from Provider Profile information.
         /// </summary>
-        public static async Task<SyUsers?> GetOrCreateSocialUserAsync(UniManage.Shared.Application.Interfaces.SocialUserProfile profile, string internalSecret, ApiLogModel log, CancellationToken ct = default)
+        public static async Task<SyUsers?> GetOrCreateSocialUserAsync(UniManage.Shared.Domain.Interfaces.SocialUserProfile profile, string internalSecret, ApiLogModel log, CancellationToken ct = default)
         {
             using var dbContext = new DbContext(openTransaction: true);
             
@@ -275,7 +280,7 @@ namespace UniManage.Shared.Infrastructure.Services
     /// <summary>
     /// DTO containing user's security status information.
     /// </summary>
-    public class UserSecurityDto
+    public class SyUserSecurityModel
     {
         public long Id { get; set; }
         public string Status { get; set; } = default!;

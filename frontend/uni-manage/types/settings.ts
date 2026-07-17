@@ -34,10 +34,10 @@ export interface SecuritySettings {
 }
 
 export interface AppearanceSettings {
-    theme: 'light' | 'dark' | 'auto';
+    theme: "light" | "dark" | "auto";
     primaryColor: string;
     accentColor: string;
-    borderRadius: 'none' | 'small' | 'medium' | 'large';
+    borderRadius: "none" | "small" | "medium" | "large";
 }
 
 export interface SystemSettings {

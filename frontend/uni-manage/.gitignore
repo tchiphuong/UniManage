@@ -49,3 +49,9 @@ hero.ts
 .github
 .heroui-docs
 AGENTS.md
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

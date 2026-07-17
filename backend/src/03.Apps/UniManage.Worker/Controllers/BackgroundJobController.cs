@@ -1,8 +1,7 @@
-﻿using UniManage.Modules.System.Domain;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
-using UniManage.Shared.Application.Models;
 using UniManage.Shared.Domain;
+using UniManage.Shared.Domain.Models;
 using UniManage.Shared.Infrastructure.Database;
 using UniManage.Shared.Infrastructure.Utilities;
 

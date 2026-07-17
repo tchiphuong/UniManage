@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { locales, defaultLocale } from "./i18n/config";
+import { locales, defaultLocale, Locale } from "./i18n/config";
 
 /**
  * Routes that don't require authentication
@@ -11,14 +11,20 @@ const publicPaths = ["/auth/login", "/auth/register", "/auth/forgot-password"];
  * Check if the path is a public route (no auth required)
  */
 function isPublicPath(pathname: string): boolean {
-    return publicPaths.some((path) => pathname === path || pathname.startsWith(path + "/"));
+    return publicPaths.some(
+        (path) => pathname === path || pathname.startsWith(path + "/"),
+    );
 }
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Ignore internal paths and static files
-    if (pathname.startsWith("/_next") || pathname.startsWith("/api") || pathname.includes(".")) {
+    if (
+        pathname.startsWith("/_next") ||
+        pathname.startsWith("/api") ||
+        pathname.includes(".")
+    ) {
         return;
     }
 
@@ -40,7 +46,9 @@ export function middleware(request: NextRequest) {
     // --- Locale Handling ---
     const localeCookie = request.cookies.get("locale")?.value;
     const locale =
-        localeCookie && locales.includes(localeCookie as any) ? localeCookie : defaultLocale;
+        localeCookie && locales.includes(localeCookie as Locale)
+            ? localeCookie
+            : defaultLocale;
 
     const response = NextResponse.next();
 

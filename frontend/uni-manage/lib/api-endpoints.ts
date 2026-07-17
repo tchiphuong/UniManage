@@ -18,7 +18,8 @@ export const AUTH_ENDPOINTS = {
     FORGOT_PASSWORD: `${API_VERSION}/auth/forgot-password`,
     RESET_PASSWORD: `${API_VERSION}/auth/reset-password`,
     PERMISSIONS: `${API_VERSION}/auth/permissions`,
-    CHECK_USERNAME: (username: string) => `${API_VERSION}/auth/check-username/${username}`,
+    CHECK_USERNAME: (username: string) =>
+        `${API_VERSION}/auth/check-username/${username}`,
     CHECK_EMAIL: (email: string) => `${API_VERSION}/auth/check-email/${email}`,
 } as const;
 

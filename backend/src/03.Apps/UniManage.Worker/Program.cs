@@ -1,7 +1,8 @@
-﻿using Autofac;
+using UniManage.Shared.Infrastructure.Database;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Hangfire;
-using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Logging;
 using UniManage.Worker.Filters;
 using UniManage.Worker.Infrastructure.AutofacModules;

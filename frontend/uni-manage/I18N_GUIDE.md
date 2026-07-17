@@ -30,11 +30,11 @@ i18n.ts             # Next-intl plugin config
 
 ## URL Structure
 
--   `/` → redirect to `/vi` (default locale)
--   `/vi` → Vietnamese version
--   `/en` → English version
--   `/vi/dashboard` → Vietnamese dashboard
--   `/en/dashboard` → English dashboard
+- `/` → redirect to `/vi` (default locale)
+- `/vi` → Vietnamese version
+- `/en` → English version
+- `/vi/dashboard` → Vietnamese dashboard
+- `/en/dashboard` → English dashboard
 
 ## Sử dụng
 
@@ -110,19 +110,19 @@ export const locales = ["vi", "en", "ja"] as const; // Thêm 'ja'
 
 Xem chi tiết trong:
 
--   [messages/vi.json](./messages/vi.json)
--   [messages/en.json](./messages/en.json)
+- [messages/vi.json](./messages/vi.json)
+- [messages/en.json](./messages/en.json)
 
 ### Categories:
 
--   `common` - Buttons, actions chung
--   `auth` - Authentication
--   `nav` - Navigation menu
--   `home` - Home page
--   `validation` - Form validation
--   `error` - Error messages
--   `success` - Success messages
--   `pagination` - Pagination labels
+- `common` - Buttons, actions chung
+- `auth` - Authentication
+- `nav` - Navigation menu
+- `home` - Home page
+- `validation` - Form validation
+- `error` - Error messages
+- `success` - Success messages
+- `pagination` - Pagination labels
 
 ## Best Practices
 
@@ -131,8 +131,8 @@ Xem chi tiết trong:
     ```json
     {
         "users": {
-            "list": "Danh sách người dùng",
-            "create": "Tạo người dùng"
+            "create": "Tạo người dùng",
+            "list": "Danh sách người dùng"
         }
     }
     ```
@@ -176,7 +176,7 @@ npm run dev
 
 ## Notes
 
--   Locale auto-detected từ `Accept-Language` header
--   URL luôn có locale prefix (`/vi/...`, `/en/...`)
--   Switching language giữ nguyên current path
--   Middleware cache locale preferences
+- Locale auto-detected từ `Accept-Language` header
+- URL luôn có locale prefix (`/vi/...`, `/en/...`)
+- Switching language giữ nguyên current path
+- Middleware cache locale preferences

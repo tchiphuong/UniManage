@@ -10,9 +10,7 @@ const nextConfig: NextConfig = {
     typescript: {
         ignoreBuildErrors: true,
     },
-    experimental: {
-        /* options here */
-    },
+    experimental: {/* options here */},
 };
 
 export default withNextIntl(nextConfig);

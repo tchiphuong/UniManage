@@ -38,17 +38,20 @@ class ApiClient {
                 }
 
                 // Thêm correlation ID
-                config.headers["X-Correlation-Id"] = this.generateCorrelationId();
+                config.headers["X-Correlation-Id"] =
+                    this.generateCorrelationId();
 
                 // Thêm Accept-Language từ locale hiện tại
                 // Backend CultureMiddleware cần header này
                 if (typeof window !== "undefined") {
-                    const locale = window.location.pathname.split("/")[1] || "vi";
+                    const locale =
+                        window.location.pathname.split("/")[1] || "vi";
                     const langMap: Record<string, string> = {
                         vi: "vi-VN",
                         en: "en-US",
                     };
-                    config.headers["Accept-Language"] = langMap[locale] || "vi-VN";
+                    config.headers["Accept-Language"] =
+                        langMap[locale] || "vi-VN";
                 }
 
                 return config;
@@ -76,28 +79,61 @@ class ApiClient {
         return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
-    async get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    async get<T>(
+        url: string,
+        config?: AxiosRequestConfig,
+    ): Promise<ApiResponse<T>> {
         const response = await this.instance.get<ApiResponse<T>>(url, config);
         return response.data;
     }
 
-    async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response = await this.instance.post<ApiResponse<T>>(url, data, config);
+    async post<T>(
+        url: string,
+        data?: any,
+        config?: AxiosRequestConfig,
+    ): Promise<ApiResponse<T>> {
+        const response = await this.instance.post<ApiResponse<T>>(
+            url,
+            data,
+            config,
+        );
         return response.data;
     }
 
-    async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response = await this.instance.put<ApiResponse<T>>(url, data, config);
+    async put<T>(
+        url: string,
+        data?: any,
+        config?: AxiosRequestConfig,
+    ): Promise<ApiResponse<T>> {
+        const response = await this.instance.put<ApiResponse<T>>(
+            url,
+            data,
+            config,
+        );
         return response.data;
     }
 
-    async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response = await this.instance.delete<ApiResponse<T>>(url, config);
+    async delete<T>(
+        url: string,
+        config?: AxiosRequestConfig,
+    ): Promise<ApiResponse<T>> {
+        const response = await this.instance.delete<ApiResponse<T>>(
+            url,
+            config,
+        );
         return response.data;
     }
 
-    async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-        const response = await this.instance.patch<ApiResponse<T>>(url, data, config);
+    async patch<T>(
+        url: string,
+        data?: any,
+        config?: AxiosRequestConfig,
+    ): Promise<ApiResponse<T>> {
+        const response = await this.instance.patch<ApiResponse<T>>(
+            url,
+            data,
+            config,
+        );
         return response.data;
     }
 }

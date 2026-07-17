@@ -1,5 +1,5 @@
-﻿using System.Text.RegularExpressions;
-using UniManage.Shared.Application.Models;
+using System.Text.RegularExpressions;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.Shared.Infrastructure.Utilities
 {

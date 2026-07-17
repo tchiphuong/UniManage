@@ -1,5 +1,6 @@
-﻿using Dapper;
 using UniManage.Shared.Infrastructure.Database;
+using Dapper;
+using UniManage.Shared.Domain.Interfaces;
 
 namespace UniManage.Shared.Infrastructure.Utilities
 {

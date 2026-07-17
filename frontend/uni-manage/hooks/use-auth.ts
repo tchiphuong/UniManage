@@ -5,11 +5,15 @@ import {
     setAccessToken,
     setRefreshToken,
     clearAuthCookies,
-    isAuthenticated as checkAuth,
     getAccessToken,
 } from "@/lib";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
-import type { LoginRequest, LoginResponse, UserProfile, FieldErrorModel } from "@/types";
+import type {
+    LoginRequest,
+    LoginResponse,
+    UserProfile,
+    FieldErrorModel,
+} from "@/types";
 
 /**
  * Hook để xử lý authentication
@@ -34,9 +38,15 @@ export function useAuth() {
 
             if (response.returnCode === 0 && response.data) {
                 // Save tokens to cookies
-                setAccessToken(response.data.accessToken, credentials.rememberMe);
+                setAccessToken(
+                    response.data.accessToken,
+                    credentials.rememberMe,
+                );
                 if (response.data.refreshToken) {
-                    setRefreshToken(response.data.refreshToken, credentials.rememberMe);
+                    setRefreshToken(
+                        response.data.refreshToken,
+                        credentials.rememberMe,
+                    );
                 }
 
                 return { success: true, data: response.data };
@@ -58,8 +68,9 @@ export function useAuth() {
                 setError(errorMessage);
                 return { success: false, error: errorMessage };
             }
-        } catch (err: any) {
-            const errorMsg = err.response?.data?.message || "An error occurred";
+        } catch (err: unknown) {
+            const errorMsg =
+                (err as { response?: { data?: { message?: string } } }).response?.data?.message || "An error occurred";
             setError(errorMsg);
             return { success: false, error: errorMsg };
         } finally {
@@ -80,7 +91,9 @@ export function useAuth() {
      */
     const getCurrentUser = async () => {
         try {
-            const response = await apiClient.get<UserProfile>(API_ENDPOINTS.AUTH.ME);
+            const response = await apiClient.get<UserProfile>(
+                API_ENDPOINTS.AUTH.ME,
+            );
             if (response.returnCode === 0 && response.data) {
                 return response.data;
             }
@@ -113,7 +126,6 @@ export function useAuth() {
 export function useAuthCheck() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
 
     const checkAuth = async () => {
         const token = getAccessToken();
@@ -125,7 +137,9 @@ export function useAuthCheck() {
         }
 
         try {
-            const response = await apiClient.get<UserProfile>(API_ENDPOINTS.AUTH.ME);
+            const response = await apiClient.get<UserProfile>(
+                API_ENDPOINTS.AUTH.ME,
+            );
             if (response.returnCode === 0) {
                 setIsAuthenticated(true);
                 setIsLoading(false);

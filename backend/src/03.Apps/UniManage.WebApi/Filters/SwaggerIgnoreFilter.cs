@@ -14,7 +14,7 @@ public class SwaggerIgnoreFilter : IOperationFilter
 
         // Remove parameters related to HeaderInfo which are internal/system properties
         var parametersToRemove = operation.Parameters
-            .Where(p => p.Name.StartsWith("HeaderInfo.") || p.Name == "HeaderInfo")
+            .Where(p => p.Name != null && (p.Name.StartsWith("HeaderInfo.") || p.Name == "HeaderInfo"))
             .ToList();
 
         foreach (var parameter in parametersToRemove)

@@ -1,5 +1,6 @@
-﻿using System.Globalization;
+using System.Globalization;
 using UniManage.Shared.Infrastructure.Constant;
+using UniManage.Core.Contants;
 
 namespace UniManage.WebApi.Middleware
 {
@@ -17,13 +18,13 @@ namespace UniManage.WebApi.Middleware
         // Chỉ lấy các ngôn ngữ có IsActive = true
         private static readonly HashSet<string> SupportedCultures = new(
             LanguageData.All
-                .Where(lang => lang.IsActive)
-                .Select(lang => lang.Code),
+                .Where(kvp => kvp.Value.IsActive)
+                .Select(kvp => kvp.Key),
             StringComparer.OrdinalIgnoreCase);
 
         // Default culture = ngôn ngữ có IsDefault = true trong DB
         private static readonly string DefaultCulture =
-            LanguageData.All.FirstOrDefault(lang => lang.IsDefault).Code ?? "en-US";
+            LanguageData.All.FirstOrDefault(kvp => kvp.Value.IsDefault).Key ?? "en-US";
 
         public CultureMiddleware(RequestDelegate next)
         {

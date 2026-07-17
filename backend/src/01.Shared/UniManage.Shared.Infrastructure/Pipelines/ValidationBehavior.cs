@@ -1,16 +1,16 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 using UniManage.Shared.Infrastructure.Constant;
 using UniManage.Shared.Infrastructure.Utilities;
 
 namespace UniManage.Shared.Infrastructure.Pipelines
 {
     /// <summary>
-    /// ValidationBehavior - Tự động validate tất cả Commands/Queries bằng FluentValidation
+    /// ValidationBehavior - T? d?ng validate t?t c? Commands/Queries b?ng FluentValidation
     /// </summary>
-    /// <typeparam name="TRequest">Command hoặc Query</typeparam>
-    /// <typeparam name="TResponse">ApiResponse hoặc ApiResponse</typeparam>
+    /// <typeparam name="TRequest">Command ho?c Query</typeparam>
+    /// <typeparam name="TResponse">ApiResponse ho?c ApiResponse</typeparam>
     public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IRequest<TResponse>
     {
@@ -23,37 +23,37 @@ namespace UniManage.Shared.Infrastructure.Pipelines
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            // Nếu không có validator, skip validation
+            // N?u kh�ng c� validator, skip validation
             if (!_validators.Any())
             {
                 return await next();
             }
 
-            // Tạo validation context
+            // T?o validation context
             var context = new ValidationContext<TRequest>(request);
 
-            // Chạy tất cả validators song song
+            // Ch?y t?t c? validators song song
             var validationResults = await Task.WhenAll(
                 _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
 
-            // Gom tất cả lỗi
+            // Gom t?t c? l?i
             var failures = validationResults
                 .SelectMany(r => r.Errors)
                 .Where(f => f != null)
                 .ToList();
 
-            // Nếu có lỗi, trả về ApiResponse.Fail với errors
+            // N?u c� l?i, tr? v? ApiResponse.Fail v?i errors
             if (failures.Any())
             {
                 return CreateValidationErrorResponse(failures);
             }
 
-            // Validation pass, tiếp tục đến Handler
+            // Validation pass, ti?p t?c d?n Handler
             return await next();
         }
 
         /// <summary>
-        /// Tạo validation error response theo đúng chuẩn ApiResponse
+        /// T?o validation error response theo d�ng chu?n ApiResponse
         /// </summary>
         private static TResponse CreateValidationErrorResponse(List<FluentValidation.Results.ValidationFailure> failures)
         {
@@ -62,7 +62,7 @@ namespace UniManage.Shared.Infrastructure.Pipelines
 
             var responseType = typeof(TResponse);
 
-            // Kiểm tra nếu TResponse là ApiResponse<T>
+            // Ki?m tra n?u TResponse l� ApiResponse<T>
             if (responseType.IsGenericType)
             {
                 var genericType = responseType.GetGenericTypeDefinition();
@@ -73,7 +73,7 @@ namespace UniManage.Shared.Infrastructure.Pipelines
                     var dataType = responseType.GetGenericArguments()[0];
                     var apiResponseType = typeof(ApiResponse<>).MakeGenericType(dataType);
 
-                    // Tạo instance với ReturnCode = InvalidData
+                    // T?o instance v?i ReturnCode = InvalidData
                     var response = Activator.CreateInstance(apiResponseType);
 
                     apiResponseType.GetProperty(nameof(ApiResponse<object>.ReturnCode))!.SetValue(response, CoreApiReturnCode.InvalidData);
@@ -85,7 +85,7 @@ namespace UniManage.Shared.Infrastructure.Pipelines
                 }
             }
 
-            // Fallback: throw ValidationException nếu không match pattern
+            // Fallback: throw ValidationException n?u kh�ng match pattern
             throw new ValidationException(failures);
         }
     }

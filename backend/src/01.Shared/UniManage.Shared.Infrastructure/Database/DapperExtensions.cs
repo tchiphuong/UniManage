@@ -1,4 +1,5 @@
-﻿using Dapper;
+using Microsoft.EntityFrameworkCore.Storage;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Data.Common;
@@ -18,7 +19,7 @@ namespace UniManage.Shared.Infrastructure.Database
         public static async Task<int> ExecuteAsync(this DbContext context, string sql, object? param = null, CancellationToken cancellationToken = default)
         {
             var connection = context.Database.GetDbConnection();
-            var transaction = Microsoft.EntityFrameworkCore.Storage.DbContextTransactionExtensions.GetDbTransaction(context.Database.CurrentTransaction);
+            var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
             await EnsureConnectionOpenAsync(connection, cancellationToken);
 
@@ -35,7 +36,7 @@ namespace UniManage.Shared.Infrastructure.Database
         public static async Task<T?> ExecuteScalarAsync<T>(this DbContext context, string sql, object? param = null, CancellationToken cancellationToken = default)
         {
             var connection = context.Database.GetDbConnection();
-            var transaction = Microsoft.EntityFrameworkCore.Storage.DbContextTransactionExtensions.GetDbTransaction(context.Database.CurrentTransaction);
+            var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
             await EnsureConnectionOpenAsync(connection, cancellationToken);
 
@@ -52,7 +53,7 @@ namespace UniManage.Shared.Infrastructure.Database
         public static async Task<IEnumerable<T>> QueryAsync<T>(this DbContext context, string sql, object? param = null, CancellationToken cancellationToken = default)
         {
             var connection = context.Database.GetDbConnection();
-            var transaction = Microsoft.EntityFrameworkCore.Storage.DbContextTransactionExtensions.GetDbTransaction(context.Database.CurrentTransaction);
+            var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
             await EnsureConnectionOpenAsync(connection, cancellationToken);
 
@@ -69,7 +70,7 @@ namespace UniManage.Shared.Infrastructure.Database
         public static async Task<T?> QueryFirstOrDefaultAsync<T>(this DbContext context, string sql, object? param = null, CancellationToken cancellationToken = default)
         {
             var connection = context.Database.GetDbConnection();
-            var transaction = Microsoft.EntityFrameworkCore.Storage.DbContextTransactionExtensions.GetDbTransaction(context.Database.CurrentTransaction);
+            var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
             await EnsureConnectionOpenAsync(connection, cancellationToken);
 
@@ -86,7 +87,7 @@ namespace UniManage.Shared.Infrastructure.Database
         public static async Task<T?> QuerySingleOrDefaultAsync<T>(this DbContext context, string sql, object? param = null, CancellationToken cancellationToken = default)
         {
             var connection = context.Database.GetDbConnection();
-            var transaction = Microsoft.EntityFrameworkCore.Storage.DbContextTransactionExtensions.GetDbTransaction(context.Database.CurrentTransaction);
+            var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
             await EnsureConnectionOpenAsync(connection, cancellationToken);
 
@@ -103,7 +104,7 @@ namespace UniManage.Shared.Infrastructure.Database
         public static async Task<SqlMapper.GridReader> QueryMultipleAsync(this DbContext context, string sql, object? param = null, CancellationToken cancellationToken = default)
         {
             var connection = context.Database.GetDbConnection();
-            var transaction = Microsoft.EntityFrameworkCore.Storage.DbContextTransactionExtensions.GetDbTransaction(context.Database.CurrentTransaction);
+            var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
 
             await EnsureConnectionOpenAsync(connection, cancellationToken);
 

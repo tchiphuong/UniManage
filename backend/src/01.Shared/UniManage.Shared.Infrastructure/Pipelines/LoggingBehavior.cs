@@ -2,7 +2,7 @@ using MediatR;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 using UniManage.Shared.Infrastructure.Constant;
 using UniManage.Shared.Infrastructure.Logging;
 using UniManage.Shared.Resource;

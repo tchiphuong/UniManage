@@ -22,7 +22,10 @@ export function formatCurrency(amount: number): string {
 /**
  * Format ngày tháng
  */
-export function formatDate(date: string | Date, format: "short" | "long" = "short"): string {
+export function formatDate(
+    date: string | Date,
+    format: "short" | "long" = "short",
+): string {
     const d = typeof date === "string" ? new Date(date) : date;
 
     if (format === "short") {
@@ -57,7 +60,7 @@ export function isValidPhoneNumber(phone: string): boolean {
  */
 export function debounce<T extends (...args: any[]) => any>(
     func: T,
-    wait: number
+    wait: number,
 ): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout;
     return (...args: Parameters<T>) => {

@@ -11,8 +11,8 @@ npm install
 
 File `.env.local` đã tạo sẵn với config mặc định:
 
--   API: http://localhost:5000/api
--   IdentityServer: http://localhost:5001
+- API: http://localhost:5000/api
+- IdentityServer: http://localhost:5001
 
 ## 3. Chạy development server
 
@@ -24,15 +24,15 @@ npm run dev
 
 ✅ **Đã hoàn thành:**
 
--   ✅ Tailwind CSS v4 configured
--   ✅ TypeScript strict mode
--   ✅ API Client với axios + interceptors
--   ✅ Type definitions (ApiResponse, PagedResponse, PagingInfo)
--   ✅ Utilities (formatCurrency, formatDate, validation helpers)
--   ✅ Custom hooks (useMounted, useDebounce)
--   ✅ Reusable components (PageHeader, LoadingScreen)
--   ✅ Environment configuration
--   ✅ Folder structure chuẩn
+- ✅ Tailwind CSS v4 configured
+- ✅ TypeScript strict mode
+- ✅ API Client với axios + interceptors
+- ✅ Type definitions (ApiResponse, PagedResponse, PagingInfo)
+- ✅ Utilities (formatCurrency, formatDate, validation helpers)
+- ✅ Custom hooks (useMounted, useDebounce)
+- ✅ Reusable components (PageHeader, LoadingScreen)
+- ✅ Environment configuration
+- ✅ Folder structure chuẩn
 
 **Folders:**
 
@@ -46,11 +46,11 @@ types/            # TypeScript interfaces
 
 ## 5. Next Steps
 
--   [ ] Cài thêm UI library nếu cần (shadcn/ui, MUI, Ant Design)
--   [ ] Setup authentication flow
--   [ ] Tạo layout với sidebar/navbar
--   [ ] Implement CRUD pages
--   [ ] Add form validation với zod + react-hook-form
+- [ ] Cài thêm UI library nếu cần (shadcn/ui, MUI, Ant Design)
+- [ ] Setup authentication flow
+- [ ] Tạo layout với sidebar/navbar
+- [ ] Implement CRUD pages
+- [ ] Add form validation với zod + react-hook-form
 
 ## 6. API Integration Example
 
@@ -73,7 +73,7 @@ const listResponse = await apiClient.post<PagedResult<User>>("/users/list", {
 
 ## Notes
 
--   HeroUI beta version có issues, đã remove tạm thời
--   Dùng native HTML elements với Tailwind styling
--   API client tự động thêm Bearer token từ localStorage
--   Tất cả responses theo format ApiResponse<T>
+- HeroUI beta version có issues, đã remove tạm thời
+- Dùng native HTML elements với Tailwind styling
+- API client tự động thêm Bearer token từ localStorage
+- Tất cả responses theo format ApiResponse<T>

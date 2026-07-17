@@ -1,4 +1,4 @@
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.Shared.Infrastructure.Utilities
 {

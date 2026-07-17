@@ -12,7 +12,7 @@ namespace UniManage.WebApi.Infrastructure
     {
         protected override void Load(ContainerBuilder builder)
         {
-            var assemblies = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "UniManage.Modules.*.Application.dll")
+            var assemblies = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "UniManage.*.Application.dll")
                 .Select(Assembly.LoadFrom)
                 .ToArray();
 
@@ -54,7 +54,7 @@ namespace UniManage.WebApi.Infrastructure
             // Used by LoginCommand, RefreshTokenCommand, LogoutCommand
             // ===========================================
             builder.RegisterType<IdentityServerClient>()
-                .As<UniManage.Shared.Application.Interfaces.IIdentityServerClient>()
+                .As<UniManage.Shared.Domain.Interfaces.IIdentityServerClient>()
                 .SingleInstance();
 
             // ===========================================
@@ -62,14 +62,14 @@ namespace UniManage.WebApi.Infrastructure
             // Strategy Pattern for multi-provider support
             // Sử dụng fully-qualified name để tránh ambiguous reference
             // ===========================================
-            builder.RegisterType<UniManage.Modules.System.Infrastructure.Services.Social.GoogleAuthProvider>()
-                .As<UniManage.Shared.Application.Interfaces.ISocialAuthProvider>()
+            builder.RegisterType<UniManage.Shared.Infrastructure.Services.Social.GoogleAuthProvider>()
+                .As<UniManage.Shared.Domain.Interfaces.ISocialAuthProvider>()
                 .InstancePerDependency();
-            builder.RegisterType<UniManage.Modules.System.Infrastructure.Services.Social.FacebookAuthProvider>()
-                .As<UniManage.Shared.Application.Interfaces.ISocialAuthProvider>()
+            builder.RegisterType<UniManage.Shared.Infrastructure.Services.Social.FacebookAuthProvider>()
+                .As<UniManage.Shared.Domain.Interfaces.ISocialAuthProvider>()
                 .InstancePerDependency();
             
-            builder.RegisterType<UniManage.Shared.Infrastructure.Services.SocialAuthProviderFactory>()
+            builder.RegisterType<UniManage.Shared.Application.Modules.System.SyAuth.Services.SocialAuthProviderFactory>()
                 .AsSelf()
                 .SingleInstance();
         }

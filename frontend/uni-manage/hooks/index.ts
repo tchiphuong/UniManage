@@ -39,7 +39,10 @@ export function useFetch<T>(
     return { ...state, refetch: fetchData };
 }
 
-export function useClickOutside(ref: React.RefObject<HTMLElement>, handler: () => void) {
+export function useClickOutside(
+    ref: React.RefObject<HTMLElement>,
+    handler: () => void,
+) {
     useEffect(() => {
         const listener = (event: MouseEvent | TouchEvent) => {
             if (!ref.current || ref.current.contains(event.target as Node)) {
@@ -73,7 +76,8 @@ export function useLocalStorage<T>(
 
     const setValue = (value: T | ((prev: T) => T)) => {
         try {
-            const valueToStore = value instanceof Function ? value(storedValue) : value;
+            const valueToStore =
+                value instanceof Function ? value(storedValue) : value;
             setStoredValue(valueToStore);
             window.localStorage.setItem(key, JSON.stringify(valueToStore));
         } catch (error) {

@@ -25,7 +25,12 @@ export default async function RootLayout({
     const messages = await getMessages();
 
     return (
-        <html lang={locale} suppressHydrationWarning className={inter.variable} data-scrollbar="thin">
+        <html
+            lang={locale}
+            suppressHydrationWarning
+            className={inter.variable}
+            data-scrollbar="thin"
+        >
             <body className="bg-background text-foreground antialiased">
                 <NextIntlClientProvider messages={messages}>
                     <Providers>{children}</Providers>

@@ -1,15 +1,34 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
-import { authService, type CurrentUserResponse } from "@/lib/services/auth.service";
-import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken, clearAuthCookies } from "@/lib/cookies";
+import {
+    authService,
+    type CurrentUserResponse,
+} from "@/lib/services/auth.service";
+import {
+    getAccessToken,
+    getRefreshToken,
+    setAccessToken,
+    setRefreshToken,
+    clearAuthCookies,
+} from "@/lib/cookies";
 
 interface AuthContextType {
     user: CurrentUserResponse | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (accessToken: string, refreshToken: string, user: CurrentUserResponse) => void;
+    login: (
+        accessToken: string,
+        refreshToken: string,
+        user: CurrentUserResponse,
+    ) => void;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -35,7 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initAuth();
     }, []);
 
-    const login = (accessToken: string, refreshToken: string, userData: CurrentUserResponse) => {
+    const login = (
+        accessToken: string,
+        refreshToken: string,
+        userData: CurrentUserResponse,
+    ) => {
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);
         setUser(userData);
@@ -98,7 +121,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
@@ -108,4 +133,3 @@ export function useAuth() {
     }
     return context;
 }
-

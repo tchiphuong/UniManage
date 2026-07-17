@@ -53,12 +53,16 @@ const fetcher = async (): Promise<MenuItem[]> => {
  * Uses SWR for caching, revalidation, and error handling
  */
 export function useMenu() {
-    const { data, error, isLoading } = useSWR<MenuItem[]>("/api/v1/menus", fetcher, {
-        revalidateOnFocus: false,
-        revalidateOnReconnect: true,
-        dedupingInterval: 60000, // Cache 60s
-        errorRetryCount: 3, // Giới hạn retry tối đa 3 lần nếu API lỗi (tránh lag khi BE offline)
-    });
+    const { data, error, isLoading } = useSWR<MenuItem[]>(
+        "/api/v1/menus",
+        fetcher,
+        {
+            revalidateOnFocus: false,
+            revalidateOnReconnect: true,
+            dedupingInterval: 60000, // Cache 60s
+            errorRetryCount: 3, // Giới hạn retry tối đa 3 lần nếu API lỗi (tránh lag khi BE offline)
+        },
+    );
 
     return {
         menuData: data || [],

@@ -28,7 +28,12 @@ export function Providers({
 
     return (
         <QueryClientProvider client={queryClient}>
-            <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <NextThemesProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+            >
                 <SidebarProvider>
                     {children}
                     <ToastProvider placement="top-right" />

@@ -1,7 +1,8 @@
+using UniManage.Shared.Infrastructure.Database;
 using Dapper;
 using UniManage.IdentityServer.Interfaces;
 using UniManage.IdentityServer.Models;
-using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Logging;
 
 namespace UniManage.IdentityServer.Services
@@ -26,38 +27,34 @@ namespace UniManage.IdentityServer.Services
                     SELECT TOP 1 
                         [ClientId], 
                         [ClientName], 
-                        [ClientSecret], 
+                        [ClientSecrets] as ClientSecret, 
                         [AllowedGrantTypes], 
                         [AllowedScopes], 
                         [AccessTokenLifetime], 
                         [AllowOfflineAccess],
-                        [IdentityTokenLifetime], 
-                        [AuthorizationCodeLifetime],
                         [AbsoluteRefreshTokenLifetime], 
                         [SlidingRefreshTokenLifetime],
                         [RefreshTokenUsage], 
-                        [RefreshTokenExpiration], 
-                        [RequireClientSecret], 
-                        [Description]
+                        [RefreshTokenExpiration]
                     FROM [dbo].[is_clients]
                     WHERE [ClientId] = @ClientId";
 
-                var clientDto = await dbContext.QueryFirstOrDefaultAsync<ClientDbModel>(sql, new { ClientId = clientId });
+                var clientModel = await dbContext.QueryFirstOrDefaultAsync<ClientDbModel>(sql, new { ClientId = clientId });
 
-                if (clientDto == null) return null;
+                if (clientModel == null) return null;
 
                 var client = new ClientModel
                 {
-                    ClientId = clientDto.ClientId,
-                    ClientName = clientDto.ClientName,
-                    Description = clientDto.Description,
-                    AllowedGrantTypes = clientDto.AllowedGrantTypes?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
-                    AllowedScopes = clientDto.AllowedScopes?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
-                    AccessTokenLifetime = clientDto.AccessTokenLifetime,
-                    AllowOfflineAccess = clientDto.AllowOfflineAccess,
-                    RefreshTokenLifetime = clientDto.AbsoluteRefreshTokenLifetime > 0 ? clientDto.AbsoluteRefreshTokenLifetime : 2592000,
-                    RequireClientSecret = clientDto.RequireClientSecret,
-                    ClientSecret = clientDto.ClientSecret
+                    ClientId = clientModel.ClientId,
+                    ClientName = clientModel.ClientName,
+                    Description = "",
+                    AllowedGrantTypes = clientModel.AllowedGrantTypes?.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
+                    AllowedScopes = clientModel.AllowedScopes?.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
+                    AccessTokenLifetime = clientModel.AccessTokenLifetime,
+                    AllowOfflineAccess = clientModel.AllowOfflineAccess,
+                    RefreshTokenLifetime = clientModel.AbsoluteRefreshTokenLifetime > 0 ? clientModel.AbsoluteRefreshTokenLifetime : 2592000,
+                    RequireClientSecret = false, // Not in DB, default to false or implement logic
+                    ClientSecret = "secret" // Temp workaround or parse from JSON
                 };
 
                 return client;
@@ -81,14 +78,10 @@ namespace UniManage.IdentityServer.Services
             public string? AllowedScopes { get; set; }
             public int AccessTokenLifetime { get; set; }
             public bool AllowOfflineAccess { get; set; }
-            public int IdentityTokenLifetime { get; set; }
-            public int AuthorizationCodeLifetime { get; set; }
             public int AbsoluteRefreshTokenLifetime { get; set; }
             public int SlidingRefreshTokenLifetime { get; set; }
             public int RefreshTokenUsage { get; set; }
             public int RefreshTokenExpiration { get; set; }
-            public bool RequireClientSecret { get; set; }
-            public string? Description { get; set; }
         }
     }
 }

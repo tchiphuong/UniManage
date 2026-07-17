@@ -40,11 +40,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure JWT Authentication (For /connect/userinfo and potentially other secured endpoints)
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IKeyManagementService>((options, keyManagementService) =>
     {
-        var keyManagementService = builder.Services.BuildServiceProvider().GetRequiredService<IKeyManagementService>();
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -55,6 +53,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
 
 var app = builder.Build();
 
@@ -70,7 +71,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapRazorPages();
 
-app.MapGet("/", () => "Custom IdentityServer is running!");
+app.MapGet("/", () => "IdentityServer is running!");
 
-app.Run();
+await app.RunAsync();
 

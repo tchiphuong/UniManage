@@ -15,7 +15,7 @@ REM Define paths for .csproj files
 set "API_PATH=%ROOT%03.Apps\UniManage.WebApi\UniManage.WebApi.csproj"
 set "IDS_PATH=%ROOT%03.Apps\UniManage.IdentityServer\UniManage.IdentityServer.csproj"
 set "WRK_PATH=%ROOT%03.Apps\UniManage.Worker\UniManage.Worker.csproj"
-set "GEN_PATH=%ROOT%04.Tools\UniManage.Tools.CodeGen\UniManage.Tools.CodeGen.csproj"
+set "GEN_PATH=%ROOT%02.Tools\UniManage.Tools.CodeGen\UniManage.Tools.CodeGen.csproj"
 
 REM Define Output folders
 for /f %%i in ('powershell -command "Get-Date -Format yyyyMMdd_HHmm"') do set "BUILD_TIME=%%i"

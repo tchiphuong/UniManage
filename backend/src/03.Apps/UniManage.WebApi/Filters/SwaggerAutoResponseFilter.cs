@@ -4,7 +4,7 @@ using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.WebApi.Filters
 {
@@ -27,6 +27,7 @@ namespace UniManage.WebApi.Filters
         /// <summary>
         /// Áp dụng filter cho từng API operation
         /// </summary>
+#pragma warning disable S3776 // Refactor this method to reduce its Cognitive Complexity
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
             if (operation == null) return;
@@ -151,7 +152,7 @@ namespace UniManage.WebApi.Filters
         /// </summary>
         private void AddResponse(OpenApiOperation operation, string statusCode, string description, ApiResponse<object> responseModel)
         {
-            operation.Responses.Add(statusCode, new OpenApiResponse
+            operation.Responses!.Add(statusCode, new OpenApiResponse
             {
                 Description = description,
                 Content = new Dictionary<string, OpenApiMediaType>

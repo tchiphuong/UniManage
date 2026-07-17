@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.WebApi.Controllers
 {
@@ -9,7 +9,7 @@ namespace UniManage.WebApi.Controllers
     [Route("api/v1/[controller]")]
     public abstract class BaseController : ControllerBase
     {
-        private IMediator _mediator;
+        private IMediator? _mediator;
         protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetRequiredService<IMediator>();
 
         /// <summary>
@@ -22,6 +22,7 @@ namespace UniManage.WebApi.Controllers
         /// <summary>
         /// Tạo HeaderInfo từ HttpContext cho mỗi request
         /// </summary>
+#pragma warning disable S6932 // Use model binding instead of accessing the raw request data
         protected HeaderInfo HeaderInfo => new HeaderInfo
         {
             CorrelationId = HttpContext.Request.Headers["X-Correlation-Id"].FirstOrDefault() ?? HttpContext.TraceIdentifier,
@@ -38,6 +39,7 @@ namespace UniManage.WebApi.Controllers
             AccessToken = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", ""),
             ApiName = $"{ControllerContext.ActionDescriptor.ControllerName}/{ControllerContext.ActionDescriptor.ActionName}"
         };
+#pragma warning restore S6932
 
         /// <summary>
         /// Lấy User ID dạng Guid từ JWT claims

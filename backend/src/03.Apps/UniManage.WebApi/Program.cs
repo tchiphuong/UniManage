@@ -48,6 +48,9 @@ builder.Services.AddControllers(options =>
 {
     // Add ApiResponseFilter globally to all controllers
     options.Filters.Add<ApiResponseFilter>();
+    
+    // Auto inject HeaderInfo to all Requests
+    options.Filters.Add<HeaderInfoFilter>();
 
     // ===========================================
     // [SECURITY] Global Authorization filter (C8)

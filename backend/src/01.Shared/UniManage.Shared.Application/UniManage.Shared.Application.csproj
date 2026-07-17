@@ -8,9 +8,13 @@
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
     <PackageReference Include="MediatR" Version="12.4.1" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <ProjectReference Include="..\UniManage.Shared.Domain\UniManage.Shared.Domain.csproj" />
+    <ProjectReference Include="..\UniManage.Shared.Infrastructure\UniManage.Shared.Infrastructure.csproj" />
+  
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\UniManage.Shared.Resource\UniManage.Shared.Resource.csproj" />
+  
   </ItemGroup>
 </Project>

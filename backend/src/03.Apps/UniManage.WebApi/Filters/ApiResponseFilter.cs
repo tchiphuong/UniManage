@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.WebApi.Filters;
 
 /// <summary>
-/// Filter tự động convert ApiResponse returnCode thành HTTP status code
+/// Filter t? d?ng convert ApiResponse returnCode th�nh HTTP status code
 /// </summary>
 public class ApiResponseFilter : IActionFilter
 {

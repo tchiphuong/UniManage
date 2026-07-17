@@ -1,7 +1,8 @@
-﻿using Dapper;
+using UniManage.Shared.Infrastructure.Database;
+using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using UniManage.Shared.Infrastructure.Constant;
-using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Logging;
 using UniManage.Shared.Infrastructure.Utilities;
 
@@ -17,7 +18,7 @@ namespace UniManage.WebApi.Authorization
     ///   4. Succeed or fail the requirement
     /// 
     /// Database tables involved:
-    ///   SyUsers â†’ SyUserRoles â†’ SyRolePermissions (FunctionCode + ActionCode)
+    ///   SyUsers → SyUserRoles → SyRolePermissions (FunctionCode + ActionCode)
     /// </summary>
     public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
     {
@@ -36,7 +37,7 @@ namespace UniManage.WebApi.Authorization
             var username = context.User?.Identity?.Name;
             if (string.IsNullOrEmpty(username))
             {
-                // Not authenticated â€” let [Authorize] handle this
+                // Not authenticated — let [Authorize] handle this
                 return;
             }
 
@@ -52,7 +53,7 @@ namespace UniManage.WebApi.Authorization
                 {
                     context.Succeed(requirement);
                 }
-                // else: requirement fails silently â†’ returns 403 Forbidden
+                // else: requirement fails silently → returns 403 Forbidden
             }
             catch (Exception ex)
             {
@@ -62,7 +63,7 @@ namespace UniManage.WebApi.Authorization
                     null,
                     true,
                     ex);
-                // On error, do NOT succeed â€” deny access (fail-closed principle)
+                // On error, do NOT succeed — deny access (fail-closed principle)
             }
         }
 

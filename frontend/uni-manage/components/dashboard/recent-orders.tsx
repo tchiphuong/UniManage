@@ -50,7 +50,7 @@ export function RecentOrders() {
             <h3 className="text-foreground mb-4 text-lg font-semibold tracking-tight">
                 {t("dashboard.overview.lbl.recentOrders")}
             </h3>
-            <Table className="bg-transparent shadow-none p-0">
+            <Table className="bg-transparent p-0 shadow-none">
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label={t("dashboard.overview.lbl.recentOrders")}

@@ -1,35 +1,23 @@
-﻿namespace UniManage.Shared.Application.Interfaces
+using UniManage.Shared.Domain.Interfaces;
+
+namespace UniManage.Shared.Application.Interfaces
 {
     /// <summary>
-    /// Model chß╗⌐a th├┤ng tin ng╞░ß╗¥i d├╣ng lß║Ñy tß╗½ Social Provider
-    /// </summary>
-    public class SocialUserProfile
-    {
-        public string Provider { get; set; } = string.Empty;
-        public string ProviderUserId { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string? Name { get; set; }
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-        public string? Picture { get; set; }
-    }
-
-    /// <summary>
-    /// Interface chung cho c├íc Social Auth Provider (Google, Facebook, Apple...)
+    /// Interface chung cho các Social Auth Provider (Google, Facebook, Apple...)
+    /// Sử dụng SocialUserProfile từ Domain layer
     /// </summary>
     public interface ISocialAuthProvider
     {
         /// <summary>
-        /// T├¬n ─æß╗ïnh danh cß╗ºa provider (google, facebook...)
+        /// Tên định danh của provider (google, facebook...)
         /// </summary>
         string ProviderName { get; }
 
         /// <summary>
-        /// X├íc thß╗▒c token v├á lß║Ñy th├┤ng tin profile ng╞░ß╗¥i d├╣ng
+        /// Xác thực token và lấy thông tin profile người dùng
         /// </summary>
-        /// <param name="token">Token tß╗½ client SDK</param>
-        /// <returns>Profile ng╞░ß╗¥i d├╣ng nß║┐u token hß╗úp lß╗ç</returns>
+        /// <param name="token">Token từ client SDK</param>
+        /// <returns>Profile người dùng nếu token hợp lệ</returns>
         Task<SocialUserProfile?> VerifyTokenAsync(string token, CancellationToken ct = default);
     }
 }
-

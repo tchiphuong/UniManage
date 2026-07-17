@@ -35,22 +35,26 @@ namespace UniManage.IdentityServer.Controllers
 
             if (string.IsNullOrEmpty(grantType) || string.IsNullOrEmpty(clientId))
             {
+                Console.WriteLine("DEBUG: invalid_request - grantType or clientId missing");
                 return BadRequest(new { error = "invalid_request" });
             }
 
             var client = await _clientStore.FindClientByIdAsync(clientId);
             if (client == null)
             {
+                Console.WriteLine($"DEBUG: invalid_client - client {clientId} not found");
                 return BadRequest(new { error = "invalid_client" });
             }
 
             if (client.RequireClientSecret && client.ClientSecret != clientSecret)
             {
+                Console.WriteLine("DEBUG: invalid_client - invalid client secret");
                 return BadRequest(new { error = "invalid_client", error_description = "Invalid client secret" });
             }
 
             if (!client.AllowedGrantTypes.Contains(grantType))
             {
+                Console.WriteLine($"DEBUG: unsupported_grant_type - {grantType} not allowed for client {clientId}");
                 return BadRequest(new { error = "unsupported_grant_type" });
             }
 
@@ -73,6 +77,7 @@ namespace UniManage.IdentityServer.Controllers
                         return await HandleSocialGrantAsync(form, client, requestedScopes);
 
                     default:
+                        Console.WriteLine("DEBUG: unsupported_grant_type - default switch case");
                         return BadRequest(new { error = "unsupported_grant_type" });
                 }
             }
@@ -90,12 +95,20 @@ namespace UniManage.IdentityServer.Controllers
 
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
+                Console.WriteLine("DEBUG: invalid_request - missing username or password");
                 return BadRequest(new { error = "invalid_request", error_description = "Missing username or password" });
             }
 
             var user = await _userRepository.FindByUsernameAsync(username);
-            if (user == null || !PasswordHelper.VerifyPassword(password, user.Password))
+            if (user == null)
             {
+                Console.WriteLine($"DEBUG: invalid_grant - user {username} not found");
+                return BadRequest(new { error = "invalid_grant", error_description = "Invalid username or password" });
+            }
+            
+            if (!PasswordHelper.VerifyPassword(password, user.Password))
+            {
+                Console.WriteLine($"DEBUG: invalid_grant - password mismatch for user {username}");
                 return BadRequest(new { error = "invalid_grant", error_description = "Invalid username or password" });
             }
 

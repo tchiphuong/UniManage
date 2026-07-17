@@ -3,11 +3,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface UseConfirmDeleteProps {
     queryKey: string;
-    deleteService: (ids: number[]) => Promise<any>;
+    deleteService: (ids: number[]) => Promise<unknown>;
     onSuccess?: () => void;
 }
 
-export function useConfirmDelete({ queryKey, deleteService, onSuccess }: UseConfirmDeleteProps) {
+export function useConfirmDelete({
+    queryKey,
+    deleteService,
+    onSuccess,
+}: UseConfirmDeleteProps) {
     const queryClient = useQueryClient();
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -22,7 +26,7 @@ export function useConfirmDelete({ queryKey, deleteService, onSuccess }: UseConf
         },
         onError: (error) => {
             console.error(`[${queryKey}] Delete failed`, error);
-        }
+        },
     });
 
     const handleDeleteClick = useCallback((id: number) => {

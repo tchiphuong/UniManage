@@ -21,7 +21,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
 
     return (
-        <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <div className="bg-background flex h-screen flex-col overflow-hidden">
             <Header />
             <div className="flex flex-1 overflow-hidden">
                 <Sidebar />

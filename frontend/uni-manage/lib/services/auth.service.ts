@@ -43,7 +43,10 @@ export const authService = {
      * @param username Username
      * @param password Password
      */
-    async login(username: string, password: string): Promise<ApiResponse<LoginResponse>> {
+    async login(
+        username: string,
+        password: string,
+    ): Promise<ApiResponse<LoginResponse>> {
         return apiClient.post<LoginResponse>(AUTH_ENDPOINTS.LOGIN, {
             username,
             password,
@@ -64,7 +67,9 @@ export const authService = {
      * Refresh access token
      * @param refreshToken Refresh token
      */
-    async refreshToken(refreshToken: string): Promise<ApiResponse<LoginResponse>> {
+    async refreshToken(
+        refreshToken: string,
+    ): Promise<ApiResponse<LoginResponse>> {
         return apiClient.post<LoginResponse>(AUTH_ENDPOINTS.REFRESH_TOKEN, {
             refreshToken,
         });
@@ -95,7 +100,9 @@ export const authService = {
      * Request password reset (forgot password)
      * @param emailOrUsername Email or username
      */
-    async forgotPassword(emailOrUsername: string): Promise<ApiResponse<boolean>> {
+    async forgotPassword(
+        emailOrUsername: string,
+    ): Promise<ApiResponse<boolean>> {
         return apiClient.post<boolean>(AUTH_ENDPOINTS.FORGOT_PASSWORD, {
             emailOrUsername,
         });
@@ -123,15 +130,21 @@ export const authService = {
      * Get current user information
      * @param username Username from JWT claims
      */
-    async getCurrentUser(username: string): Promise<ApiResponse<CurrentUserResponse>> {
-        return apiClient.get<CurrentUserResponse>(`${AUTH_ENDPOINTS.ME}?username=${username}`);
+    async getCurrentUser(
+        username: string,
+    ): Promise<ApiResponse<CurrentUserResponse>> {
+        return apiClient.get<CurrentUserResponse>(
+            `${AUTH_ENDPOINTS.ME}?username=${username}`,
+        );
     },
 
     /**
      * Get user permissions and roles
      * @param username Username from JWT claims
      */
-    async getPermissions(username: string): Promise<ApiResponse<UserPermissionsResponse>> {
+    async getPermissions(
+        username: string,
+    ): Promise<ApiResponse<UserPermissionsResponse>> {
         return apiClient.get<UserPermissionsResponse>(
             `${AUTH_ENDPOINTS.PERMISSIONS}?username=${username}`,
         );
@@ -141,15 +154,23 @@ export const authService = {
      * Check if username exists
      * @param username Username to check
      */
-    async checkUsernameExists(username: string): Promise<ApiResponse<CheckExistsResponse>> {
-        return apiClient.get<CheckExistsResponse>(AUTH_ENDPOINTS.CHECK_USERNAME(username));
+    async checkUsernameExists(
+        username: string,
+    ): Promise<ApiResponse<CheckExistsResponse>> {
+        return apiClient.get<CheckExistsResponse>(
+            AUTH_ENDPOINTS.CHECK_USERNAME(username),
+        );
     },
 
     /**
      * Check if email exists
      * @param email Email to check
      */
-    async checkEmailExists(email: string): Promise<ApiResponse<CheckExistsResponse>> {
-        return apiClient.get<CheckExistsResponse>(AUTH_ENDPOINTS.CHECK_EMAIL(email));
+    async checkEmailExists(
+        email: string,
+    ): Promise<ApiResponse<CheckExistsResponse>> {
+        return apiClient.get<CheckExistsResponse>(
+            AUTH_ENDPOINTS.CHECK_EMAIL(email),
+        );
     },
 };

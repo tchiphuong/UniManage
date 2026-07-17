@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    ReactNode,
+} from "react";
 
 interface SidebarContextType {
     sidebarOpen: boolean;
@@ -10,14 +16,14 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(() => {
-        if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-            return localStorage.getItem('sidebarOpen') === 'true';
+        if (typeof window !== "undefined" && window.innerWidth >= 768) {
+            return localStorage.getItem("sidebarOpen") === "true";
         }
         return false;
     });
 
     useEffect(() => {
-        localStorage.setItem('sidebarOpen', String(sidebarOpen));
+        localStorage.setItem("sidebarOpen", String(sidebarOpen));
     }, [sidebarOpen]);
 
     useEffect(() => {
@@ -27,8 +33,8 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
             }
         };
 
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
     }, []);
 
     const toggleSidebar = () => {
@@ -40,7 +46,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <SidebarContext.Provider value={{ sidebarOpen, toggleSidebar, closeSidebar }}>
+        <SidebarContext.Provider
+            value={{ sidebarOpen, toggleSidebar, closeSidebar }}
+        >
             {children}
         </SidebarContext.Provider>
     );
@@ -49,7 +57,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 export function useSidebar() {
     const context = useContext(SidebarContext);
     if (context === undefined) {
-        throw new Error('useSidebar must be used within a SidebarProvider');
+        throw new Error("useSidebar must be used within a SidebarProvider");
     }
     return context;
 }

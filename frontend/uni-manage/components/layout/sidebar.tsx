@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef, useDeferredValue } from "react";
+import React, {
+    useState,
+    useEffect,
+    useCallback,
+    useRef,
+    useDeferredValue,
+} from "react";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import Cookies from "js-cookie";
@@ -215,6 +221,7 @@ const SidebarMenuItem = React.memo(function SidebarMenuItem({
 
     useEffect(() => {
         if (isActive && hasChildren) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsOpen(true);
         }
     }, [currentPath, hasChildren, isActive]);
@@ -233,19 +240,21 @@ const SidebarMenuItem = React.memo(function SidebarMenuItem({
         }
     };
 
-    const commonClasses = `mx-2 flex flex-1 cursor-pointer items-center justify-between rounded-full p-1.5 transition-all duration-200 ${isActive
-        ? "bg-accent text-accent-foreground shadow-md shadow-accent/25"
-        : "text-foreground hover:bg-default"
-        }`;
+    const commonClasses = `mx-2 flex flex-1 cursor-pointer items-center justify-between rounded-full p-1.5 transition-all duration-200 ${
+        isActive
+            ? "bg-accent text-accent-foreground shadow-md shadow-accent/25"
+            : "text-foreground hover:bg-default"
+    }`;
     const content = (
         <>
             <span className="flex flex-1 items-center gap-3 overflow-hidden">
                 {IconComponent && (
                     <span
-                        className={`shrink-0 rounded-full p-1.5 transition-colors ${isActive
-                            ? "bg-white/20"
-                            : "bg-default group-hover:bg-accent-soft"
-                            }`}
+                        className={`shrink-0 rounded-full p-1.5 transition-colors ${
+                            isActive
+                                ? "bg-white/20"
+                                : "bg-default group-hover:bg-accent-soft"
+                        }`}
                     >
                         <IconComponent
                             className={`h-4 w-4 ${isActive ? "" : "group-hover:text-accent"}`}
@@ -260,7 +269,7 @@ const SidebarMenuItem = React.memo(function SidebarMenuItem({
             <span className="flex shrink-0 items-center gap-1">
                 {/* Badge */}
                 {badgeCount && badgeCount > 0 && (
-                    <span className="rounded-full bg-danger px-1.5 py-0.5 text-xs font-bold text-danger-foreground">
+                    <span className="bg-danger text-danger-foreground rounded-full px-1.5 py-0.5 text-xs font-bold">
                         {badgeCount > 99 ? "99+" : badgeCount}
                     </span>
                 )}
@@ -268,10 +277,11 @@ const SidebarMenuItem = React.memo(function SidebarMenuItem({
                 {/* Keyboard Shortcut */}
                 {item.shortcut && !hasChildren && (
                     <kbd
-                        className={`hidden rounded-md border px-1.5 py-0.5 text-[10px] font-semibold sm:inline ${isActive
-                            ? "border-white/30 bg-white/20 text-white"
-                            : "border-border bg-default text-muted"
-                            }`}
+                        className={`hidden rounded-md border px-1.5 py-0.5 text-[10px] font-semibold sm:inline ${
+                            isActive
+                                ? "border-white/30 bg-white/20 text-white"
+                                : "border-border bg-default text-muted"
+                        }`}
                     >
                         ⌘ + {item.shortcut}
                     </kbd>
@@ -291,7 +301,7 @@ const SidebarMenuItem = React.memo(function SidebarMenuItem({
                             <StarIconSolid className="h-4 w-4 text-yellow-500" />
                         ) : (
                             <StarIcon
-                                className={`h-4 w-4 ${isActive ? "text-white/70 hover:text-warning" : "text-muted hover:text-warning"}`}
+                                className={`h-4 w-4 ${isActive ? "hover:text-warning text-white/70" : "text-muted hover:text-warning"}`}
                             />
                         )}
                     </span>
@@ -332,15 +342,16 @@ const SidebarMenuItem = React.memo(function SidebarMenuItem({
             </Tooltip>
 
             {hasChildren && isOpen && (
-                <ul className="mt-2 ml-6 space-y-0.5 border-l-2 border-border">
+                <ul className="border-border mt-2 ml-6 space-y-0.5 border-l-2">
                     {item.children?.map((subItem, i) => (
                         <li key={i}>
                             <Link
                                 href={subItem.link || "#"}
-                                className={`mx-2 flex items-center rounded-full p-1.5 pl-9 text-sm transition-all duration-200 ${subItem.link === currentPath
-                                    ? "bg-accent text-accent-foreground shadow-md shadow-accent/25"
-                                    : "text-muted hover:bg-default hover:text-foreground"
-                                    }`}
+                                className={`mx-2 flex items-center rounded-full p-1.5 pl-9 text-sm transition-all duration-200 ${
+                                    subItem.link === currentPath
+                                        ? "bg-accent text-accent-foreground shadow-accent/25 shadow-md"
+                                        : "text-muted hover:bg-default hover:text-foreground"
+                                }`}
                             >
                                 <span className="truncate font-medium">
                                     {t(subItem.title)}
@@ -381,17 +392,21 @@ export function Sidebar() {
     const deferredSearchQuery = useDeferredValue(searchQuery);
     const [favorites, setFavorites] = useState<string[]>([]);
 
-    const handleNavigate = useCallback((path: string) => {
-        // Navigation is handled by Link, but we might want to close sidebar on mobile
-        if (window.innerWidth < 1024) {
-            closeSidebar();
-        }
-    }, [closeSidebar]);
+    const handleNavigate = useCallback(
+        (_path: string) => {
+            // Navigation is handled by Link, but we might want to close sidebar on mobile
+            if (window.innerWidth < 1024) {
+                closeSidebar();
+            }
+        },
+        [closeSidebar],
+    );
 
     // Load favorites from localStorage
     useEffect(() => {
         const saved = localStorage.getItem(FAVORITES_KEY);
         if (saved) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFavorites(JSON.parse(saved));
         }
     }, []);
@@ -469,33 +484,34 @@ export function Sidebar() {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [handleNavigate]);
+    }, [handleNavigate, menuData]);
 
     return (
         <aside
-            className={`sidebar-transition fixed top-16 left-0 z-40 flex h-[calc(100vh-4rem)] flex-col overflow-hidden bg-surface text-surface-foreground shadow-lg lg:relative lg:top-0 lg:m-3 lg:h-[calc(100vh-5.5rem)] lg:rounded-xl lg:border lg:border-border ${sidebarOpen
-                ? "w-full translate-x-0 opacity-100 lg:w-64"
-                : "-translate-x-full opacity-0 lg:w-0 lg:translate-x-0"
-                }`}
+            className={`sidebar-transition bg-surface text-surface-foreground lg:border-border fixed top-16 left-0 z-40 flex h-[calc(100vh-4rem)] flex-col overflow-hidden shadow-lg lg:relative lg:top-0 lg:m-3 lg:h-[calc(100vh-5.5rem)] lg:rounded-xl lg:border ${
+                sidebarOpen
+                    ? "w-full translate-x-0 opacity-100 lg:w-64"
+                    : "-translate-x-full opacity-0 lg:w-0 lg:translate-x-0"
+            }`}
         >
             {/* Search Box */}
             {/* Search Box */}
-            <div className="border-b border-border p-3">
+            <div className="border-border border-b p-3">
                 <div className="relative">
-                    <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted" />
+                    <MagnifyingGlassIcon className="text-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t("common.global.lbl.search") + "..."}
-                        className="w-full rounded-full border border-border bg-default py-2 pr-8 pl-9 text-sm text-foreground transition-colors focus:border-accent focus:bg-surface focus:outline-none"
+                        className="border-border bg-default text-foreground focus:border-accent focus:bg-surface w-full rounded-full border py-2 pr-8 pl-9 text-sm transition-colors focus:outline-none"
                     />
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery("")}
-                            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1 hover:bg-default"
+                            className="hover:bg-default absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1"
                         >
-                            <XMarkIcon className="h-4 w-4 text-muted" />
+                            <XMarkIcon className="text-muted h-4 w-4" />
                         </button>
                     )}
                 </div>
@@ -507,7 +523,7 @@ export function Sidebar() {
                         {[...Array(10)].map((_, i) => (
                             <div
                                 key={i}
-                                className="h-10 w-full animate-pulse rounded-lg bg-default"
+                                className="bg-default h-10 w-full animate-pulse rounded-lg"
                             ></div>
                         ))}
                     </div>
@@ -518,7 +534,7 @@ export function Sidebar() {
                             <div className="mb-4">
                                 <div className="mb-2 flex items-center gap-2 px-4">
                                     <StarIconSolid className="h-4 w-4 text-yellow-500" />
-                                    <span className="text-xs font-semibold tracking-wider text-muted uppercase">
+                                    <span className="text-muted text-xs font-semibold tracking-wider uppercase">
                                         {t("common.global.lbl.favorites")}
                                     </span>
                                 </div>
@@ -541,7 +557,7 @@ export function Sidebar() {
                                         />
                                     ))}
                                 </ul>
-                                <div className="mx-4 my-3 border-t border-border"></div>
+                                <div className="border-border mx-4 my-3 border-t"></div>
                             </div>
                         )}
 
@@ -555,8 +571,8 @@ export function Sidebar() {
                                         className="mb-2"
                                     >
                                         {/* Section Header */}
-                                        <div className="sticky -top-4 z-10 mb-1 border-b border-border bg-surface px-4 pb-1">
-                                            <span className="text-[10px] font-bold tracking-widest text-muted uppercase">
+                                        <div className="border-border bg-surface sticky -top-4 z-10 mb-1 border-b px-4 pb-1">
+                                            <span className="text-muted text-[10px] font-bold tracking-widest uppercase">
                                                 {t(item.title)}
                                             </span>
                                         </div>
@@ -570,15 +586,15 @@ export function Sidebar() {
                                                         onNavigate={() =>
                                                             handleNavigate(
                                                                 child.link ||
-                                                                "#",
+                                                                    "#",
                                                             )
                                                         }
                                                         currentPath={pathname}
                                                         isFavorite={
                                                             child.id
                                                                 ? favorites.includes(
-                                                                    child.id,
-                                                                )
+                                                                      child.id,
+                                                                  )
                                                                 : false
                                                         }
                                                         onToggleFavorite={
@@ -587,8 +603,8 @@ export function Sidebar() {
                                                         badgeCount={
                                                             child.id
                                                                 ? badgeCounts[
-                                                                child.id
-                                                                ]
+                                                                      child.id
+                                                                  ]
                                                                 : undefined
                                                         }
                                                     />
@@ -627,24 +643,24 @@ export function Sidebar() {
 
                 {/* No Results */}
                 {filteredMenu.length === 0 && (
-                    <div className="px-4 py-8 text-center text-sm text-muted">
+                    <div className="text-muted px-4 py-8 text-center text-sm">
                         {t("common.global.lbl.noResults")}
                     </div>
                 )}
             </ScrollShadow>
 
             {/* Compact Footer: Language + Version + Copyright */}
-            <div className="border-t border-border px-3 py-2">
+            <div className="border-border border-t px-3 py-2">
                 <div className="relative flex items-center justify-between">
                     {/* Language Selector - Compact */}
                     <Dropdown>
                         <Dropdown.Trigger>
-                            <div className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-all duration-200 hover:bg-default focus:outline-none">
+                            <div className="hover:bg-default flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-all duration-200 focus:outline-none">
                                 <currentLang.Flag
                                     title={currentLang.name}
                                     className="h-4 w-5 rounded-sm"
                                 />
-                                <ChevronDownIcon className="h-3 w-3 text-muted transition-transform" />
+                                <ChevronDownIcon className="text-muted h-3 w-3 transition-transform" />
                             </div>
                         </Dropdown.Trigger>
                         <Dropdown.Popover placement="top start">
@@ -657,9 +673,14 @@ export function Sidebar() {
                                 }}
                             >
                                 {languages
-                                    .toSorted((a, b) => a.name.localeCompare(b.name))
+                                    .toSorted((a, b) =>
+                                        a.name.localeCompare(b.name),
+                                    )
                                     .map((lang) => (
-                                        <Dropdown.Item key={lang.code} textValue={lang.name}>
+                                        <Dropdown.Item
+                                            key={lang.code}
+                                            textValue={lang.name}
+                                        >
                                             <div className="flex w-full items-center gap-2.5">
                                                 <lang.Flag
                                                     title={lang.name}
@@ -676,7 +697,7 @@ export function Sidebar() {
                     </Dropdown>
 
                     {/* Version & Copyright */}
-                    <div className="text-right text-[10px] text-muted">
+                    <div className="text-muted text-right text-[10px]">
                         <span>v1.0.0</span>
                         <span className="mx-1">•</span>
                         <span>© 2024 Phuong Tran</span>

@@ -1,5 +1,6 @@
-﻿using Hangfire;
 using UniManage.Shared.Infrastructure.Database;
+using Hangfire;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Logging;
 
 namespace UniManage.Worker.Jobs;
@@ -32,7 +33,7 @@ public class TokenCleanupJob
 
                 if (grantsAffected > 0 || devicesAffected > 0)
                 {
-                    var log = new UniManage.Shared.Application.Models.ApiLogModel()
+                    var log = new UniManage.Shared.Domain.Models.ApiLogModel()
                     {
                         Message = $"TokenCleanupJob: Deleted {grantsAffected} grants and {devicesAffected} device codes.",
                         Method = nameof(ExecuteAsync),
@@ -46,7 +47,7 @@ public class TokenCleanupJob
             {
                 await dbContext.RollbackAsync(CancellationToken.None);
 
-                var log = new UniManage.Shared.Application.Models.ApiLogModel()
+                var log = new UniManage.Shared.Domain.Models.ApiLogModel()
                 {
                     Message = $"TokenCleanupJob Error: {ex.Message}",
                     Method = nameof(ExecuteAsync),

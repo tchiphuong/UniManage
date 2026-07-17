@@ -16,7 +16,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
         if (!locale && c?.value) {
             locale = c.value;
         }
-    } catch (e) {
+    } catch {
         // ignore (safe fallback)
     }
 

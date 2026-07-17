@@ -1,23 +1,24 @@
-﻿using Dapper;
+using UniManage.Shared.Infrastructure.Database;
+using Dapper;
 using System.Collections;
 using System.Globalization;
 using UniManage.Shared.Infrastructure.Constant;
-using UniManage.Shared.Infrastructure.Database;
-using UniManage.Shared.Infrastructure.Models.Resources;
+using UniManage.Shared.Domain.Interfaces;
+using UniManage.Shared.Domain.Models.Resources;
 using UniManage.Shared.Infrastructure.Utilities;
 
 namespace UniManage.Shared.Infrastructure.Services
 {
     /// <summary>
-    /// Quản lý tài nguyên đa ngôn ngữ (Localization) từ Database SQL Server.
-    /// Hỗ trợ nạp dữ liệu vào bộ nhớ đệm (Hashtable) và tự động dịch nếu thiếu tài nguyên.
+    /// Qu?n l� t�i nguy�n da ng�n ng? (Localization) t? Database SQL Server.
+    /// H? tr? n?p d? li?u v�o b? nh? d?m (Hashtable) v� t? d?ng d?ch n?u thi?u t�i nguy�n.
     /// </summary>
     public class ResourceManager
     {
         private Hashtable? _Table;
 
         /// <summary>
-        /// Lấy giá trị văn bản của một tài nguyên dựa trên mã khóa và ngôn ngữ.
+        /// L?y gi� tr? van b?n c?a m?t t�i nguy�n d?a tr�n m� kh�a v� ng�n ng?.
         /// </summary>
         public string GetString(string resourceName, CultureInfo? culture = null)
         {
@@ -40,14 +41,14 @@ namespace UniManage.Shared.Infrastructure.Services
                 return langData;
             }
 
-            // Nếu không tìm thấy, thực hiện dịch từ ngôn ngữ mặc định
+            // N?u kh�ng t�m th?y, th?c hi?n d?ch t? ng�n ng? m?c d?nh
             langData = TranslateResource(resourceName, langCode);
 
             return langData ?? string.Empty;
         }
 
         /// <summary>
-        /// Lấy toàn bộ danh sách tài nguyên cho một ngôn ngữ cụ thể.
+        /// L?y to�n b? danh s�ch t�i nguy�n cho m?t ng�n ng? c? th?.
         /// </summary>
         public Dictionary<string, string?> GetResources(CultureInfo? culture = null)
         {
@@ -90,7 +91,7 @@ namespace UniManage.Shared.Infrastructure.Services
         }
 
         /// <summary>
-        /// Nạp dữ liệu tài nguyên từ bảng SyResources vào bộ nhớ đệm.
+        /// N?p d? li?u t�i nguy�n t? b?ng SyResources v�o b? nh? d?m.
         /// </summary>
         public void SetResourceStore()
         {
@@ -136,7 +137,7 @@ namespace UniManage.Shared.Infrastructure.Services
         }
 
         /// <summary>
-        /// Lấy mã ngôn ngữ mặc định của hệ thống (IsDefault = 1).
+        /// L?y m� ng�n ng? m?c d?nh c?a h? th?ng (IsDefault = 1).
         /// </summary>
         public static string GetDefaultLanguage()
         {
@@ -147,7 +148,7 @@ namespace UniManage.Shared.Infrastructure.Services
         }
 
         /// <summary>
-        /// Thực hiện dịch tài nguyên bằng TranslateHelper và lưu kết quả vào Database.
+        /// Th?c hi?n d?ch t�i nguy�n b?ng TranslateHelper v� luu k?t qu? v�o Database.
         /// </summary>
         private string TranslateResource(string resourceName, string langShortName)
         {
@@ -157,7 +158,7 @@ namespace UniManage.Shared.Infrastructure.Services
             if (!string.IsNullOrEmpty(defaultLang) && _Table != null && _Table.ContainsKey(defaultLang))
             {
                 string defaultData = GetString(resourceName, new CultureInfo(defaultLang));
-                translatedData = TranslateHelper.TranslateTextAsync(defaultData, langShortName).Result;
+                translatedData = TranslateHelper.TranslateTextAsync(defaultData, langShortName).Result ?? string.Empty;
                 
                 if (!string.IsNullOrEmpty(translatedData))
                 {

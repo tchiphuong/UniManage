@@ -19,7 +19,10 @@ export interface UserListParams extends PagingParams {
 
 export const UserService = {
     list: async (params: UserListParams): Promise<PagedResponse<User>> => {
-        const response = await apiClient.get<PagedResult<User>>(USER_ENDPOINTS.LIST, { params });
+        const response = await apiClient.get<PagedResult<User>>(
+            USER_ENDPOINTS.LIST,
+            { params },
+        );
         // Ensure strictly typed return or handle undefined if apiClient can be undefined (though interceptor throws)
         return (
             response || {
@@ -28,7 +31,12 @@ export const UserService = {
                 errors: [],
                 data: {
                     items: [],
-                    paging: { pageIndex: 1, pageSize: 20, totalItems: 0, totalPages: 0 },
+                    paging: {
+                        pageIndex: 1,
+                        pageSize: 20,
+                        totalItems: 0,
+                        totalPages: 0,
+                    },
                 },
             }
         );
@@ -40,17 +48,28 @@ export const UserService = {
     },
 
     create: async (data: Partial<User>): Promise<ApiResponse<number>> => {
-        const response = await apiClient.post<number>(USER_ENDPOINTS.CREATE, data);
+        const response = await apiClient.post<number>(
+            USER_ENDPOINTS.CREATE,
+            data,
+        );
         return response as ApiResponse<number>;
     },
 
-    update: async (id: number, data: Partial<User>): Promise<ApiResponse<void>> => {
-        const response = await apiClient.put<void>(USER_ENDPOINTS.UPDATE(id), data);
+    update: async (
+        id: number,
+        data: Partial<User>,
+    ): Promise<ApiResponse<void>> => {
+        const response = await apiClient.put<void>(
+            USER_ENDPOINTS.UPDATE(id),
+            data,
+        );
         return response as ApiResponse<void>;
     },
 
     delete: async (ids: number[]): Promise<ApiResponse<void>> => {
-        const response = await apiClient.delete<void>(USER_ENDPOINTS.DELETE, { data: ids });
+        const response = await apiClient.delete<void>(USER_ENDPOINTS.DELETE, {
+            data: ids,
+        });
         return response as ApiResponse<void>;
     },
 };

@@ -3,7 +3,7 @@
  * Theo chuẩn UniManage backend
  */
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
     returnCode: number;
     message: string;
     data?: T;
@@ -22,7 +22,7 @@ export interface PagedResult<T> {
     paging: PagingInfo;
 }
 
-export interface PagedResponse<T> extends ApiResponse<PagedResult<T>> {}
+export type PagedResponse<T> = ApiResponse<PagedResult<T>>;
 
 export interface FieldErrorModel {
     field: string;
@@ -32,5 +32,5 @@ export interface FieldErrorModel {
 export interface PagingParams {
     pageIndex: number;
     pageSize: number;
-    [key: string]: any;
+    [key: string]: unknown;
 }

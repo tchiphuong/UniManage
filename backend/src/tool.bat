@@ -18,7 +18,7 @@ echo.
 :SkipT4
 cls
 echo [2/3] Running Code Generator...
-dotnet run --project 04.Tools\UniManage.Tools.CodeGen\UniManage.Tools.CodeGen.csproj
+dotnet run --project 02.Tools\UniManage.Tools.CodeGen\UniManage.Tools.CodeGen.csproj
 
 echo.
 choice /c YN /m "Update T4 again to apply newly generated Resources?"

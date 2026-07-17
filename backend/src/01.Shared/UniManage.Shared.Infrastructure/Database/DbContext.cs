@@ -79,10 +79,7 @@ namespace UniManage.Shared.Infrastructure.Database
                 var connString = GetConnectionString();
                 optionsBuilder.UseSqlServer(connString, sqlOptions =>
                 {
-                    sqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 3,
-                        maxRetryDelay: TimeSpan.FromSeconds(5),
-                        errorNumbersToAdd: null);
+                    // Xóa EnableRetryOnFailure vì không tương thích với TransactionBehavior (explicit transaction)
                     sqlOptions.CommandTimeout(30);
                 });
 
@@ -111,7 +108,7 @@ namespace UniManage.Shared.Infrastructure.Database
                     // Chú ý: ConfigEncryption.Decrypt() cần được xử lý nếu mật khẩu chưa mã hóa
                     var decryptedPassword = ConfigEncryption.Decrypt(password);
 
-                    var builder = new SqlConnectionStringBuilder
+                    var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
                     {
                         DataSource = server,
                         InitialCatalog = database,

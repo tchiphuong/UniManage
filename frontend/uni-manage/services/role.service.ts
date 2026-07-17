@@ -22,7 +22,10 @@ export interface RoleListParams extends PagingParams {
 
 export const RoleService = {
     list: async (params: RoleListParams): Promise<PagedResponse<Role>> => {
-        const response = await apiClient.get<PagedResult<Role>>(ROLE_ENDPOINTS.LIST, { params });
+        const response = await apiClient.get<PagedResult<Role>>(
+            ROLE_ENDPOINTS.LIST,
+            { params },
+        );
         return (
             response || {
                 returnCode: -1,
@@ -30,19 +33,31 @@ export const RoleService = {
                 errors: [],
                 data: {
                     items: [],
-                    paging: { pageIndex: 1, pageSize: 20, totalItems: 0, totalPages: 0 },
+                    paging: {
+                        pageIndex: 1,
+                        pageSize: 20,
+                        totalItems: 0,
+                        totalPages: 0,
+                    },
                 },
             }
         );
     },
 
     getByCode: async (code: string): Promise<ApiResponse<Role>> => {
-        const response = await apiClient.get<Role>(`${ROLE_ENDPOINTS.LIST}/${code}`);
+        const response = await apiClient.get<Role>(
+            `${ROLE_ENDPOINTS.LIST}/${code}`,
+        );
         return response as ApiResponse<Role>;
     },
 
-    create: async (data: Partial<Role>): Promise<ApiResponse<{ id: number }>> => {
-        const response = await apiClient.post<{ id: number }>(ROLE_ENDPOINTS.CREATE, data);
+    create: async (
+        data: Partial<Role>,
+    ): Promise<ApiResponse<{ id: number }>> => {
+        const response = await apiClient.post<{ id: number }>(
+            ROLE_ENDPOINTS.CREATE,
+            data,
+        );
         return response as ApiResponse<{ id: number }>;
     },
 
@@ -57,7 +72,9 @@ export const RoleService = {
         return response as ApiResponse<{ success: boolean }>;
     },
 
-    delete: async (roleCodes: string[]): Promise<ApiResponse<{ success: boolean }>> => {
+    delete: async (
+        roleCodes: string[],
+    ): Promise<ApiResponse<{ success: boolean }>> => {
         // Backend DeleteRoleCommand accepts { roleCode: "..." } or list?
         // Let's check DeleteRoleCommand.cs backend.
         // Usually list delete sends body: [ "code1", "code2" ]
@@ -71,16 +88,24 @@ export const RoleService = {
         // I'll check DeleteRoleCommand.cs in a moment.
 
         // Let's assume standard behavior for now:
-        const response = await apiClient.delete<{ success: boolean }>(ROLE_ENDPOINTS.DELETE, {
-            data: { roleCodes },
-        });
+        const response = await apiClient.delete<{ success: boolean }>(
+            ROLE_ENDPOINTS.DELETE,
+            {
+                data: { roleCodes },
+            },
+        );
         return response as ApiResponse<{ success: boolean }>;
     },
 
-    getCombobox: async (keyword?: string): Promise<ApiResponse<any[]>> => {
-        const response = await apiClient.get<any[]>(ROLE_ENDPOINTS.COMBOBOX, {
-            params: { keyword },
-        });
-        return response as ApiResponse<any[]>;
+    getCombobox: async (
+        keyword?: string,
+    ): Promise<ApiResponse<Record<string, unknown>[]>> => {
+        const response = await apiClient.get<Record<string, unknown>[]>(
+            ROLE_ENDPOINTS.COMBOBOX,
+            {
+                params: { keyword },
+            },
+        );
+        return response as ApiResponse<Record<string, unknown>[]>;
     },
 };

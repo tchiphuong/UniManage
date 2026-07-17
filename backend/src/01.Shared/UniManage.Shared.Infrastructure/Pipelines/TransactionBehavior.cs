@@ -1,27 +1,27 @@
-﻿using MediatR;
+using MediatR;
 using System.Transactions;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.Shared.Infrastructure.Pipelines
 {
     /// <summary>
-    /// Tự động đóng bọc các Command vào một Database Transaction.
-    /// Chỉ các Request implement ITransactionalCommand mới bị ảnh hưởng.
-    /// Trái với DbContext transaction thông thường (bị giới hạn trong 1 biến), 
-    /// TransactionScope bao phủ luôn toàn bộ tiến trình.
+    /// T? d?ng d�ng b?c c�c Command v�o m?t Database Transaction.
+    /// Ch? c�c Request implement ITransactionalCommand m?i b? ?nh hu?ng.
+    /// Tr�i v?i DbContext transaction th�ng thu?ng (b? gi?i h?n trong 1 bi?n), 
+    /// TransactionScope bao ph? lu�n to�n b? ti?n tr�nh.
     /// </summary>
     public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IRequest<TResponse>
     {
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            // Bỏ qua nếu Command không yêu cầu Transaction
+            // B? qua n?u Command kh�ng y�u c?u Transaction
             if (request is not ITransactionalCommand)
             {
                 return await next();
             }
 
-            // Mở TransactionScope với AsyncFlowEnabled (bắt buộc cho await/async)
+            // M? TransactionScope v?i AsyncFlowEnabled (b?t bu?c cho await/async)
             var transactionOptions = new TransactionOptions
             {
                 IsolationLevel = IsolationLevel.ReadCommitted,
@@ -30,10 +30,10 @@ namespace UniManage.Shared.Infrastructure.Pipelines
 
             using var scope = new TransactionScope(TransactionScopeOption.Required, transactionOptions, TransactionScopeAsyncFlowOption.Enabled);
             
-            // Chạy logic của Handler
+            // Ch?y logic c?a Handler
             var response = await next();
 
-            // Nếu không có exception, tự động commit
+            // N?u kh�ng c� exception, t? d?ng commit
             scope.Complete();
 
             return response;

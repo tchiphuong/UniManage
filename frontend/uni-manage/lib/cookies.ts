@@ -23,8 +23,15 @@ const shortCookieOptions = {
 /**
  * Save access token to cookie
  */
-export function setAccessToken(token: string, rememberMe: boolean = false): void {
-    Cookies.set(TOKEN_KEY, token, rememberMe ? cookieOptions : shortCookieOptions);
+export function setAccessToken(
+    token: string,
+    rememberMe: boolean = false,
+): void {
+    Cookies.set(
+        TOKEN_KEY,
+        token,
+        rememberMe ? cookieOptions : shortCookieOptions,
+    );
 }
 
 /**
@@ -44,8 +51,15 @@ export function removeAccessToken(): void {
 /**
  * Save refresh token to cookie
  */
-export function setRefreshToken(token: string, rememberMe: boolean = false): void {
-    Cookies.set(REFRESH_TOKEN_KEY, token, rememberMe ? cookieOptions : shortCookieOptions);
+export function setRefreshToken(
+    token: string,
+    rememberMe: boolean = false,
+): void {
+    Cookies.set(
+        REFRESH_TOKEN_KEY,
+        token,
+        rememberMe ? cookieOptions : shortCookieOptions,
+    );
 }
 
 /**

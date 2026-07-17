@@ -1,51 +1,53 @@
 export const appConfig = {
     // 1. App Info
-    appName: 'UniManage',
-    companyName: 'Phuong Tran',
-    version: '1.0.0',
+    appName: "UniManage",
+    companyName: "Phuong Tran",
+    version: "1.0.0",
     copyright: `© ${new Date().getFullYear()} Phuong Tran`,
-    logoUrl: 'https://images.freeimages.com/vhq/images/previews/214/generic-logo-140952.png',
+    logoUrl:
+        "https://images.freeimages.com/vhq/images/previews/214/generic-logo-140952.png",
 
     // 2. Localization
-    defaultLocale: 'vi',
-    locales: ['vi', 'en'],
+    defaultLocale: "vi",
+    locales: ["vi", "en"],
 
     // 3. UI / UX Defaults
     ui: {
-        defaultTheme: 'light', // 'light' | 'dark'
+        defaultTheme: "light", // 'light' | 'dark'
         pagination: {
             defaultPageSize: 10,
             pageSizeOptions: [10, 20, 50, 100],
         },
         table: {
-            defaultSortOrder: 'desc',
+            defaultSortOrder: "desc",
         },
         toast: {
             duration: 3000,
-            placement: 'top-right' as const,
+            placement: "top-right" as const,
         },
     },
 
     // 4. Formatting
     format: {
-        date: 'DD/MM/YYYY',
-        dateTime: 'DD/MM/YYYY HH:mm',
-        currency: 'VND',
-        currencySymbol: '₫',
+        date: "DD/MM/YYYY",
+        dateTime: "DD/MM/YYYY HH:mm",
+        currency: "VND",
+        currencySymbol: "₫",
     },
 
     // 5. Network / API
     api: {
         // Lấy từ biến môi trường, fallback về localhost
-        baseUrl: process.env.NEXT_PUBLIC_API_URL || 'https://localhost:5001/api',
+        baseUrl:
+            process.env.NEXT_PUBLIC_API_URL || "https://localhost:5001/api",
         timeout: 30000, // 30 seconds
         retryAttempts: 2,
     },
 
     // 6. Security / Auth
     auth: {
-        tokenStorageKey: 'unimanage_token',
-        refreshTokenStorageKey: 'unimanage_refresh_token',
+        tokenStorageKey: "unimanage_token",
+        refreshTokenStorageKey: "unimanage_refresh_token",
         sessionTimeoutMinutes: 60,
     },
 };

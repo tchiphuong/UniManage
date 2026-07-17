@@ -1,20 +1,20 @@
-﻿using Serilog;
+using Serilog;
 using Serilog.Context;
 using Serilog.Events;
 using System.Text.Json;
-using UniManage.Shared.Application.Models;
+using UniManage.Shared.Domain.Models;
 
 namespace UniManage.Shared.Infrastructure.Logging
 {
     /// <summary>
-    /// API logging manager với structured logging (Serilog implementation)
+    /// API logging manager v?i structured logging (Serilog implementation)
     /// </summary>
     public static class UniLogManager
     {
         // Serilog uses global Log.Logger
 
         /// <summary>
-        /// Log API request/response với structured data
+        /// Log API request/response v?i structured data
         /// </summary>
         public static void WriteApiLog(
             string apiName,
@@ -23,7 +23,7 @@ namespace UniManage.Shared.Infrastructure.Logging
             bool isException = false,
             Exception? exception = null)
         {
-            // Serialize header info thành JSON nếu có
+            // Serialize header info th�nh JSON n?u c�
             string headerInfoJson = "";
             if (headerInfo != null)
             {

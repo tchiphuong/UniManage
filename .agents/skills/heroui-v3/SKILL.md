@@ -78,3 +78,12 @@ Dựa trên bộ quy chuẩn chính thức từ HeroUI Pro (`heroui-react-pro` v
    - **Tối giản (Minimalism)**: Tránh lạm dụng màu sắc nổi bật. Giữ giao diện gọn gàng, sử dụng màu nhấn (Primary/Success/Danger) đúng lúc.
 
 > Tóm tắt: Luôn dùng **HeroUI v3**, ưu tiên dùng **Wrapper trong `@/components/ui`**, dùng `onPress` thay vì `onClick`, và tuân thủ phong cách thiết kế tối giản, nhiều khoảng trắng.
+
+## 6. Production-Grade Automation & E2E Testing
+
+Khi xây dựng mã kiểm thử tự động (Auto Test) cho dự án product, tuyệt đối tuân thủ chuẩn Enterprise:
+1. **Công cụ**: Sử dụng **Playwright** cho toàn bộ quá trình E2E Testing.
+2. **Page Object Model (POM)**: Tuyệt đối không viết test script lộn xộn (spaghetti code). Phải tách riêng logic tương tác UI ra các class POM đặt trong thư mục `e2e-tests/pages/` để dễ tái sử dụng và bảo trì.
+3. **Môi trường & Biến số**: Không hardcode thông tin nhạy cảm (username, password) vào mã nguồn test. Luôn đọc từ biến môi trường (`process.env`) hoặc dùng Fixtures/Mock data.
+4. **Bối cảnh (Isolation)**: Tận dụng cơ chế tự động cô lập (isolated context) của Playwright. Mỗi test case (`test()`) tự động có một session/trình duyệt độc lập. Không lạm dụng `page.context().clearCookies()` một cách dư thừa trong `beforeEach`.
+5. **CI/CD Ready**: Cấu hình test chạy song song (`fullyParallel: true`) và cơ chế chụp ảnh/quay video khi lỗi (`screenshot: 'only-on-failure'`) để sẵn sàng tích hợp vào Github Actions/Gitlab CI.

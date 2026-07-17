@@ -6,22 +6,24 @@ import { useConfirmDelete } from "./use-confirm-delete";
 interface UseCrudTableProps<T, TParams extends PagingParams> {
     queryKey: string;
     listService: (params: TParams) => Promise<PagedResponse<T>>;
-    deleteService: (ids: number[]) => Promise<any>;
+    deleteService: (ids: number[]) => Promise<unknown>;
     defaultPageSize?: number;
 }
 
-export function useCrudTable<T extends { id: number }, TParams extends PagingParams = any>({
+export function useCrudTable<
+    T extends { id: number },
+    TParams extends PagingParams = PagingParams,
+>({
     queryKey,
     listService,
     deleteService,
-    defaultPageSize = 20
+    defaultPageSize = 20,
 }: UseCrudTableProps<T, TParams>) {
-    
     // 1. Data Table (Fetching, Pagination, Search)
     const table = useDataTable<T, TParams>({
         queryKey,
         listService,
-        defaultPageSize
+        defaultPageSize,
     });
 
     // 2. Modal (Create/Edit)
@@ -30,7 +32,7 @@ export function useCrudTable<T extends { id: number }, TParams extends PagingPar
     // 3. Delete (Confirmation & Mutation)
     const confirmDelete = useConfirmDelete({
         queryKey,
-        deleteService
+        deleteService,
     });
 
     return {
@@ -39,4 +41,3 @@ export function useCrudTable<T extends { id: number }, TParams extends PagingPar
         ...confirmDelete,
     };
 }
-

@@ -5,7 +5,7 @@ export function useDataModal<T>() {
     const [selectedItem, setSelectedItem] = useState<T | null>(null);
 
     const onOpen = useCallback(() => setIsOpen(true), []);
-    
+
     const onClose = useCallback(() => {
         setIsOpen(false);
         setSelectedItem(null);
@@ -16,10 +16,13 @@ export function useDataModal<T>() {
         onOpen();
     }, [onOpen]);
 
-    const handleEdit = useCallback((item: T) => {
-        setSelectedItem(item);
-        onOpen();
-    }, [onOpen]);
+    const handleEdit = useCallback(
+        (item: T) => {
+            setSelectedItem(item);
+            onOpen();
+        },
+        [onOpen],
+    );
 
     return {
         isOpen,

@@ -9,10 +9,10 @@ interface UseDataTableProps<T, TParams extends PagingParams> {
     defaultPageSize?: number;
 }
 
-export function useDataTable<T, TParams extends PagingParams = any>({
+export function useDataTable<T, TParams extends PagingParams = PagingParams>({
     queryKey,
     listService,
-    defaultPageSize = 20
+    defaultPageSize = 20,
 }: UseDataTableProps<T, TParams>) {
     // State
     const [pageIndex, setPageIndex] = useState(1);
@@ -21,11 +21,11 @@ export function useDataTable<T, TParams extends PagingParams = any>({
     const debouncedKeyword = useDebounce(keyword, 500);
 
     // Query params
-    const queryParams: any = {
+    const queryParams: TParams = {
         pageIndex,
         pageSize,
         keyword: debouncedKeyword,
-    };
+    } as unknown as TParams;
 
     // Data fetching
     const { data, isLoading, isFetching, refetch } = useQuery({
@@ -36,7 +36,12 @@ export function useDataTable<T, TParams extends PagingParams = any>({
 
     return {
         items: data?.data?.items || [],
-        paging: data?.data?.paging || { pageIndex: 1, pageSize, totalItems: 0, totalPages: 0 },
+        paging: data?.data?.paging || {
+            pageIndex: 1,
+            pageSize,
+            totalItems: 0,
+            totalPages: 0,
+        },
         isLoading,
         isFetching,
         refetch,

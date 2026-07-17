@@ -1,6 +1,7 @@
+using UniManage.Shared.Infrastructure.Database;
 using Dapper;
 using UniManage.Shared.Infrastructure.Constant;
-using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Domain.Interfaces;
 using UniManage.Shared.Infrastructure.Logging;
 
 namespace UniManage.IdentityServer.Services
@@ -65,7 +66,7 @@ namespace UniManage.IdentityServer.Services
                 var sql = @"
                     SELECT TOP 1
                         [Id], [UserName], [Password], [EmployeeCode], [RoleCode], [Email], [Status]
-                    FROM [dbo].[SyUsers]
+                    FROM [dbo].[sy_users]
                     WHERE [UserName] = @UserName AND [Status] = @ActiveStatus";
 
                 return await dbContext.QueryFirstOrDefaultAsync<IdentityUserModel>(
@@ -87,7 +88,7 @@ namespace UniManage.IdentityServer.Services
                 var sql = @"
                     SELECT TOP 1
                         [Id], [UserName], [Password], [EmployeeCode], [RoleCode], [Email], [Status]
-                    FROM [dbo].[SyUsers]
+                    FROM [dbo].[sy_users]
                     WHERE [Id] = @UserId AND [Status] = @ActiveStatus";
 
                 return await dbContext.QueryFirstOrDefaultAsync<IdentityUserModel>(
@@ -108,7 +109,7 @@ namespace UniManage.IdentityServer.Services
                 using var dbContext = new DbContext();
                 var sql = @"
                     SELECT COUNT(*)
-                    FROM [dbo].[SyUsers]
+                    FROM [dbo].[sy_users]
                     WHERE [Id] = @UserId AND [Status] = @ActiveStatus";
 
                 var count = await dbContext.ExecuteScalarAsync<int>(
@@ -131,8 +132,8 @@ namespace UniManage.IdentityServer.Services
                 using var dbContext = new DbContext();
                 var sql = @"
                     SELECT u.[Id], u.[UserName], u.[Password], u.[EmployeeCode], u.[RoleCode], u.[Email], u.[Status]
-                    FROM [dbo].[SyUsers] u
-                    INNER JOIN [dbo].[SyUserLogins] l ON u.[Id] = l.[UserId]
+                    FROM [dbo].[sy_users] u
+                    INNER JOIN [dbo].[sy_user_logins] l ON u.[Id] = l.[UserId]
                     WHERE l.[LoginProvider] = @Provider AND l.[ProviderKey] = @ProviderKey 
                     AND u.[Status] = @ActiveStatus";
 
@@ -153,9 +154,9 @@ namespace UniManage.IdentityServer.Services
             {
                 using var dbContext = new DbContext(openTransaction: true);
                 var sql = @"
-                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SyUserLogins] WHERE [LoginProvider] = @Provider AND [ProviderKey] = @ProviderKey)
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[sy_user_logins] WHERE [LoginProvider] = @Provider AND [ProviderKey] = @ProviderKey)
                     BEGIN
-                        INSERT INTO [dbo].[SyUserLogins] ([UserId], [LoginProvider], [ProviderKey], [ProviderDisplayName], [CreatedAt])
+                        INSERT INTO [dbo].[sy_user_logins] ([UserId], [LoginProvider], [ProviderKey], [ProviderDisplayName], [CreatedAt])
                         VALUES (@UserId, @Provider, @ProviderKey, @DisplayName, GETDATE())
                     END";
 

@@ -1,8 +1,9 @@
-﻿using Dapper;
+using UniManage.Shared.Infrastructure.Database;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-using UniManage.Shared.Application.Models;
-using UniManage.Shared.Infrastructure.Database;
+using UniManage.Shared.Domain.Models;
+using UniManage.Shared.Domain.Interfaces;
 
 namespace UniManage.Shared.Infrastructure.Utilities
 {

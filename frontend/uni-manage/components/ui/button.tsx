@@ -4,13 +4,11 @@ import {
 } from "@heroui/react";
 import { forwardRef } from "react";
 
-export interface ButtonProps extends HeroButtonProps {}
+export type ButtonProps = HeroButtonProps;
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     (props, ref) => {
-        return (
-            <HeroButton ref={ref} radius={props.radius || "sm"} {...props} />
-        );
+        return <HeroButton ref={ref} {...props} />;
     },
 );
 

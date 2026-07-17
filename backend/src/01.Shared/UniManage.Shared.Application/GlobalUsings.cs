@@ -1,0 +1,12 @@
+global using Dapper;
+global using FluentValidation;
+global using MediatR;
+global using Microsoft.EntityFrameworkCore;
+global using UniManage.Shared.Domain;
+global using UniManage.Shared.Domain.Models;
+global using UniManage.Shared.Infrastructure.Constant;
+global using UniManage.Shared.Infrastructure.Database;
+global using UniManage.Shared.Infrastructure.Logging;
+global using UniManage.Shared.Infrastructure.Utilities;
+global using UniManage.Shared.Resource;
+global using DbContext = UniManage.Shared.Infrastructure.Database.DbContext;
