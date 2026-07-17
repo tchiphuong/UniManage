@@ -7,23 +7,23 @@ import {
     TableColumn, 
     TableBody, 
     TableRow, 
-    TableCell, 
-    Pagination, 
-    Input, 
-    Button, 
-    Chip, 
+    TableCell,
+    Pagination,
+    Chip,
     Spinner,
-    Tooltip
-} from "@heroui/react";
-import { SearchIcon, EditIcon, DeleteIcon, PlusIcon } from "lucide-react";
+    Tooltip,
+    Button,
+    Input
+} from "@/components/common";
+import { MagnifyingGlassIcon, PencilSquareIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { userService } from "@/services/system/user.service";
 import { UserModel, UserListParams } from "@/types/system";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce"; 
 // Assuming use-debounce exists, otherwise we will create it or use simple timeout
 
-import { UserFormModal } from "@/components/system/users/user-form-modal";
-import { UserDeleteModal } from "@/components/system/users/user-delete-modal";
+import { UserFormModal } from "./components/user-form-modal";
+import { ConfirmModal } from "@/components/common";
 
 export default function UsersPage() {
     const [users, setUsers] = useState<UserModel[]>([]);
@@ -204,7 +204,7 @@ export default function UsersPage() {
                                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
                                 onClick={() => handleEdit(user)}
                             >
-                                <EditIcon size={20} />
+                                <PencilSquareIcon className="size-5" />
                             </span>
                         </Tooltip>
                         <Tooltip color="danger" content="Delete user">
@@ -212,7 +212,7 @@ export default function UsersPage() {
                                 className="text-lg text-danger cursor-pointer active:opacity-50"
                                 onClick={() => handleDelete(user)}
                             >
-                                <DeleteIcon size={20} />
+                                <TrashIcon className="size-5" />
                             </span>
                         </Tooltip>
                     </div>
@@ -230,13 +230,13 @@ export default function UsersPage() {
                         isClearable
                         className="w-full sm:max-w-[44%]"
                         placeholder="Search by username, email or code..."
-                        startContent={<SearchIcon />}
+                        startContent={<MagnifyingGlassIcon className="size-5" />}
                         value={searchQuery}
                         onClear={() => onClear()}
                         onValueChange={onSearchChange}
                     />
                     <div className="flex gap-3">
-                        <Button color="primary" endContent={<PlusIcon />} onPress={handleAdd}>
+                        <Button color="primary" endContent={<PlusIcon className="size-5" />} onPress={handleAdd}>
                             Add New
                         </Button>
                     </div>
@@ -322,11 +322,18 @@ export default function UsersPage() {
                 isLoading={isModalLoading}
             />
 
-            <UserDeleteModal
+            <ConfirmModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={onDeleteConfirm}
-                user={selectedUser}
+                title="Confirm Deletion"
+                message={
+                    <>
+                        <p>Are you sure you want to delete the user <strong>{selectedUser?.username}</strong>?</p>
+                        <p className="text-small text-default-500 mt-2">This action cannot be undone. All data associated with this user will be removed.</p>
+                    </>
+                }
+                confirmText="Delete User"
                 isLoading={isModalLoading}
             />
         </div>

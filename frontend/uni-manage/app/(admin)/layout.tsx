@@ -1,15 +1,14 @@
-/* eslint-disable */
 "use client";
 
 import { useState, useEffect } from "react";
-import { Header } from "./layout/header";
-import { Sidebar } from "./layout/sidebar";
+import { Header } from "./components/header";
+import { Sidebar } from "./components/sidebar";
 
-interface DashboardLayoutProps {
+interface AdminLayoutProps {
     children: React.ReactNode;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function AdminLayout({ children }: AdminLayoutProps) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {

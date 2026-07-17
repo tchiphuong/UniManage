@@ -7,7 +7,8 @@ import React, {
     useCallback,
     ReactNode,
 } from "react";
-import { Button, AlertDialog } from "@heroui/react";
+import { AlertDialog } from "@heroui/react";
+import { Button } from "@/components/common";
 // import { Icon } from "@iconify/react"; // Not needed if using AlertDialog.Icon
 import { useTranslations } from "next-intl";
 

@@ -88,6 +88,17 @@ class UserService {
 
 **Read `@.agents/skills/heroui-v3/SKILL.md`** before building UI.
 
+**UI Component Wrapper Pattern (MANDATORY)**:
+- **NEVER** import UI components (Button, Input, Table, etc.) directly from `@heroui/react` in your feature pages.
+- **ALWAYS** create or use a wrapper component in the `components/common/` folder (e.g., `components/common/button.tsx`).
+- Configure default props (like `variant`, `size`, `color`) inside these wrapper components to maintain a consistent design system across the app.
+- Then, import the component from `@/components/common` into your page.
+
+**Feature-Specific Components (Co-location Pattern)**:
+- Do NOT clutter the global `components/` folder with module-specific logic.
+- **ALWAYS** place feature-specific components (e.g., Modals, Forms, custom Cards) inside `app/{module}/{entity}/components/`.
+- Example: `app/system/users/components/user-form-modal.tsx`.
+
 **Page structure** (`app/{module}/{entity}/page.tsx`):
 
 ```

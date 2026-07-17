@@ -3,12 +3,12 @@ import {
     ModalContent, 
     ModalHeader, 
     ModalBody, 
-    ModalFooter, 
-    Button, 
-    Input,
+    ModalFooter,
     Select,
-    SelectItem
-} from "@heroui/react";
+    SelectItem,
+    Button,
+    Input 
+} from "@/components/common";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -91,7 +91,6 @@ export function UserFormModal({ isOpen, onClose, onSubmit, initialData, isLoadin
                                         autoFocus
                                         label="Username"
                                         placeholder="Enter username"
-                                        variant="bordered"
                                         isInvalid={!!errors.username}
                                         errorMessage={errors.username?.message}
                                         isDisabled={isEditMode} // Usually username cannot be changed
@@ -107,7 +106,6 @@ export function UserFormModal({ isOpen, onClose, onSubmit, initialData, isLoadin
                                         label="Email"
                                         placeholder="Enter email address"
                                         type="email"
-                                        variant="bordered"
                                         isInvalid={!!errors.email}
                                         errorMessage={errors.email?.message}
                                     />
@@ -121,7 +119,6 @@ export function UserFormModal({ isOpen, onClose, onSubmit, initialData, isLoadin
                                         {...field}
                                         label="Employee Code"
                                         placeholder="Enter employee code"
-                                        variant="bordered"
                                         isInvalid={!!errors.employeeCode}
                                         errorMessage={errors.employeeCode?.message}
                                     />
@@ -137,7 +134,6 @@ export function UserFormModal({ isOpen, onClose, onSubmit, initialData, isLoadin
                                             className="w-full"
                                             label="Role Code"
                                             placeholder="Enter role code"
-                                            variant="bordered"
                                             isInvalid={!!errors.roleCode}
                                             errorMessage={errors.roleCode?.message}
                                         />

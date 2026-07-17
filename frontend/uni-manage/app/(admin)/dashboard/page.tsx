@@ -1,7 +1,7 @@
 "use client";
 
-import { StatsCard } from "@/components/dashboard";
-import { RecentOrders } from "@/components/dashboard/recent-orders";
+import { StatsCard } from "./components";
+import { RecentOrders } from "./components/recent-orders";
 import { Card } from "@heroui/react";
 import { useTranslations } from "next-intl";
 

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Breadcrumb } from "./breadcrumb";
 
 interface PageHeaderProps {
     title: string;
