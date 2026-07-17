@@ -2,11 +2,14 @@
 
 **ATTENTION AI ASSISTANTS (GitHub Copilot, Gemini, Cursor, Antigravity, etc.)**:
 
-The comprehensive rules, naming conventions, architectural patterns (CQRS, Dapper, EF Core), and RESTful API standards for this project have been consolidated into a single source of truth.
+This project uses a structured agent configuration system:
 
-**MANDATORY INSTRUCTION**: 
-You MUST read and strictly follow the comprehensive guidelines defined in the following file before analyzing, generating, or modifying any code in this project:
+## Rules (Always Applied)
+- **`.agents/rules/coding-rules.md`** — Communication style and persona
+- **`.agents/rules/backend-rules.md`** — Backend coding constraints (naming, architecture, DB patterns)
 
-👉 **Path:** `.agents/skills/unimanage-backend/SKILL.md`
+## Skills (On-Demand Reference)
+- **`.agents/skills/unimanage-backend/SKILL.md`** — Architecture guide + code templates in `examples/`
+- **`.agents/skills/unimanage-feature-workflow/SKILL.md`** — 5-step feature development workflow
 
-*Do NOT proceed with any task without applying the rules specified in that document.*
+**MANDATORY**: Read the relevant Rules and Skills before generating or modifying any code.

@@ -1,51 +1,166 @@
 ---
-name: UniManage Feature Workflow
-description: Tiêu chuẩn và quy trình 5 bước bắt buộc khi phát triển một tính năng/module mới (từ Frontend, Backend, E2E Test đến Tài liệu) cho hệ thống UniManage.
+name: unimanage-feature-workflow
+description: Step-by-step workflow for building a complete feature/module in UniManage (Backend CQRS + Frontend HeroUI v3 + E2E Test + Documentation). Use when asked to "build page X" or "create module Y".
 ---
 
 # UniManage Feature Implementation Workflow
 
-Đây là bộ quy tắc bắt buộc (Mandatory Rules) định hướng kiến trúc và quy trình làm việc dành cho các AI Agent khi được yêu cầu xây dựng một màn hình hoặc tính năng hoàn chỉnh.
+## When to use this skill
+- User asks to "build page X", "create module Y", or "implement feature Z"
+- Building a complete CRUD screen end-to-end
+- Adding a new module to the system
 
-## 1. Nguyên tắc Đặt tên (Naming Conventions)
+## Naming Conventions (MANDATORY)
 
-- **Database & Backend**: Sử dụng đầy đủ tiền tố của Module (VD: `SyUsers`, `CdCategories`).
-- **API & UI Routes**: **BẮT BUỘC cắt bỏ tiền tố** để URL gọn gàng, thân thiện và đạt chuẩn RESTful.
-  - ❌ Lỗi: `/api/v1/syusers`, `app/system/syusers/page.tsx`
-  - ✅ Đúng: `/api/v1/users`, `app/system/users/page.tsx`
-- **Interfaces / Models (Frontend)**: Nên giữ lại tiền tố gốc (VD: `export interface SyUser { ... }`) để Dev dễ dàng map chính xác với cấu trúc dưới Database và Backend.
+| Layer | Convention | Example |
+|---|---|---|
+| Database tables | Full prefix | `SyUsers`, `HrEmployees` |
+| Entity classes | Full prefix | `SyUsers`, `CdCategories` |
+| API URLs | **Drop prefix**, plural nouns | `/api/v1/users`, `/api/v1/employees` |
+| Frontend routes | **Drop prefix** | `app/system/users/page.tsx` |
+| Frontend types | Keep prefix for DB mapping | `export interface SyUserModel { ... }` |
 
-## 2. Quy trình 5 Bước Triển khai (5-Step Production Workflow)
+## The 5-Step Workflow
 
-Khi nhận yêu cầu "Làm trang X", Agent PHẢI tự động thiết kế và thực thi theo trình tự 5 bước sau, không được phép đốt cháy giai đoạn:
+### Step 1: Backend Investigation & CQRS Setup
 
-### Bước 1: Khảo sát Backend (WebAPI)
-- Dùng công cụ (grep_search) tìm Controller tương ứng (VD: `SyUsersController.cs`).
-- Kiểm tra các Endpoints (GET, POST, PUT, DELETE) đã có sẵn hay chưa.
-- Lấy chính xác cấu trúc payload Request/Response từ các file `CQRS` Commands/Queries.
+**Before writing any code**, investigate existing backend:
 
-### Bước 2: Setup Types & Services (Frontend)
-- Cập nhật/Tạo file định nghĩa kiểu dữ liệu trong thư mục `types/` (VD: `types/system.ts`).
-- Tạo file API Service tại thư mục `services/` (VD: `services/system/user.service.ts`).
-- Service phải bọc các lệnh gọi qua class `apiClient` của Frontend để hỗ trợ nhét Token tự động và hứng lỗi chuẩn.
+```
+1. grep_search for existing Controller (e.g., UsersController.cs)
+2. Check which CRUD endpoints exist (GET, POST, PUT, DELETE)
+3. Read Command/Query files to understand Request/Response structure
+4. Identify missing endpoints that need to be created
+```
 
-### Bước 3: Phát triển Giao diện (Frontend UI)
-Sử dụng thư viện **HeroUI v3** và tuân thủ chặt chẽ `HeroUI v3 Guidelines` Skill:
-- **Routes**: Đặt tại thư mục `app/` (VD: `app/system/users/page.tsx`).
-- **Thành phần chính trên một màn hình quản lý**:
-  1. `Toolbar`: Vùng Header chứa ô Search, Filter trạng thái và nút Thêm mới.
-  2. `Data Table`: Component Table (`@heroui/react`) xử lý phân trang (Server-side Pagination).
-  3. `Modals`: Tạo tách biệt `FormModal` (dùng React Hook Form + Zod) và `ConfirmModal` (cảnh báo xóa dữ liệu).
+**When creating new Commands/Queries:**
+- Read `@.agents/skills/unimanage-backend/SKILL.md` for architecture reference
+- Copy patterns from `@.agents/skills/unimanage-backend/examples/`
+- ALL Commands/Queries MUST implement `ILoggableCommand`
+- NO manual logging code in Handlers
+- Validators in consolidated files: `{Module}QueriesValidators.cs`, `{Module}CommandValidators.cs`
+- List queries MUST extend `BaseListQuery` and return `PagedResponse<T>`
 
-### Bước 4: Kiểm thử tự động (E2E Testing)
-Bảo chứng chất lượng cho Product bằng mã test tự động thay vì test tay:
-- **File test**: Tạo file test tại `e2e-tests/` (VD: `system.users.spec.ts`).
-- **Chuẩn mực Playwright**:
-  - Dùng **Page Object Model (POM)** tách logic tương tác UI ra khỏi spec.
-  - Không hardcode thông tin đăng nhập; dùng `process.env`.
-  - Phủ đủ các luồng: Xem danh sách, Thêm mới, Sửa, Xoá, và Validate Form lỗi.
+**Checklist before moving to Step 2:**
+- [ ] GET list (paginated) endpoint exists
+- [ ] GET by id/uuid endpoint exists
+- [ ] POST create endpoint exists
+- [ ] PUT update endpoint exists
+- [ ] DELETE endpoint exists
+- [ ] All implement `ILoggableCommand`
+- [ ] Validators consolidated in separate files
+- [ ] Controller is thin (only routing + `_mediator.Send()`)
 
-### Bước 5: Soạn thảo Tài liệu (User Manual)
-Tính năng chỉ hoàn tất khi có tài liệu hướng dẫn:
-- **Nơi lưu**: Tạo file hướng dẫn tại `docs/manuals/` (VD: `UserManagement_Manual.md`).
-- **Nội dung**: Giới thiệu mục đích, hướng dẫn từng thao tác cụ thể cho End User.
+### Step 2: Frontend Types & API Service
+
+**Create/update type definitions** in `types/` directory:
+
+```typescript
+// types/system.ts
+export interface SyUserModel {
+  uuid: string;
+  username: string;
+  email: string;
+  status: string;
+  // ... map exactly to backend Response DTO
+}
+```
+
+**Create API service** in `services/` directory:
+
+```typescript
+// services/system/user.service.ts
+class UserService {
+  async getUsers(params): Promise<ApiResponse<PagedResult<SyUserModel>>> { ... }
+  async getUserById(uuid): Promise<ApiResponse<SyUserModel>> { ... }
+  async createUser(data): Promise<ApiResponse<any>> { ... }
+  async updateUser(uuid, data): Promise<ApiResponse<any>> { ... }
+  async deleteUsers(uuids): Promise<ApiResponse<any>> { ... }
+}
+```
+
+**Rules:**
+- Service must use the shared `apiClient` (handles JWT token injection and error handling)
+- Type interfaces must match backend Response DTOs exactly
+- Use `ApiResponse<T>` and `PagedResult<T>` generic wrappers
+
+### Step 3: Frontend UI (HeroUI v3)
+
+**Read `@.agents/skills/heroui-v3/SKILL.md`** before building UI.
+
+**Page structure** (`app/{module}/{entity}/page.tsx`):
+
+```
+┌─────────────────────────────────────────┐
+│ Toolbar                                 │
+│  [Search Input]  [Status Filter]  [+Add]│
+├─────────────────────────────────────────┤
+│ Data Table (server-side pagination)     │
+│  Column1 | Column2 | Status | Actions  │
+│  ...     | ...     | Chip   | Edit/Del │
+│                                         │
+│  [Pagination: < 1 2 3 ... >]           │
+└─────────────────────────────────────────┘
+```
+
+**Required components:**
+1. **Toolbar**: Search input (debounced), status filter dropdown, "Add New" button
+2. **Data Table**: HeroUI `Table` with server-side pagination via `Pagination` component
+3. **Form Modal**: Shared for Create and Edit, using `react-hook-form` + `zod` validation
+4. **Delete Modal**: Confirmation dialog with danger styling
+
+**Code patterns:**
+- `useState` for filters, pagination, modal state
+- `useCallback` for fetch functions
+- `useEffect` to trigger fetch on filter/page changes
+- `useDebounce` for search input (prevent API spam)
+- Toast notifications for success/error feedback
+
+### Step 4: E2E Testing (Playwright)
+
+**Create test file** in `e2e-tests/` (e.g., `system.users.spec.ts`).
+
+**Standards:**
+- Use **Page Object Model (POM)** — separate UI interaction logic from test specs
+- Login credentials from `process.env` (never hardcode)
+- Test data cleanup after each test run
+
+**Required test coverage:**
+```
+✅ View list page (table renders, pagination works)
+✅ Search/filter functionality
+✅ Create new record (fill form, submit, verify in table)
+✅ Edit existing record (open modal, change data, save)
+✅ Delete record (confirm dialog, verify removed)
+✅ Form validation (submit empty form, verify error messages)
+```
+
+### Step 5: Documentation
+
+**Create user manual** in `docs/manuals/` (e.g., `UserManagement_Manual.md`).
+
+**Content structure:**
+1. Feature overview and purpose
+2. Step-by-step operation guide for each action
+3. Field descriptions and validation rules
+4. Common errors and troubleshooting
+
+## Decision Tree
+
+```
+User asks "Build page X"
+│
+├── Backend exists?
+│   ├── YES → Step 1: Investigate existing endpoints
+│   └── NO  → Step 1: Create full CQRS (Command + Query + Controller)
+│
+├── Step 2: Create types + service (always needed for new pages)
+│
+├── Step 3: Build UI
+│   ├── Simple CRUD? → Table + Modal pattern
+│   └── Complex? → Discuss with user first
+│
+├── Step 4: Write E2E tests
+│
+└── Step 5: Write documentation
+```

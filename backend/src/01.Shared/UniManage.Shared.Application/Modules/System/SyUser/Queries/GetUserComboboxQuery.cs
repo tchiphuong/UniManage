@@ -1,6 +1,7 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Shared.Domain;
+using UniManage.Shared.Domain.Models;
 using UniManage.Shared.Application.Interfaces;
 
 namespace UniManage.Shared.Application.Modules.SyUser.Queries
@@ -8,12 +9,12 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
     #region Query
 
     /// <summary>
-    /// Truy v?n l?y danh s�ch ngu?i d�ng r�t g?n cho c�c th�nh ph?n Combobox/Dropdown
+    /// Query to get a shortened user list for Combobox/Dropdown components
     /// </summary>
-    public sealed class GetUserComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItem<long>>>>, ICacheable
+    public sealed class GetUserComboboxQuery : BaseQuery, IRequest<ApiResponse<List<ComboboxItem<long>>>>, ICacheable, ILoggableCommand
     {
         /// <summary>
-        /// T? kh�a t�m ki?m theo Username
+        /// Search keyword by Username
         /// </summary>
         public string? Keyword { get; init; }
 
@@ -26,83 +27,55 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
     #region Handler
 
     /// <summary>
-    /// B? x? l� truy v?n l?y danh s�ch ngu?i d�ng cho Combobox
+    /// Query handler to get user list for Combobox
     /// </summary>
     public sealed class GetUserComboboxQueryHandler : IRequestHandler<GetUserComboboxQuery, ApiResponse<List<ComboboxItem<long>>>>
     {
         /// <summary>
-        /// H�m x? l� l?y d? li?u t? Database
+        /// Handle getting data from Database
         /// </summary>
         public async Task<ApiResponse<List<ComboboxItem<long>>>> Handle(GetUserComboboxQuery request, CancellationToken cancellationToken)
         {
-            // Kh?i t?o log API v?i th�ng tin header v� tham s? keyword
-            var log = new ApiLogModel(request.HeaderInfo)
+            using (var dbContext = new DbContext())
             {
-                Parameter = new List<LogParamModel>
+                try
                 {
-                    new(nameof(request.Keyword), request.Keyword)
-                }
-            };
+                    // Only get active users
+                    var query = dbContext.Set<SyUsers>()
+                        .Include(u => u.HrEmployees) // Eager load employee information to get FullName
+                        .Where(u => u.Status == CoreCommon.Value.Commonstatus.Active);
 
-            try
-            {
-                using var dbContext = new DbContext();
-
-                // Ch? l?y nh?ng ngu?i d�ng dang ho?t d?ng (Active)
-                var query = dbContext.Set<SyUsers>()
-                    .Include(u => u.HrEmployees) // Eager load th�ng tin nh�n vi�n d? l?y FullName
-                    .Where(u => u.Status == CoreCommon.Value.Commonstatus.Active);
-
-                // L?c theo t? kh�a n?u c�
-                if (!string.IsNullOrEmpty(request.Keyword))
-                {
-                    var kw = request.Keyword.Trim();
-                    query = query.Where(u => u.Username.Contains(kw));
-                }
-
-                // Chuy?n d?i d? li?u sang d?nh d?ng ComboboxItem chu?n
-                var users = await query
-                    .OrderBy(u => u.Username)
-                    .Take(100) // Gi?i h?n 100 b?n ghi d? d?m b?o hi?u nang UI
-                    .Select(u => new ComboboxItem<long>
+                    // Filter by keyword if any
+                    if (!string.IsNullOrEmpty(request.Keyword))
                     {
-                        Code = u.Id,
-                        // Hi?n th? d?ng "Username - FullName" n?u c� th�ng tin nh�n vi�n, ngu?c l?i ch? hi?n Username
-                        Name = u.HrEmployees != null ? $"{u.Username} - {u.HrEmployees.FullName}" : u.Username,
-                        ExtData = u.Username
-                    })
-                    .ToListAsync(cancellationToken);
+                        var kw = request.Keyword.Trim();
+                        query = query.Where(u => u.Username.Contains(kw));
+                    }
 
-                var response = ResponseHelper.Success(users);
-                
-                log.Result = new { Count = users.Count };
-                log.ReturnCode = response.ReturnCode;
-                log.Message = response.Message;
+                    // Convert data to standard ComboboxItem format
+                    var users = await query
+                        .OrderBy(u => u.Username)
+                        .Take(100) // Limit to 100 records to ensure UI performance
+                        .Select(u => new ComboboxItem<long>
+                        {
+                            Code = u.Id,
+                            // Display as "Username - FullName" if employee info exists, otherwise just Username
+                            Name = u.HrEmployees != null ? $"{u.Username} - {u.HrEmployees.FullName}" : u.Username,
+                            ExtData = u.Username
+                        })
+                        .ToListAsync(cancellationToken);
 
-                return response;
-            }
-            catch (Exception ex)
-            {
-                // Ghi nh?n ngo?i l? v�o log
-                log.IsException = true;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                throw;
-            }
-            finally
-            {
-                // Ghi log t?p trung
-                UniLogManager.WriteApiLog(log);
+                    var response = ResponseHelper.Success(users);
+
+                    return response;
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
             }
         }
     }
 
     #endregion
 }
-
-
-
-
-
-
-

@@ -1,41 +1,28 @@
+using MediatR;
+using UniManage.Shared.Domain;
+using UniManage.Shared.Application.Interfaces;
 
 namespace UniManage.Shared.Application.Modules.SyUser.Queries
 {
     #region Query
 
     /// <summary>
-    /// Truy vấn lấy danh sách vai trò của một người dùng cụ thể
+    /// Query to get the role list of a specific user
     /// </summary>
-    public sealed class GetUserRolesQuery : BaseQuery, IRequest<ApiResponse<List<SyUserRoleModel>>>
+    public sealed class GetUserRolesQuery : BaseQuery, IRequest<ApiResponse<List<GetUserRolesQuery.Response>>>, ILoggableCommand
     {
         /// <summary>
-        /// Uuid của người dùng cần lấy danh sách vai trò
+        /// Uuid of the user to get roles for
         /// </summary>
         public Guid Uuid { get; init; }
-    }
 
-    /// <summary>
-    /// DTO chứa thông tin vai trò của người dùng
-    /// </summary>
-    public sealed record SyUserRoleModel(
-        string RoleCode,
-        string RoleName,
-        DateTime AssignedAt);
-
-    #endregion
-
-    #region Validator
-
-    /// <summary>
-    /// Bộ kiểm tra dữ liệu cho truy vấn lấy vai trò người dùng
-    /// </summary>
-    public sealed class GetUserRolesQueryValidator : AbstractValidator<GetUserRolesQuery>
-    {
-        public GetUserRolesQueryValidator()
-        {
-            RuleFor(x => x.Uuid)
-                .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, "Uuid"));
-        }
+        /// <summary>
+        /// Response DTO containing user role information
+        /// </summary>
+        public sealed record Response(
+            string RoleCode,
+            string RoleName,
+            DateTime AssignedAt);
     }
 
     #endregion
@@ -43,45 +30,34 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
     #region Handler
 
     /// <summary>
-    /// Bộ xử lý truy vấn lấy danh sách vai trò người dùng
+    /// Query handler to get user role list
     /// </summary>
-    public sealed class GetUserRolesQueryHandler : IRequestHandler<GetUserRolesQuery, ApiResponse<List<SyUserRoleModel>>>
+    public sealed class GetUserRolesQueryHandler : IRequestHandler<GetUserRolesQuery, ApiResponse<List<GetUserRolesQuery.Response>>>
     {
-        public async Task<ApiResponse<List<SyUserRoleModel>>> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
+        public async Task<ApiResponse<List<GetUserRolesQuery.Response>>> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
         {
-            // Khởi tạo log nghiệp vụ
-            var log = new ApiLogModel(request.HeaderInfo)
+            using (var dbContext = new DbContext())
             {
-                Parameter = new List<LogParamModel>
+                try
                 {
-                    new(nameof(request.Uuid), request.Uuid.ToString())
-                }
-            };
-
-            try
-            {
-                using (var db = new DbContext())
-                {
-                    // Bước 1: Kiểm tra người dùng có tồn tại trong hệ thống hay không
-                    var userExists = await db.ExecuteScalarAsync<bool>(
+                    // Step 1: Check if user exists in the system
+                    var userExists = await dbContext.ExecuteScalarAsync<bool>(
                         "SELECT CASE WHEN EXISTS(SELECT 1 FROM SyUsers WHERE Uuid = @Uuid) THEN 1 ELSE 0 END",
                         new { request.Uuid },
                         cancellationToken: cancellationToken);
 
                     if (!userExists)
                     {
-                        var notFoundResponse = ResponseHelper.NotFound<List<SyUserRoleModel>>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
-                        log.Message = notFoundResponse.Message;
-                        log.ReturnCode = notFoundResponse.ReturnCode;
+                        var notFoundResponse = ResponseHelper.NotFound<List<GetUserRolesQuery.Response>>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
                         return notFoundResponse;
                     }
 
-                    // Xác định cột tên vai trò theo ngôn ngữ
+                    // Determine role name column by language
                     var suffix = TranslateHelper.GetLanguageSuffix(request.HeaderInfo?.Language);
                     var roleNameColumn = $"r.Name{suffix}";
 
-                    // Bước 2: Truy vấn danh sách vai trò sử dụng Dapper để tối ưu hiệu năng
-                    var roles = await db.QueryAsync<SyUserRoleModel>(
+                    // Step 2: Query role list using Dapper to optimize performance
+                    var roles = await dbContext.QueryAsync<GetUserRolesQuery.Response>(
                         $"""
                         SELECT ur.RoleCode, {roleNameColumn} AS RoleName, ur.CreatedAt AS AssignedAt
                         FROM SyUserRoles ur
@@ -95,41 +71,16 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
 
                     var result = roles.ToList();
                     var response = ResponseHelper.Success(result, string.Format(CoreResource.common_listSuccess, CoreResource.entity_role));
-                    
-                    log.Result = new { RoleCount = result.Count };
-                    log.ReturnCode = response.ReturnCode;
-                    log.Message = response.Message;
 
                     return response;
                 }
-            }
-            catch (Exception ex)
-            {
-                // Ghi nhận lỗi ngoại lệ vào hệ thống log
-                log.IsException = true;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                
-                return ResponseHelper.Error<List<SyUserRoleModel>>(CoreResource.common_error);
-            }
-            finally
-            {
-                UniLogManager.WriteApiLog(log);
+                catch (Exception)
+                {
+                    return ResponseHelper.Error<List<GetUserRolesQuery.Response>>(CoreResource.common_error);
+                }
             }
         }
     }
 
     #endregion
 }
-
-
-
-
-
-
-
-
-
-
-
-

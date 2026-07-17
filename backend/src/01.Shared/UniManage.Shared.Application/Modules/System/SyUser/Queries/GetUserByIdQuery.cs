@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Shared.Domain;
@@ -16,7 +16,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
     /// <summary>
     /// Query to get user by id
     /// </summary>
-    public sealed class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<GetUserByIdQuery.Response>>
+    public sealed class GetUserByIdQuery : BaseQuery, IRequest<ApiResponse<GetUserByIdQuery.Response>>, ILoggableCommand
     {
         public Guid Uuid { get; init; }
 
@@ -35,21 +35,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
 
     #endregion
 
-    #region Validator
 
-    /// <summary>
-    /// Validator for GetUserByIdQuery
-    /// </summary>
-    public sealed class GetUserByIdQueryValidator : AbstractValidator<GetUserByIdQuery>
-    {
-        public GetUserByIdQueryValidator()
-        {
-            RuleFor(x => x.Uuid)
-                .NotEmpty().WithMessage("Uuid must not be empty");
-        }
-    }
-
-    #endregion
 
     #region Handler
 
@@ -60,15 +46,6 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
     {
         public async Task<ApiResponse<GetUserByIdQuery.Response>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
         {
-            // Initialize log data
-            var logData = new ApiLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<LogParamModel>
-            {
-                new LogParamModel(nameof(request.Uuid), request.Uuid.ToString())
-            }
-            };
-
             using (var dbContext = new DbContext())
             {
                 try
@@ -92,30 +69,15 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
                     if (user == null)
                     {
                         var notFoundResponse = ResponseHelper.NotFound<GetUserByIdQuery.Response>("User not found");
-                        logData.ReturnCode = notFoundResponse.ReturnCode;
-                        UniLogManager.WriteApiLog(logData);
                         return notFoundResponse;
                     }
 
                     var response = ResponseHelper.Success(user, string.Format(CoreResource.common_getSuccess, CoreResource.entity_user));
-
-                    logData.Result = user;
-                    logData.ReturnCode = response.ReturnCode;
-                    logData.Message = "Get user by Uuid success";
-
                     return response;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    logData.IsException = true;
-                    logData.Message = ex.Message;
-                    logData.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-
                     return ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.common_error);
-                }
-                finally
-                {
-                    UniLogManager.WriteApiLog(logData);
                 }
             }
         }

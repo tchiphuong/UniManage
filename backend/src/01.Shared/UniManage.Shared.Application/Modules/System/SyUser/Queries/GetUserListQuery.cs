@@ -1,29 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
-using UniManage.Shared.Domain;
-using UniManage.Shared.Infrastructure.Constant;
-using UniManage.Shared.Infrastructure.Logging;
-
-
 namespace UniManage.Shared.Application.Modules.SyUser.Queries
 {
     #region Query
 
     /// <summary>
-    /// Truy vấn lấy danh sách người dùng có phân trang và lọc theo điều kiện
+    /// Query to get paginated user list with filters
     /// </summary>
-    public sealed class GetUserListQuery : BaseListQuery, IRequest<PagedResponse<GetUserListQuery.Response>>
+    public sealed class GetUserListQuery : BaseListQuery, IRequest<PagedResponse<GetUserListQuery.Response>>, ILoggableCommand
     {
         /// <summary>
-        /// Trạng thái người dùng để lọc (Active/Inactive)
+        /// User status for filtering (Active/Inactive)
         /// </summary>
         public string? Status { get; set; }
 
         /// <summary>
-        /// DTO kết quả trả về cho mỗi dòng người dùng
+        /// Response DTO for each user row
         /// </summary>
         public sealed record Response
         {
             public long Id { get; set; }
+            public Guid Uuid { get; set; }
             public string Username { get; set; } = default!;
             public string EmployeeCode { get; set; } = default!;
             public string RoleCode { get; set; } = default!;
@@ -32,59 +27,28 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
         }
     }
 
-    #endregion
 
-    #region Validator
-
-    /// <summary>
-    /// Bộ kiểm tra dữ liệu cho truy vấn danh sách người dùng
-    /// </summary>
-    public sealed class GetUserListQueryValidator : AbstractValidator<GetUserListQuery>
-    {
-        public GetUserListQueryValidator()
-        {
-            RuleFor(x => x.PageIndex)
-                .GreaterThan(0).WithMessage(string.Format(CoreResource.validation_invalidFormat, "PageIndex"));
-
-            RuleFor(x => x.PageSize)
-                .InclusiveBetween(1, 100).WithMessage(string.Format(CoreResource.validation_maxLength, "PageSize", 100));
-        }
-    }
-
-    #endregion
 
     #region Handler
 
     /// <summary>
-    /// Bộ xử lý truy vấn lấy danh sách người dùng
+    /// Handler for getting user list
     /// </summary>
     public sealed class GetUserListQueryHandler : IRequestHandler<GetUserListQuery, PagedResponse<GetUserListQuery.Response>>
     {
         /// <summary>
-        /// Hàm xử lý lấy dữ liệu danh sách có phân trang từ Database
+        /// Handle getting paginated data from Database
         /// </summary>
         public async Task<PagedResponse<GetUserListQuery.Response>> Handle(GetUserListQuery request, CancellationToken cancellationToken)
         {
-            // Khởi tạo log nghiệp vụ với các tham số phân trang và tìm kiếm
-            var logData = new ApiLogModel(request.HeaderInfo)
-            {
-                Parameter = new List<LogParamModel>
-                {
-                    new(nameof(request.Keyword), request.Keyword),
-                    new(nameof(request.Status), request.Status),
-                    new(nameof(request.PageIndex), request.PageIndex),
-                    new(nameof(request.PageSize), request.PageSize)
-                }
-            };
-
             using (var dbContext = new DbContext())
             {
                 try
                 {
-                    // Khởi tạo truy vấn từ bảng SyUsers
+                    // Initialize query from SyUsers table
                     var query = dbContext.Set<SyUsers>().AsQueryable();
 
-                    // BƯỚC 1: Áp dụng các bộ lọc nghiệp vụ
+                    // STEP 1: Apply business filters
                     if (!string.IsNullOrEmpty(request.Status))
                     {
                         query = query.Where(u => u.Status == request.Status);
@@ -99,11 +63,11 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
                             (u.EmployeeCode != null && u.EmployeeCode.ToLower().Contains(keyword)));
                     }
 
-                    // BƯỚC 2: Lấy tổng số bản ghi trước khi phân trang để tính toán UI
+                    // STEP 2: Get total record count before pagination for UI calculation
                     var totalItems = await query.CountAsync(cancellationToken);
 
-                    // BƯỚC 3: Áp dụng sắp xếp và phân trang trực tiếp từ tham số Query
-                    // Sử dụng request.Offset và request.PageSize đã được BaseListQuery tính toán sẵn
+                    // STEP 3: Apply sorting and pagination directly from Query parameters
+                    // Use request.Offset and request.PageSize which are pre-calculated by BaseListQuery
                     var items = await query
                         .OrderByDescending(u => u.CreatedAt)
                         .Skip(request.Offset)
@@ -111,6 +75,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
                         .Select(u => new GetUserListQuery.Response
                         {
                             Id = u.Id,
+                            Uuid = u.Uuid,
                             Username = u.Username,
                             EmployeeCode = u.EmployeeCode ?? string.Empty,
                             RoleCode = u.RoleCode ?? string.Empty,
@@ -119,7 +84,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
                         })
                         .ToListAsync(cancellationToken);
 
-                    // BƯỚC 4: Đóng gói kết quả trả về theo chuẩn PagedResult
+                    // STEP 4: Package the return result according to PagedResult standard
                     var result = new PagedResult<GetUserListQuery.Response>
                     {
                         Items = items,
@@ -133,24 +98,11 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
 
                     var response = ResponseHelper.PagedSuccess(result, string.Format(CoreResource.common_listSuccess, CoreResource.entity_user));
 
-                    logData.Result = new { ItemCount = items.Count, TotalItems = totalItems };
-                    logData.ReturnCode = response.ReturnCode;
-                    logData.Message = response.Message;
-
                     return response;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    logData.Message = ex.Message;
-                    logData.IsException = true;
-                    logData.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-
                     return ResponseHelper.PagedError<GetUserListQuery.Response>(CoreResource.common_error);
-                }
-                finally
-                {
-                    // Luôn ghi log API trong mọi trường hợp
-                    UniLogManager.WriteApiLog(logData);
                 }
             }
         }
