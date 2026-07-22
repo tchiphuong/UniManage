@@ -654,9 +654,11 @@
                 "yes": "Yes"
             },
             "lbl": {
+                "all": "All",
                 "appDescription": "Comprehensive University Management System",
                 "appName": "UniManage",
                 "favorites": "Favorites",
+                "info": "Information",
                 "language": "Language",
                 "languageEnglish": "English",
                 "languageSelect": "Select language",
@@ -666,7 +668,8 @@
                 "notifications": "Notifications",
                 "profile": "Profile",
                 "requiredField": "This field is required",
-                "search": "Search"
+                "search": "Search",
+                "success": "Success"
             },
             "msg": {
                 "unreadNotifications": "{count} unread notifications"
@@ -804,6 +807,35 @@
                 "teachersTitle": "Teacher Management",
                 "title": "UniManage - University Management System"
             }
+        }
+    },
+    "system": {
+        "users": {
+            "btn": {
+                "add": "Add User",
+                "cancel": "Cancel",
+                "changePassword": "Change Password",
+                "delete": "Delete",
+                "edit": "Edit",
+                "save": "Save"
+            },
+            "fields": {
+                "createdAt": "Created At",
+                "email": "Email",
+                "employeeCode": "Employee Code",
+                "password": "Password",
+                "role": "Role",
+                "status": "Status",
+                "username": "Username"
+            },
+            "msg": {
+                "changePasswordDev": "Change password: Feature under development for user {username}",
+                "createSuccess": "User created successfully",
+                "deleteConfirm": "Are you sure you want to delete this user?",
+                "deleteSuccess": "User deleted successfully",
+                "updateSuccess": "User updated successfully"
+            },
+            "title": "User Management"
         }
     }
 }

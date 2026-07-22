@@ -38,46 +38,39 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
         {
             using (var dbContext = new DbContext())
             {
-                try
+                // Step 1: Check if user exists in the system
+                var userExists = await dbContext.ExecuteScalarAsync<bool>(
+                    "SELECT CASE WHEN EXISTS(SELECT 1 FROM SyUsers WHERE Uuid = @Uuid) THEN 1 ELSE 0 END",
+                    new { request.Uuid },
+                    cancellationToken: cancellationToken);
+
+                if (!userExists)
                 {
-                    // Step 1: Check if user exists in the system
-                    var userExists = await dbContext.ExecuteScalarAsync<bool>(
-                        "SELECT CASE WHEN EXISTS(SELECT 1 FROM SyUsers WHERE Uuid = @Uuid) THEN 1 ELSE 0 END",
-                        new { request.Uuid },
-                        cancellationToken: cancellationToken);
-
-                    if (!userExists)
-                    {
-                        var notFoundResponse = ResponseHelper.NotFound<List<GetUserRolesQuery.Response>>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
-                        return notFoundResponse;
-                    }
-
-                    // Determine role name column by language
-                    var suffix = TranslateHelper.GetLanguageSuffix(request.HeaderInfo?.Language);
-                    var roleNameColumn = $"r.Name{suffix}";
-
-                    // Step 2: Query role list using Dapper to optimize performance
-                    var roles = await dbContext.QueryAsync<GetUserRolesQuery.Response>(
-                        $"""
-                        SELECT ur.RoleCode, {roleNameColumn} AS RoleName, ur.CreatedAt AS AssignedAt
-                        FROM SyUserRoles ur
-                        INNER JOIN SyRoles r ON ur.RoleCode = r.Code
-                        INNER JOIN SyUsers u ON ur.Username = u.Username
-                        WHERE u.Uuid = @Uuid
-                        ORDER BY ur.CreatedAt
-                        """,
-                        new { request.Uuid },
-                        cancellationToken: cancellationToken);
-
-                    var result = roles.ToList();
-                    var response = ResponseHelper.Success(result, string.Format(CoreResource.common_listSuccess, CoreResource.entity_role));
-
-                    return response;
+                    var notFoundResponse = ResponseHelper.NotFound<List<GetUserRolesQuery.Response>>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+                    return notFoundResponse;
                 }
-                catch (Exception)
-                {
-                    return ResponseHelper.Error<List<GetUserRolesQuery.Response>>(CoreResource.common_error);
-                }
+
+                // Determine role name column by language
+                var suffix = TranslateHelper.GetLanguageSuffix(request.HeaderInfo?.Language);
+                var roleNameColumn = $"r.Name{suffix}";
+
+                // Step 2: Query role list using Dapper to optimize performance
+                var roles = await dbContext.QueryAsync<GetUserRolesQuery.Response>(
+                    $"""
+                    SELECT ur.RoleCode, {roleNameColumn} AS RoleName, ur.CreatedAt AS AssignedAt
+                    FROM SyUserRoles ur
+                    INNER JOIN SyRoles r ON ur.RoleCode = r.Code
+                    INNER JOIN SyUsers u ON ur.Username = u.Username
+                    WHERE u.Uuid = @Uuid
+                    ORDER BY ur.CreatedAt
+                    """,
+                    new { request.Uuid },
+                    cancellationToken: cancellationToken);
+
+                var result = roles.ToList();
+                var response = ResponseHelper.Success(result, string.Format(CoreResource.common_listSuccess, CoreResource.entity_role));
+
+                return response;
             }
         }
     }

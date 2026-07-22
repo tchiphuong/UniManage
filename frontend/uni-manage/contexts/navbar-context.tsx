@@ -48,13 +48,11 @@ export function NavbarProvider({ children }: { readonly children: ReactNode }) {
 
     const contextValue = useMemo(
         () => ({ navbarOpen, toggleNavbar, closeNavbar }),
-        [navbarOpen]
+        [navbarOpen],
     );
 
     return (
-        <NavbarContext.Provider
-            value={contextValue}
-        >
+        <NavbarContext.Provider value={contextValue}>
             {children}
         </NavbarContext.Provider>
     );
@@ -63,7 +61,9 @@ export function NavbarProvider({ children }: { readonly children: ReactNode }) {
 export function useNavbarContext() {
     const context = useContext(NavbarContext);
     if (context === undefined) {
-        throw new Error("useNavbarContext must be used within a NavbarProvider");
+        throw new Error(
+            "useNavbarContext must be used within a NavbarProvider",
+        );
     }
     return context;
 }

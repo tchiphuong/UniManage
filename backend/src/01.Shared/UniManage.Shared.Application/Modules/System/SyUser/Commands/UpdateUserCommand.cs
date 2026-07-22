@@ -30,66 +30,6 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
 
     #endregion
 
-    #region Validator
-
-    /// <summary>
-    /// Validator for UpdateUserCommand
-    /// </summary>
-    public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
-    {
-        public UpdateUserCommandValidator()
-        {
-            RuleFor(x => x.Uuid)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.user_userIdentity))
-                .MustAsync(async (uuid, cancel) => await IsUserExistsAsync(uuid))
-                .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
-
-            RuleFor(x => x.EmployeeCode)
-                .MaximumLength(50)
-                .WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.user_employeeCode, 50));
-
-            When(x => !string.IsNullOrEmpty(x.EmployeeCode), () =>
-            {
-                RuleFor(x => x.EmployeeCode)
-                    .MustAsync(async (code, cancel) => await IsEmployeeExistsAsync(code!))
-                    .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_employee));
-            });
-
-            RuleFor(x => x.Status)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.user_status))
-                .DependentRules(() =>
-                {
-                    RuleFor(x => x.Status)
-                        .Must(status => CoreCommon.Value.Commonstatus.All.Contains(status))
-                        .WithMessage(CoreResource.validation_invalidStatus);
-                });
-
-            RuleFor(x => x.RowVersion)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, "RowVersion"));
-        }
-
-        private static async Task<bool> IsUserExistsAsync(Guid uuid)
-        {
-            using (var dbContext = new DbContext())
-            {
-                return await dbContext.Set<SyUsers>().AnyAsync(x => x.Uuid == uuid);
-            }
-        }
-
-        private static async Task<bool> IsEmployeeExistsAsync(string employeeCode)
-        {
-            using (var dbContext = new DbContext())
-            {
-                return await dbContext.Set<HrEmployees>().AnyAsync(x => x.EmployeeCode == employeeCode);
-            }
-        }
-    }
-
-    #endregion
-
     #region Handler
 
     /// <summary>
@@ -143,6 +83,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
 
     #endregion
 }
+
 
 
 

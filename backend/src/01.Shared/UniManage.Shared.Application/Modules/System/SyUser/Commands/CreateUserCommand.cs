@@ -30,92 +30,6 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
 
     #endregion
 
-    #region Validator
-
-    /// <summary>
-    /// B? ki?m tra d? li?u cho l?nh t?o m?i ngu?i d�ng
-    /// </summary>
-    public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
-    {
-        public CreateUserCommandValidator()
-        {
-            RuleFor(x => x.Username)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_username))
-                .DependentRules(() =>
-                {
-                    RuleFor(x => x.Username)
-                        .Length(3, 50)
-                        .WithMessage(string.Format(CoreResource.validation_length, CoreResource.lbl_username, 3, 50))
-                        .Must(ValidationHelper.IsValidUserCode)
-                        .WithMessage(CoreResource.validation_alphanumericOnly)
-                        .MustAsync(async (username, cancel) => !await IsUsernameExistsAsync(username))
-                        .WithMessage(CoreResource.validation_alreadyExists);
-                });
-
-            RuleFor(x => x.Password)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_password))
-                .DependentRules(() =>
-                {
-                    RuleFor(x => x.Password)
-                        .MinimumLength(PasswordHelper.MinPasswordLength).WithMessage(string.Format(CoreResource.validation_minLength, CoreResource.lbl_password, PasswordHelper.MinPasswordLength))
-                        .Must(PasswordHelper.IsValidPassword).WithMessage(CoreResource.validation_passwordComplexity);
-                });
-
-            RuleFor(x => x.Status)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_status))
-                .DependentRules(() =>
-                {
-                    RuleFor(x => x.Status)
-                        .Must(status => CoreCommon.Value.Commonstatus.All.Contains(status))
-                        .WithMessage(CoreResource.validation_invalidStatus);
-                });
-
-            RuleFor(x => x.RoleCodes)
-                .NotEmpty()
-                .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleCode))
-                .MustAsync(async (roles, cancel) => await AreRolesValidAsync(roles))
-                .WithMessage(CoreResource.validation_invalidRole);
-
-            When(x => !string.IsNullOrEmpty(x.EmployeeCode), () =>
-            {
-                RuleFor(x => x.EmployeeCode)
-                    .MustAsync(async (code, cancel) => await IsEmployeeExistsAsync(code!))
-                    .WithMessage(string.Format(CoreResource.common_notFound, CoreResource.entity_employee));
-            });
-        }
-
-        private static async Task<bool> IsUsernameExistsAsync(string username)
-        {
-            using (var dbContext = new DbContext())
-            {
-                return await dbContext.Set<SyUsers>().AnyAsync(x => x.Username == username);
-            }
-        }
-
-        private static async Task<bool> IsEmployeeExistsAsync(string employeeCode)
-        {
-            using (var dbContext = new DbContext())
-            {
-                return await dbContext.Set<HrEmployees>().AnyAsync(x => x.EmployeeCode == employeeCode);
-            }
-        }
-
-        private static async Task<bool> AreRolesValidAsync(List<string> roleCodes)
-        {
-            if (roleCodes == null || !roleCodes.Any()) return false;
-            using (var dbContext = new DbContext())
-            {
-                var count = await dbContext.Set<SyRoles>().CountAsync(x => roleCodes.Contains(x.Code));
-                return count == roleCodes.Distinct().Count();
-            }
-        }
-    }
-
-    #endregion
-
     #region Handler
 
     /// <summary>
@@ -186,4 +100,5 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
 
     #endregion
 }
+
 

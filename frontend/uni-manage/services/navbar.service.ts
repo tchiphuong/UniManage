@@ -12,6 +12,7 @@ interface FunctionNode {
     code: string;
     resourceKey: string;
     icon: string | null;
+    url: string | null;
     sortOrder: number;
 }
 
@@ -59,15 +60,15 @@ function mapModuleToNavbarItems(modules: ModuleNode[]): NavbarItem[] {
                     id: grp.code,
                     title: toTranslationKey(grp.resourceKey),
                     icon: grp.icon || undefined,
-                    // Group cũng không có link, chỉ chứa functions
-                    children: grp.children.map((func) => ({
-                        id: func.code,
-                        title: toTranslationKey(func.resourceKey),
-                        icon: func.icon || undefined,
-                        // Function URL sẽ được tạo từ code, ví dụ: SY_USER → /system/security/users
-                        // Tạm thời để undefined, URL mapping sẽ xử lý sau
-                        link: undefined,
-                    })),
+                    // Function cũng không có link, chỉ chứa functions
+                    children: grp.children.map((func) => {
+                        return {
+                            id: func.code,
+                            title: toTranslationKey(func.resourceKey),
+                            icon: func.icon || undefined,
+                            link: func.url || undefined,
+                        };
+                    }),
                 };
 
                 return groupItem;

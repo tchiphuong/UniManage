@@ -49,7 +49,6 @@ export const ROLE_ENDPOINTS = {
     COMBOBOX: `${API_VERSION}/roles/combobox`,
 } as const;
 
-
 /**
  * Department Management Endpoints
  */

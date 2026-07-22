@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace UniManage.WebApi.Authorization
 {
@@ -26,7 +26,6 @@ namespace UniManage.WebApi.Authorization
         public string ActionCode { get; }
 
         public PermissionAuthorizeAttribute(string functionCode, string actionCode)
-            : base(policy: $"Permission:{functionCode}.{actionCode}")
         {
             FunctionCode = functionCode;
             ActionCode = actionCode;

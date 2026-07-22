@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Primitives;
 using Serilog;
 using Serilog.Context;
@@ -28,7 +28,11 @@ public class ApiLoggingMiddleware
 
         // Extract Context Info
         var correlationId = GetCorrelationId(context);
-        var user = context.User?.Identity?.Name ?? "anonymous";
+        var user = context.User?.Identity?.Name 
+            ?? context.User?.FindFirst("name")?.Value 
+            ?? context.User?.FindFirst("preferred_username")?.Value 
+            ?? context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+            ?? "anonymous";
         var method = context.Request.Method;
         var path = context.Request.GetDisplayUrl();
         var apiName = GetApiName(context);

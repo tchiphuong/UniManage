@@ -654,9 +654,11 @@
                 "yes": "Có"
             },
             "lbl": {
+                "all": "Tất cả",
                 "appDescription": "Hệ thống quản lý đại học toàn diện",
                 "appName": "UniManage",
                 "favorites": "Yêu thích",
+                "info": "Thông báo",
                 "language": "Ngôn ngữ",
                 "languageEnglish": "Tiếng Anh",
                 "languageSelect": "Chọn ngôn ngữ",
@@ -666,7 +668,8 @@
                 "notifications": "Thông báo",
                 "profile": "Hồ sơ cá nhân",
                 "requiredField": "Trường này là bắt buộc",
-                "search": "Tìm kiếm"
+                "search": "Tìm kiếm",
+                "success": "Thành công"
             },
             "msg": {
                 "unreadNotifications": "{count} thông báo chưa đọc"
@@ -804,6 +807,35 @@
                 "teachersTitle": "Quản lý giảng viên",
                 "title": "UniManage - Hệ thống quản lý đại học"
             }
+        }
+    },
+    "system": {
+        "users": {
+            "btn": {
+                "add": "Thêm người dùng",
+                "cancel": "Hủy",
+                "changePassword": "Đổi mật khẩu",
+                "delete": "Xóa",
+                "edit": "Chỉnh sửa",
+                "save": "Lưu"
+            },
+            "fields": {
+                "createdAt": "Ngày tạo",
+                "email": "Email",
+                "employeeCode": "Mã nhân viên",
+                "password": "Mật khẩu",
+                "role": "Vai trò",
+                "status": "Trạng thái",
+                "username": "Tên đăng nhập"
+            },
+            "msg": {
+                "changePasswordDev": "Đổi mật khẩu: Tính năng đang phát triển cho người dùng {username}",
+                "createSuccess": "Tạo người dùng thành công",
+                "deleteConfirm": "Bạn có chắc chắn muốn xóa người dùng này không?",
+                "deleteSuccess": "Xóa người dùng thành công",
+                "updateSuccess": "Cập nhật người dùng thành công"
+            },
+            "title": "Quản lý người dùng"
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Shared.Domain;
@@ -20,36 +20,6 @@ public sealed class ChangePasswordCommand : BaseCommand, IRequest<ApiResponse<bo
     public string ConfirmPassword { get; init; } = default!;
 }
 
-#endregion
-
-#region Validator
-
-/// <summary>
-/// Validator for ChangePasswordCommand
-/// </summary>
-public sealed class ChangePasswordCommandValidator : AbstractValidator<ChangePasswordCommand>
-{
-    public ChangePasswordCommandValidator()
-    {
-        RuleFor(x => x.OldPassword)
-            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.auth_oldPassword));
-
-        RuleFor(x => x.NewPassword)
-            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.auth_newPassword))
-            .DependentRules(() =>
-            {
-                RuleFor(x => x.NewPassword)
-                    .MinimumLength(PasswordHelper.MinPasswordLength).WithMessage(string.Format(CoreResource.validation_minLength, CoreResource.auth_newPassword, PasswordHelper.MinPasswordLength))
-                    .MaximumLength(PasswordHelper.MaxPasswordLength).WithMessage(string.Format(CoreResource.validation_maxLength, CoreResource.auth_newPassword, PasswordHelper.MaxPasswordLength))
-                    .Must(PasswordHelper.IsValidPassword).WithMessage(CoreResource.validation_passwordComplexity)
-                    .NotEqual(x => x.OldPassword).WithMessage(CoreResource.validation_newPasswordDifferent);
-            });
-
-        RuleFor(x => x.ConfirmPassword)
-            .NotEmpty().WithMessage(string.Format(CoreResource.validation_required, CoreResource.auth_confirmPassword))
-            .Equal(x => x.NewPassword).WithMessage(CoreResource.validation_confirmPasswordMismatch);
-    }
-}
 #endregion
 
 #region Handler
@@ -129,6 +99,7 @@ public sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePasswor
 }
 
 #endregion
+
 
 
 

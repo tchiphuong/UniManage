@@ -16,29 +16,41 @@ export const useAppToast = () => {
 
     return useMemo(
         () => ({
-            success: (message?: string, options?: ToastOptions) =>
+            success: (
+                title: string,
+                message?: string,
+                options?: ToastOptions,
+            ) =>
                 appToastQueue.add({
+                    title: title,
                     description: message || tSuccess("saved"),
                     variant: "success",
                     ...options,
                 }),
 
-            error: (message?: string, options?: ToastOptions) =>
+            error: (title: string, message?: string, options?: ToastOptions) =>
                 appToastQueue.add({
+                    title: title,
                     description: message || t("general"),
                     variant: "danger",
                     ...options,
                 }),
 
-            warning: (message?: string, options?: ToastOptions) =>
+            warning: (
+                title: string,
+                message?: string,
+                options?: ToastOptions,
+            ) =>
                 appToastQueue.add({
+                    title: title,
                     description: message || t("general"),
                     variant: "warning",
                     ...options,
                 }),
 
-            info: (message?: string, options?: ToastOptions) =>
+            info: (title: string, message?: string, options?: ToastOptions) =>
                 appToastQueue.add({
+                    title: title,
                     description: message || t("general"),
                     variant: "default",
                     ...options,

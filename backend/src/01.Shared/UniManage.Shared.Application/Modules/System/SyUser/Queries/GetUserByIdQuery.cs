@@ -48,37 +48,30 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
         {
             using (var dbContext = new DbContext())
             {
-                try
-                {
-                    // Use EF Core LINQ to find user by Uuid
-                    var user = await dbContext.Set<SyUsers>()
-                        .Where(u => u.Uuid == request.Uuid)
-                        .Select(u => new GetUserByIdQuery.Response
-                        {
-                            Username = u.Username,
-                            Email = u.Email,
-                            EmployeeCode = u.EmployeeCode,
-                            RoleCode = u.RoleCode,
-                            Status = u.Status,
-                            CreatedAt = u.CreatedAt,
-                            UpdatedAt = u.UpdatedAt,
-                            RowVersion = u.RowVersion
-                        })
-                        .FirstOrDefaultAsync(cancellationToken);
-
-                    if (user == null)
+                // Use EF Core LINQ to find user by Uuid
+                var user = await dbContext.Set<SyUsers>()
+                    .Where(u => u.Uuid == request.Uuid)
+                    .Select(u => new GetUserByIdQuery.Response
                     {
-                        var notFoundResponse = ResponseHelper.NotFound<GetUserByIdQuery.Response>("User not found");
-                        return notFoundResponse;
-                    }
+                        Username = u.Username,
+                        Email = u.Email,
+                        EmployeeCode = u.EmployeeCode,
+                        RoleCode = u.RoleCode,
+                        Status = u.Status,
+                        CreatedAt = u.CreatedAt,
+                        UpdatedAt = u.UpdatedAt,
+                        RowVersion = u.RowVersion
+                    })
+                    .FirstOrDefaultAsync(cancellationToken);
 
-                    var response = ResponseHelper.Success(user, string.Format(CoreResource.common_getSuccess, CoreResource.entity_user));
-                    return response;
-                }
-                catch (Exception)
+                if (user == null)
                 {
-                    return ResponseHelper.Error<GetUserByIdQuery.Response>(CoreResource.common_error);
+                    var notFoundResponse = ResponseHelper.NotFound<GetUserByIdQuery.Response>("User not found");
+                    return notFoundResponse;
                 }
+
+                var response = ResponseHelper.Success(user, string.Format(CoreResource.common_getSuccess, CoreResource.entity_user));
+                return response;
             }
         }
     }

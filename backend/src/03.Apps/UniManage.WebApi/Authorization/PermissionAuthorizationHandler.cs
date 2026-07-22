@@ -34,7 +34,11 @@ namespace UniManage.WebApi.Authorization
             PermissionRequirement requirement)
         {
             // 1. Extract username from JWT claims
-            var username = context.User?.Identity?.Name;
+            var username = context.User?.Identity?.Name 
+                ?? context.User?.FindFirst("name")?.Value 
+                ?? context.User?.FindFirst("preferred_username")?.Value 
+                ?? context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrEmpty(username))
             {
                 // Not authenticated — let [Authorize] handle this

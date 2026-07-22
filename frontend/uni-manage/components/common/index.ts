@@ -1,4 +1,4 @@
-export * from "./alert-modal";
+﻿export * from "./alert-modal";
 export * from "./avatar";
 export * from "./breadcrumb";
 export * from "./button";
@@ -24,3 +24,5 @@ export * from "./textarea";
 export * from "./toast";
 export * from "./tooltip";
 export * from "./use-table-data";
+export * from "./group-icon";
+export * from "./autocomplete";

@@ -3,7 +3,22 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 
 import type { ApiResponse } from "@/types";
 
-import { getAccessToken, removeAccessToken } from "./cookies";
+import { getAccessToken, getRefreshToken, removeAccessToken, setAccessToken, setRefreshToken } from "./cookies";
+import { AUTH_ENDPOINTS } from "./api-endpoints";
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
 
 /**
  * API Client cho UniManage
@@ -65,16 +80,96 @@ class ApiClient {
         this.instance.interceptors.response.use(
             (response) => response,
             async (error: AxiosError<ApiResponse>) => {
-                if (error.response?.status === 401) {
-                    // Token expired, redirect to login
-                    if (typeof window !== "undefined") {
-                        removeAccessToken(); // Clear cookie to prevent middleware loop
-                        window.location.href = "/auth/login";
-                    }
+                const originalRequest = error.config as AxiosRequestConfig & {
+                    _retry?: boolean;
+                };
+
+                if (
+                    error.response?.status === 401 &&
+                    originalRequest &&
+                    !originalRequest._retry
+                ) {
+                    return this.handleUnauthorizedError(error, originalRequest);
                 }
+
                 throw error;
             },
         );
+    }
+
+    private async handleUnauthorizedError(
+        error: AxiosError<ApiResponse>,
+        originalRequest: AxiosRequestConfig & { _retry?: boolean },
+    ) {
+        if (isRefreshing) {
+            return this.waitForTokenRefresh(originalRequest);
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        const refreshToken = getRefreshToken();
+        if (!refreshToken) {
+            return this.handleRefreshFailure(error);
+        }
+
+        try {
+            return await this.performTokenRefresh(
+                refreshToken,
+                originalRequest,
+            );
+        } catch (refreshError) {
+            return this.handleRefreshFailure(refreshError);
+        } finally {
+            isRefreshing = false;
+        }
+    }
+
+    private async waitForTokenRefresh(originalRequest: AxiosRequestConfig) {
+        const token = await new Promise<string>((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+        });
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return this.instance(originalRequest);
+    }
+
+    private async performTokenRefresh(
+        refreshToken: string,
+        originalRequest: AxiosRequestConfig,
+    ) {
+        const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const response = await axios.post(
+            `${baseURL}${AUTH_ENDPOINTS.REFRESH_TOKEN}`,
+            { refreshToken },
+            { headers: { "Content-Type": "application/json" } },
+        );
+
+        const data = response.data?.data;
+        if (!data?.accessToken) {
+            throw new Error("Invalid token response");
+        }
+
+        setAccessToken(data.accessToken);
+        if (data.refreshToken) {
+            setRefreshToken(data.refreshToken);
+        }
+
+        processQueue(null, data.accessToken);
+
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+        return this.instance(originalRequest);
+    }
+
+    private handleRefreshFailure(error: any) {
+        isRefreshing = false;
+        processQueue(error, null);
+        if (typeof window !== "undefined") {
+            removeAccessToken();
+            window.location.href = "/auth/login";
+        }
+        throw error;
     }
 
     private generateCorrelationId(): string {

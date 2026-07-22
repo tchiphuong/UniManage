@@ -47,6 +47,7 @@ namespace UniManage.Shared.Application.Modules.SySystem.Queries
             public string Code { get; init; } = default!;
             public string ResourceKey { get; init; } = default!;
             public string? Icon { get; init; }
+            public string? Url { get; init; }
             public int SortOrder { get; init; }
         }
     }
@@ -104,7 +105,7 @@ namespace UniManage.Shared.Application.Modules.SySystem.Queries
 
                 // Lấy tất cả functions mà user có quyền (cấp 3)
                 var functionsSql = @"
-                    SELECT f.Code, f.ResourceKey, f.Icon, f.SortOrder, f.GroupCode
+                    SELECT f.Code, f.ResourceKey, f.Icon, f.SortOrder, f.GroupCode, f.Url
                     FROM sy_functions f
                     INNER JOIN sy_function_groups fg ON f.GroupCode = fg.Code
                     WHERE f.Code IN @PermittedCodes
@@ -185,6 +186,7 @@ namespace UniManage.Shared.Application.Modules.SySystem.Queries
                                 Code = func.Code,
                                 ResourceKey = func.ResourceKey,
                                 Icon = func.Icon,
+                                Url = func.Url,
                                 SortOrder = func.SortOrder
                             });
                         }
