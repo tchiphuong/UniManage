@@ -21,7 +21,7 @@ async function fetchDoc(filename) {
 
   try {
     const response = await fetch(url, {
-      headers: {"User-Agent": "HeroUI-Migration-Skill/1.0"},
+      headers: { "User-Agent": "HeroUI-Migration-Skill/1.0" },
       signal: AbortSignal.timeout(30000),
     });
 
@@ -39,7 +39,9 @@ async function main() {
   const arg = (process.argv[2] || "full").toLowerCase();
   const migrationType = arg === "incremental" ? "incremental" : "full";
   const filename =
-    migrationType === "incremental" ? "agent-guide-incremental.mdx" : "agent-guide-full.mdx";
+    migrationType === "incremental"
+      ? "agent-guide-incremental.mdx"
+      : "agent-guide-full.mdx";
 
   console.error(`# Fetching ${migrationType} migration guide...`);
 
@@ -50,7 +52,9 @@ async function main() {
         ? "HeroUI v2 to v3 Agent Migration Guide - Incremental Migration"
         : "HeroUI v2 to v3 Agent Migration Guide - Full Migration";
 
-    console.log(`# ${title}\n\n**Source:** ${DOCS_BASE}/${filename}\n\n---\n\n${content}`);
+    console.log(
+      `# ${title}\n\n**Source:** ${DOCS_BASE}/${filename}\n\n---\n\n${content}`,
+    );
   } catch (error) {
     console.error(`# Error: ${error.message}`);
     process.exit(1);

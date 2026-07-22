@@ -1,18 +1,22 @@
 "use client";
 
+import { FieldError, Input, Label, TextField } from "@heroui/react";
 import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { Input as HeroInput } from "@heroui/react";
 
-interface FormInputProps extends React.ComponentProps<typeof HeroInput> {
+interface FormInputProps extends React.ComponentProps<typeof TextField> {
     name: string;
     label?: string;
+    placeholder?: string;
+    type?: string;
 }
 
 export function FormInput({
     name,
     label,
     className,
+    placeholder,
+    type,
     ...props
 }: FormInputProps) {
     const { control } = useFormContext();
@@ -22,16 +26,18 @@ export function FormInput({
             name={name}
             control={control}
             render={({ field, fieldState: { error } }) => (
-                <HeroInput
+                <TextField
                     {...field}
                     {...props}
-                    label={label}
                     isInvalid={!!error}
-                    errorMessage={error?.message}
                     className={className}
                     value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value)}
-                />
+                    onChange={field.onChange}
+                >
+                    {label && <Label>{label}</Label>}
+                    <Input placeholder={placeholder} type={type} />
+                    {error && <FieldError>{error.message}</FieldError>}
+                </TextField>
             )}
         />
     );

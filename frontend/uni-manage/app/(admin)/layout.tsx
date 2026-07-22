@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { Header } from "./components/header";
-import { Sidebar } from "./components/sidebar";
+import { Navbar } from "./components/navbar";
 
 interface AdminLayoutProps {
-    children: React.ReactNode;
+    readonly children: React.ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -23,7 +24,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="bg-background flex h-screen flex-col overflow-hidden">
             <Header />
             <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
+                <Navbar />
                 <main className="flex-1 overflow-x-hidden overflow-y-auto">
                     <div className="container mx-auto gap-3 p-6">
                         {children}

@@ -1,29 +1,30 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { useRouter } from "@/i18n/navigation";
-import { LanguageSwitcher } from "@/components";
-import { useAuth } from "@/hooks/use-auth";
 import {
-    UserIcon,
-    EyeSlashIcon,
     ArrowRightIcon,
     EyeIcon,
+    EyeSlashIcon,
+    UserIcon,
 } from "@heroicons/react/24/outline";
 import {
+    Button,
     Checkbox,
+    FieldError,
     Form,
     Input,
-    Button,
-    TextField,
     Label,
-    FieldError,
+    TextField,
 } from "@heroui/react";
-import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Icon } from "@iconify/react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as z from "zod";
+
+import { LanguageSwitcher } from "@/components";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "@/i18n/navigation";
 import { setAccessToken } from "@/lib";
 
 export default function LoginPage() {
@@ -32,10 +33,12 @@ export default function LoginPage() {
     const { login, isLoading: authLoading } = useAuth();
     const [isVisible, setIsVisible] = useState(false);
     const [apiError, setApiError] = useState<string | null>(null);
+    const [isNavigating, setIsNavigating] = useState(false);
 
     const toggleVisibility = () => setIsVisible(!isVisible);
 
     const handleDemoLogin = () => {
+        setIsNavigating(true);
         setAccessToken("dummy-demo-token", true);
         router.push("/dashboard");
     };
@@ -74,6 +77,7 @@ export default function LoginPage() {
         });
 
         if (result.success) {
+            setIsNavigating(true);
             router.push("/dashboard");
         } else {
             setApiError(result.error || t("err.failed"));
@@ -82,11 +86,6 @@ export default function LoginPage() {
 
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 transition-colors duration-300 dark:bg-zinc-900">
-            {/* Language Switcher Positioned absolute top right */}
-            <div className="absolute top-6 right-6 z-50">
-                <LanguageSwitcher />
-            </div>
-
             {/* Ambient Background Blobs */}
             <div className="pointer-events-none absolute top-0 left-0 h-full w-full overflow-hidden">
                 <div className="animate-blob absolute -top-[30%] -left-[10%] h-[70%] w-[70%] rounded-full bg-blue-400/20 blur-3xl dark:bg-blue-600/10"></div>
@@ -96,8 +95,11 @@ export default function LoginPage() {
 
             <div className="z-10 mx-4 w-full max-w-md">
                 <div className="overflow-hidden rounded-3xl border border-white/20 bg-white/40 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/40">
-                    <div className="p-8 sm:p-10">
-                        <div className="mb-10 text-center">
+                    <div className="p-6 sm:p-8">
+                        <div className="-mt-2 -mr-2 mb-0 flex justify-end">
+                            <LanguageSwitcher />
+                        </div>
+                        <div className="mb-6 text-center">
                             <div className="mb-6 inline-flex h-16 w-16 rotate-3 transform items-center justify-center rounded-2xl bg-blue-600 bg-linear-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-transform duration-300 hover:rotate-6">
                                 <UserIcon className="h-8 w-8" />
                             </div>
@@ -207,7 +209,7 @@ export default function LoginPage() {
                             </div>
 
                             {apiError && (
-                                <div className="bg-danger-50 border-danger-200 text-danger-600 rounded-lg border p-3 text-center text-sm font-medium">
+                                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center text-sm font-medium text-red-600 dark:border-red-900/50 dark:bg-red-900/30 dark:text-red-400">
                                     {apiError}
                                 </div>
                             )}
@@ -216,9 +218,9 @@ export default function LoginPage() {
                                 variant="primary"
                                 type="submit"
                                 fullWidth
-                                isPending={authLoading}
+                                isPending={authLoading || isNavigating}
                             >
-                                {authLoading ? (
+                                {authLoading || isNavigating ? (
                                     t("msg.loggingIn")
                                 ) : (
                                     <span className="flex items-center justify-center">
@@ -229,7 +231,7 @@ export default function LoginPage() {
                             </Button>
                         </Form>
 
-                        <div className="relative my-8">
+                        <div className="relative my-4">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-zinc-200/50 dark:border-zinc-700/50"></div>
                             </div>
@@ -247,7 +249,7 @@ export default function LoginPage() {
                             </Button>
                             <Button className="w-full" variant="secondary">
                                 <Icon icon="devicon:facebook" />
-                                Sign in with Facebook
+                                {t("btn.signInWithFacebook")}
                             </Button>
                             {process.env.NODE_ENV === "development" && (
                                 <Button

@@ -37,7 +37,7 @@ namespace UniManage.WebApi.Controllers
             AppVersion = HttpContext.Request.Headers["App-Version"].FirstOrDefault(),
             SessionId = HttpContext.Request.Headers["Session-Id"].FirstOrDefault(),
             AccessToken = HttpContext.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", ""),
-            ApiName = $"{ControllerContext.ActionDescriptor.ControllerName}/{ControllerContext.ActionDescriptor.ActionName}"
+            ApiName = $"{ControllerContext.ActionDescriptor.AttributeRouteInfo?.Template ?? HttpContext.Request.Path.Value?.TrimStart('/')}_{HttpContext.Request.Method}".Replace("/", "_").Replace("{", "").Replace("}", "").ToLower()
         };
 #pragma warning restore S6932
 
@@ -51,6 +51,24 @@ namespace UniManage.WebApi.Controllers
                 var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
                 return Guid.TryParse(userId, out var id) ? id : null;
             }
+        }
+
+        /// <summary>
+        /// Chuyển đổi ApiResponse thành ActionResult với HTTP Status Code tương ứng
+        /// </summary>
+        protected ActionResult<ApiResponse<T>> ToActionResult<T>(ApiResponse<T> response)
+        {
+            if (response == null) return StatusCode(500);
+
+            return response.ReturnCode switch
+            {
+                0 => Ok(response),
+                400 => BadRequest(response),
+                401 => Unauthorized(response),
+                403 => StatusCode(403, response),
+                404 => NotFound(response),
+                _ => StatusCode(500, response)
+            };
         }
     }
 }

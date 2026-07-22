@@ -1,17 +1,17 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
 import {
+    ArrowUpTrayIcon,
+    BellIcon,
+    BoltIcon,
+    ChartBarIcon,
+    Cog6ToothIcon,
+    CubeIcon,
     PlusIcon,
     UserPlusIcon,
-    CubeIcon,
-    ChartBarIcon,
     UsersIcon,
-    Cog6ToothIcon,
-    BellIcon,
-    ArrowUpTrayIcon,
-    BoltIcon,
 } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
 
 const actions = [
     { icon: PlusIcon, labelKey: "dashboard.newOrder", color: "blue" },

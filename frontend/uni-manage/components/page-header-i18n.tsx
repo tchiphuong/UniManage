@@ -1,8 +1,8 @@
 "use client";
 
-import { LanguageSwitcher } from "./language-switcher";
-
 import { Button } from "@heroui/react";
+
+import { LanguageSwitcher } from "./language-switcher";
 
 interface PageHeaderProps {
     title: string;
@@ -38,14 +38,7 @@ export function PageHeaderI18n({
             <div className="flex items-center gap-4">
                 {showLanguageSwitcher && <LanguageSwitcher />}
                 {action && (
-                    <Button
-                        color="primary"
-                        onPress={action.onClick}
-                        // HeroUI Button uses onPress, but we can pass onClick to standard button props
-                        onClick={action.onClick}
-                    >
-                        {action.label}
-                    </Button>
+                    <Button onPress={action.onClick}>{action.label}</Button>
                 )}
             </div>
         </div>

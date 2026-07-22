@@ -1,54 +1,52 @@
 "use client";
 
-import { Switch as HeroSwitch, Label } from "@heroui/react";
+import { Description, Switch as HeroSwitch } from "@heroui/react";
 
 interface SwitchProps {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
+    isSelected?: boolean;
+    defaultSelected?: boolean;
+    onChange?: (isSelected: boolean) => void;
     label?: string;
     description?: string;
-    disabled?: boolean;
+    isDisabled?: boolean;
+    size?: "sm" | "md" | "lg";
+    name?: string;
     className?: string;
 }
 
 /**
- * Reusable Switch Component
- * Wrapper around HeroUI Switch with label support
+ * Switch Component chuẩn hóa
+ * Wrapper HeroUI v3 Switch với compound pattern
+ * Default: size="md"
  */
 export function Switch({
-    checked,
+    isSelected,
+    defaultSelected,
     onChange,
     label,
     description,
-    disabled = false,
+    isDisabled = false,
+    size = "md",
+    name,
     className = "",
-}: SwitchProps) {
+}: Readonly<SwitchProps>) {
     return (
-        <div className={`flex items-start gap-3 ${className}`}>
-            <HeroSwitch
-                checked={checked}
-                onChange={onChange}
-                isDisabled={disabled}
-                className="flex items-center"
-            >
-                <HeroSwitch.Control className="bg-default-200 data-[state=checked]:bg-primary relative h-6 w-11 rounded-full transition-colors">
-                    <HeroSwitch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform data-[state=checked]:translate-x-5" />
+        <HeroSwitch
+            isSelected={isSelected}
+            defaultSelected={defaultSelected}
+            onChange={onChange}
+            isDisabled={isDisabled}
+            size={size}
+            name={name}
+            className={className}
+        >
+            <HeroSwitch.Content>
+                <HeroSwitch.Control>
+                    <HeroSwitch.Thumb />
                 </HeroSwitch.Control>
-            </HeroSwitch>
-            {(label || description) && (
-                <div className="flex flex-col">
-                    {label && (
-                        <Label className="text-default-700 text-sm font-medium">
-                            {label}
-                        </Label>
-                    )}
-                    {description && (
-                        <p className="text-default-500 mt-0.5 text-xs">
-                            {description}
-                        </p>
-                    )}
-                </div>
-            )}
-        </div>
+                {label}
+            </HeroSwitch.Content>
+            {description && <Description>{description}</Description>}
+        </HeroSwitch>
     );
 }

@@ -1,23 +1,23 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import {
-    Form,
-    Input,
     Button,
     Checkbox,
-    TextField,
-    Label,
     FieldError,
+    Form,
+    Input,
+    Label,
+    TextField,
 } from "@heroui/react";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { LanguageSwitcher } from "@/components";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as z from "zod";
 
+import { LanguageSwitcher } from "@/components";
+import { Link, useRouter } from "@/i18n/navigation";
 import { apiClient } from "@/lib";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 

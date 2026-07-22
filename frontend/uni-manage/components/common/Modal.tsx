@@ -1,10 +1,6 @@
-import {
-    Modal as HeroModal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter,
-} from "@heroui/react";
+"use client";
+
+import { Modal as HeroModal } from "@heroui/react";
 import { ReactNode } from "react";
 
 export interface ModalProps {
@@ -13,21 +9,16 @@ export interface ModalProps {
     title: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
-    size?:
-        | "xs"
-        | "sm"
-        | "md"
-        | "lg"
-        | "xl"
-        | "2xl"
-        | "3xl"
-        | "4xl"
-        | "5xl"
-        | "full";
-    scrollBehavior?: "inside" | "outside" | "normal";
+    size?: "xs" | "sm" | "md" | "lg" | "cover" | "full";
+    scroll?: "inside" | "outside";
+    backdrop?: "opaque" | "blur" | "transparent";
     className?: string;
 }
 
+/**
+ * Modal wrapper chuẩn hóa với default props
+ * Default: size="md", scroll="inside", backdrop="blur"
+ */
 export function Modal({
     isOpen,
     onClose,
@@ -35,29 +26,30 @@ export function Modal({
     children,
     footer,
     size = "md",
-    scrollBehavior = "inside",
+    scroll = "inside",
+    backdrop = "blur",
     className,
-}: ModalProps) {
+}: Readonly<ModalProps>) {
     return (
-        <HeroModal
-            isOpen={isOpen}
-            onClose={onClose}
-            size={size}
-            scrollBehavior={scrollBehavior}
-            backdrop="blur"
-            className={className}
-        >
-            <ModalContent>
-                {() => (
-                    <>
-                        <ModalHeader className="flex flex-col gap-1">
-                            {title}
-                        </ModalHeader>
-                        <ModalBody>{children}</ModalBody>
-                        {footer && <ModalFooter>{footer}</ModalFooter>}
-                    </>
-                )}
-            </ModalContent>
+        <HeroModal>
+            <HeroModal.Backdrop
+                variant={backdrop}
+                isOpen={isOpen}
+                onOpenChange={(open) => {
+                    if (!open) onClose();
+                }}
+            />
+            <HeroModal.Container size={size} scroll={scroll}>
+                <HeroModal.Dialog className={className}>
+                    <HeroModal.Header>{title}</HeroModal.Header>
+                    <HeroModal.Body>{children}</HeroModal.Body>
+                    {footer && <HeroModal.Footer>{footer}</HeroModal.Footer>}
+                    <HeroModal.CloseTrigger />
+                </HeroModal.Dialog>
+            </HeroModal.Container>
         </HeroModal>
     );
 }
+
+// Re-export sub-components for direct use if needed
+export { HeroModal as HeroModalRoot };

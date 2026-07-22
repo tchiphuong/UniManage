@@ -1,10 +1,12 @@
 # Business Flow: Authentication & Login
 
 ## Mục đích
+
 Quản lý luồng xác thực người dùng và phân quyền truy cập (RBAC) thông qua IdentityServer và JWT.
 
 ## Quy trình nghiệp vụ
-1. **Người dùng đăng nhập**: 
+
+1. **Người dùng đăng nhập**:
    - Hệ thống (WebApi) nhận thông tin (Username, Password).
    - Kiểm tra trạng thái User (Active, Blocked).
    - Xác minh Identity qua IdentityServer (chuẩn OAuth2 ROPC/PKCE).

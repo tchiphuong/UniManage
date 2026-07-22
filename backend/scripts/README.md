@@ -15,12 +15,12 @@ sqlcmd -S "TCPHUONG\SQLEXPRESS" -d UniManage -U uni_manager -P "uni_manager@2024
 
 **Actions:**
 
--   DROP old tables (ad_countries, ad_provinces, ad_wards, etc.)
--   CREATE new bilingual schema (5 tables)
--   INSERT reference data:
-    -   1 Country (VN - Vietnam)
-    -   3 Administrative Regions (Miền Bắc/Trung/Nam)
-    -   10 Administrative Units (Thành phố, Tỉnh, Phường, Xã, etc.)
+- DROP old tables (ad_countries, ad_provinces, ad_wards, etc.)
+- CREATE new bilingual schema (5 tables)
+- INSERT reference data:
+  - 1 Country (VN - Vietnam)
+  - 3 Administrative Regions (Miền Bắc/Trung/Nam)
+  - 10 Administrative Units (Thành phố, Tỉnh, Phường, Xã, etc.)
 
 ---
 
@@ -33,17 +33,17 @@ sqlcmd -S "TCPHUONG\SQLEXPRESS" -d UniManage -U uni_manager -P "uni_manager@2024
 
 **Data:**
 
--   ✅ **34 provinces** (Nghị quyết 202/2025/QH15)
-    -   6 Cities: Hà Nội, TP.HCM, Hải Phòng, Đà Nẵng, Cần Thơ, Thủ Đô Hà Nội
-    -   28 Provinces
--   ✅ **3,321 wards** (2-level structure: Province → Ward, NO districts)
+- ✅ **34 provinces** (Nghị quyết 202/2025/QH15)
+  - 6 Cities: Hà Nội, TP.HCM, Hải Phòng, Đà Nẵng, Cần Thơ, Thủ Đô Hà Nội
+  - 28 Provinces
+- ✅ **3,321 wards** (2-level structure: Province → Ward, NO districts)
 
 **Bilingual columns:**
 
--   `NameVi` - Tên tiếng Việt (e.g., "Hà Nội", "Phường Hoàn Kiếm")
--   `NameEn` - Tên tiếng Anh (e.g., "Ha Noi", "Hoan Kiem Ward")
--   `FullNameVi` - Tên đầy đủ tiếng Việt (e.g., "Thành phố Hà Nội")
--   `FullNameEn` - Tên đầy đủ tiếng Anh (e.g., "Ha Noi City")
+- `NameVi` - Tên tiếng Việt (e.g., "Hà Nội", "Phường Hoàn Kiếm")
+- `NameEn` - Tên tiếng Anh (e.g., "Ha Noi", "Hoan Kiem Ward")
+- `FullNameVi` - Tên đầy đủ tiếng Việt (e.g., "Thành phố Hà Nội")
+- `FullNameEn` - Tên đầy đủ tiếng Anh (e.g., "Ha Noi City")
 
 ---
 
@@ -56,21 +56,22 @@ sqlcmd -S "TCPHUONG\SQLEXPRESS" -d UniManage -U uni_manager -P "uni_manager@2024
 
 **Data:**
 
--   ✅ **227 countries** with full schema (18 fields)
--   ✅ **30+ Vietnamese translations** (e.g., "Việt Nam", "Hoa Kỳ", "Trung Quốc")
--   ✅ Extended fields:
-    -   `CountryType`, `CountrySubType`, `Sovereignty`
-    -   `Capital`, `CurrencyCode`, `CurrencyName`
-    -   `PhoneCode`, `CountryCode3`, `CountryNumber`
-    -   `InternetCountryCode`, `Flags`
+- ✅ **227 countries** with full schema (18 fields)
+- ✅ **30+ Vietnamese translations** (e.g., "Việt Nam", "Hoa Kỳ", "Trung Quốc")
+- ✅ Extended fields:
+  - `CountryType`, `CountrySubType`, `Sovereignty`
+  - `Capital`, `CurrencyCode`, `CurrencyName`
+  - `PhoneCode`, `CountryCode3`, `CountryNumber`
+  - `InternetCountryCode`, `Flags`
 
 **Sample data:**
-| Code | NameVi | NameEn | Capital | Currency | Phone |
-|------|--------|--------|---------|----------|-------|
-| VN | Việt Nam | Vietnam | Hanoi | VND | +84 |
-| US | Hoa Kỳ | United States | Washington | USD | +1 |
-| CN | Trung Quốc | China | Beijing | CNY | +86 |
-| JP | Nhật Bản | Japan | Tokyo | JPY | +81 |
+
+| Code | NameVi     | NameEn        | Capital    | Currency | Phone |
+| ---- | ---------- | ------------- | ---------- | -------- | ----- |
+| VN   | Việt Nam   | Vietnam       | Hanoi      | VND      | +84   |
+| US   | Hoa Kỳ     | United States | Washington | USD      | +1    |
+| CN   | Trung Quốc | China         | Beijing    | CNY      | +86   |
+| JP   | Nhật Bản   | Japan         | Tokyo      | JPY      | +81   |
 
 ---
 
@@ -86,13 +87,13 @@ ad_countries (Code PK)
 
 ### Reference Tables
 
--   `ad_administrative_regions` - 3 regions (Miền Bắc/Trung/Nam)
--   `ad_administrative_units` - 10 units (Thành phố, Tỉnh, Phường, Xã, etc.)
+- `ad_administrative_regions` - 3 regions (Miền Bắc/Trung/Nam)
+- `ad_administrative_units` - 10 units (Thành phố, Tỉnh, Phường, Xã, etc.)
 
 ### Primary Key Design
 
--   ✅ **Code as PRIMARY KEY** (stable, no auto-increment)
--   ❌ No `Id` for primary key (Id kept as index only)
+- ✅ **Code as PRIMARY KEY** (stable, no auto-increment)
+- ❌ No `Id` for primary key (Id kept as index only)
 
 ---
 
@@ -109,10 +110,10 @@ ad_countries (Code PK)
 
 ## 📝 Documentation
 
--   **MIGRATION_BILINGUAL_SCHEMA.md** - Schema design & architecture
--   **MIGRATION_EXECUTION_REPORT.md** - Execution results & statistics
--   **README_PROVINCES.md** - Province migration details
--   **README_DISTRICTS_WARDS.md** - Districts/Wards migration details
+- **MIGRATION_BILINGUAL_SCHEMA.md** - Schema design & architecture
+- **MIGRATION_EXECUTION_REPORT.md** - Execution results & statistics
+- **README_PROVINCES.md** - Province migration details
+- **README_DISTRICTS_WARDS.md** - Districts/Wards migration details
 
 ---
 
@@ -168,12 +169,12 @@ ORDER BY Code;
 
 ## 📅 Migration History
 
--   **2025-10-11** - Initial bilingual schema migration
-    -   Created 5 tables with bilingual columns
-    -   Imported 34 provinces (Nghị quyết 202/2025/QH15)
-    -   Imported 3,321 wards (2-level structure)
-    -   Imported 227 countries with full schema
-    -   Vietnamese translations for 30+ countries
+- **2025-10-11** - Initial bilingual schema migration
+  - Created 5 tables with bilingual columns
+  - Imported 34 provinces (Nghị quyết 202/2025/QH15)
+  - Imported 3,321 wards (2-level structure)
+  - Imported 227 countries with full schema
+  - Vietnamese translations for 30+ countries
 
 ---
 
@@ -184,6 +185,6 @@ ORDER BY Code;
 3. Implement language switching in frontend
 4. Add more Vietnamese translations for remaining countries
 5. Create API endpoints for:
-    - `GET /api/countries?lang=vi|en`
-    - `GET /api/provinces?lang=vi|en`
-    - `GET /api/wards?provinceCode={code}&lang=vi|en`
+   - `GET /api/countries?lang=vi|en`
+   - `GET /api/provinces?lang=vi|en`
+   - `GET /api/wards?provinceCode={code}&lang=vi|en`

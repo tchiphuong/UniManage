@@ -1,15 +1,19 @@
 "use client";
 
-import { AlertDialog, Button } from "@heroui/react";
+import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { AlertDialog } from "@heroui/react";
 import { ReactNode } from "react";
 
-interface ConfirmModalProps {
+import { Button } from "./button";
+
+export interface ConfirmModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: () => void;
     title?: string;
     message?: string | ReactNode;
     confirmLabel?: string;
+    confirmText?: string;
     cancelLabel?: string;
     variant?: "default" | "danger";
     isLoading?: boolean;
@@ -17,17 +21,7 @@ interface ConfirmModalProps {
 
 /**
  * ConfirmModal Component - Wrapper around HeroUI AlertDialog
- * Simple confirmation dialog for user actions
- *
- * Usage:
- * <ConfirmModal
- *   isOpen={isOpen}
- *   onClose={() => setIsOpen(false)}
- *   onConfirm={handleDelete}
- *   title="Delete Item"
- *   message="Are you sure you want to delete this item?"
- *   variant="danger"
- * />
+ * Confirmation dialog for user actions
  */
 export function ConfirmModal({
     isOpen,
@@ -35,11 +29,15 @@ export function ConfirmModal({
     onConfirm,
     title = "Confirm Action",
     message = "Are you sure you want to proceed?",
-    confirmLabel = "Confirm",
+    confirmLabel,
+    confirmText,
     cancelLabel = "Cancel",
     variant = "default",
     isLoading = false,
-}: ConfirmModalProps) {
+}: Readonly<ConfirmModalProps>) {
+    // confirmText is an alias for confirmLabel (backward compatibility)
+    const finalConfirmLabel = confirmLabel || confirmText || "Confirm";
+
     const handleConfirm = () => {
         onConfirm();
         if (!isLoading) {
@@ -48,7 +46,10 @@ export function ConfirmModal({
     };
 
     return (
-        <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <AlertDialog
+            isOpen={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+        >
             <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
             <AlertDialog.Container className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <AlertDialog.Dialog className="w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-800">
@@ -68,18 +69,23 @@ export function ConfirmModal({
 
                     <AlertDialog.Footer className="flex justify-end gap-3 p-6 pt-4">
                         <Button
-                            variant="light"
+                            variant="ghost"
+                            className="text-danger-500"
                             onPress={onClose}
                             isDisabled={isLoading}
                         >
+                            <XMarkIcon className="h-5 w-5" />
                             {cancelLabel}
                         </Button>
                         <Button
-                            color={variant === "danger" ? "danger" : "primary"}
+                            variant={
+                                variant === "danger" ? "danger" : "primary"
+                            }
                             onPress={handleConfirm}
-                            isLoading={isLoading}
+                            isPending={isLoading}
                         >
-                            {confirmLabel}
+                            {!isLoading && <CheckIcon className="h-5 w-5" />}
+                            {finalConfirmLabel}
                         </Button>
                     </AlertDialog.Footer>
                 </AlertDialog.Dialog>

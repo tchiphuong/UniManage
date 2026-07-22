@@ -1,29 +1,35 @@
-import { 
-    Modal, 
-    ModalContent, 
-    ModalHeader, 
-    ModalBody, 
-    ModalFooter,
-    Select,
-    SelectItem,
-    Button,
-    Input 
-} from "@/components/common";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+    FieldError,
+    Input,
+    Label,
+    ListBox,
+    Modal,
+    Select,
+    TextField,
+} from "@heroui/react";
 import { useEffect } from "react";
-import { CreateUserPayload, UpdateUserPayload, UserModel, UserDetailModel } from "@/types/system";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/common";
+
+import { UserDetailModel } from "@/types/system";
 
 const userSchema = z.object({
-    username: z.string().min(3, "Username must be at least 3 characters").max(50, "Username too long"),
+    username: z
+        .string()
+        .min(3, "Username must be at least 3 characters")
+        .max(50, "Username too long"),
     email: z.string().email("Invalid email address"),
     employeeCode: z.string().optional(),
     roleCode: z.string().optional(),
     status: z.enum(["active", "inactive"]),
+    password: z.string().optional(),
 });
 
-type UserFormValues = z.infer<typeof userSchema>;
+export type UserFormValues = z.infer<typeof userSchema>;
 
 interface UserFormModalProps {
     isOpen: boolean;
@@ -33,10 +39,21 @@ interface UserFormModalProps {
     isLoading: boolean;
 }
 
-export function UserFormModal({ isOpen, onClose, onSubmit, initialData, isLoading }: UserFormModalProps) {
+export function UserFormModal({
+    isOpen,
+    onClose,
+    onSubmit,
+    initialData,
+    isLoading,
+}: Readonly<UserFormModalProps>) {
     const isEditMode = !!initialData;
 
-    const { control, handleSubmit, reset, formState: { errors } } = useForm<UserFormValues>({
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
         defaultValues: {
             username: "",
@@ -44,7 +61,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, initialData, isLoadin
             employeeCode: "",
             roleCode: "",
             status: "active",
-        }
+        },
     });
 
     useEffect(() => {
@@ -69,111 +86,210 @@ export function UserFormModal({ isOpen, onClose, onSubmit, initialData, isLoadin
         }
     }, [isOpen, initialData, reset]);
 
-    const handleFormSubmit = async (data: UserFormValues) => {
-        await onSubmit(data);
-    };
-
     return (
-        <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()} placement="top-center">
-            <ModalContent>
-                {(onClose) => (
-                    <form onSubmit={handleSubmit(handleFormSubmit)}>
-                        <ModalHeader className="flex flex-col gap-1">
+        <Modal>
+            <Modal.Backdrop
+                variant="blur"
+                isOpen={isOpen}
+                onOpenChange={(open) => !open && onClose()}
+            />
+            <Modal.Container size="md" scroll="inside">
+                <Modal.Dialog>
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                        <Modal.Header>
                             {isEditMode ? "Edit User" : "Create New User"}
-                        </ModalHeader>
-                        <ModalBody>
-                            <Controller
-                                name="username"
-                                control={control}
-                                render={({ field }) => (
-                                    <Input
-                                        {...field}
-                                        autoFocus
-                                        label="Username"
-                                        placeholder="Enter username"
-                                        isInvalid={!!errors.username}
-                                        errorMessage={errors.username?.message}
-                                        isDisabled={isEditMode} // Usually username cannot be changed
-                                    />
-                                )}
-                            />
-                            <Controller
-                                name="email"
-                                control={control}
-                                render={({ field }) => (
-                                    <Input
-                                        {...field}
-                                        label="Email"
-                                        placeholder="Enter email address"
-                                        type="email"
-                                        isInvalid={!!errors.email}
-                                        errorMessage={errors.email?.message}
-                                    />
-                                )}
-                            />
-                            <Controller
-                                name="employeeCode"
-                                control={control}
-                                render={({ field }) => (
-                                    <Input
-                                        {...field}
-                                        label="Employee Code"
-                                        placeholder="Enter employee code"
-                                        isInvalid={!!errors.employeeCode}
-                                        errorMessage={errors.employeeCode?.message}
-                                    />
-                                )}
-                            />
-                            <div className="flex gap-4">
+                        </Modal.Header>
+                        <Modal.Body>
+                            <div className="flex flex-col gap-4">
+                                {/* Username */}
                                 <Controller
-                                    name="roleCode"
+                                    name="username"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <TextField
                                             {...field}
-                                            className="w-full"
-                                            label="Role Code"
-                                            placeholder="Enter role code"
-                                            isInvalid={!!errors.roleCode}
-                                            errorMessage={errors.roleCode?.message}
-                                        />
-                                    )}
-                                />
-                                <Controller
-                                    name="status"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Select
-                                            {...field}
-                                            label="Status"
-                                            variant="bordered"
-                                            className="w-full"
-                                            isInvalid={!!errors.status}
-                                            errorMessage={errors.status?.message}
-                                            selectedKeys={new Set([field.value])}
-                                            onSelectionChange={(keys) => {
-                                                const selectedValue = Array.from(keys)[0] as string;
-                                                field.onChange(selectedValue);
-                                            }}
+                                            autoFocus
+                                            isInvalid={!!errors.username}
+                                            isDisabled={isEditMode}
                                         >
-                                            <SelectItem key="active" value="active">Active</SelectItem>
-                                            <SelectItem key="inactive" value="inactive">Inactive</SelectItem>
-                                        </Select>
+                                            <Label>Username</Label>
+                                            <Input placeholder="Enter username" />
+                                            {errors.username && (
+                                                <FieldError>
+                                                    {errors.username.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
                                     )}
                                 />
+
+                                {/* Email */}
+                                <Controller
+                                    name="email"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            type="email"
+                                            isInvalid={!!errors.email}
+                                        >
+                                            <Label>Email</Label>
+                                            <Input placeholder="Enter email address" />
+                                            {errors.email && (
+                                                <FieldError>
+                                                    {errors.email.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
+                                    )}
+                                />
+
+                                {/* Employee Code */}
+                                <Controller
+                                    name="employeeCode"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            isInvalid={!!errors.employeeCode}
+                                        >
+                                            <Label>Employee Code</Label>
+                                            <Input placeholder="Enter employee code" />
+                                            {errors.employeeCode && (
+                                                <FieldError>
+                                                    {
+                                                        errors.employeeCode
+                                                            .message
+                                                    }
+                                                </FieldError>
+                                            )}
+                                        </TextField>
+                                    )}
+                                />
+
+                                {/* Password (chỉ hiển thị khi tạo mới) */}
+                                {!isEditMode && (
+                                    <Controller
+                                        name="password"
+                                        control={control}
+                                        rules={{
+                                            required: "Password is required",
+                                        }}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                type="password"
+                                                isInvalid={!!errors.password}
+                                            >
+                                                <Label>Password</Label>
+                                                <Input placeholder="Enter password" />
+                                                {errors.password && (
+                                                    <FieldError>
+                                                        {
+                                                            errors.password
+                                                                .message
+                                                        }
+                                                    </FieldError>
+                                                )}
+                                            </TextField>
+                                        )}
+                                    />
+                                )}
+
+                                <div className="flex gap-4">
+                                    {/* Role Code */}
+                                    <Controller
+                                        name="roleCode"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <TextField
+                                                {...field}
+                                                isInvalid={!!errors.roleCode}
+                                                isDisabled={isEditMode}
+                                                className="w-full"
+                                            >
+                                                <Label>Role Code</Label>
+                                                <Input placeholder="Enter role code" />
+                                                {errors.roleCode && (
+                                                    <FieldError>
+                                                        {
+                                                            errors.roleCode
+                                                                .message
+                                                        }
+                                                    </FieldError>
+                                                )}
+                                            </TextField>
+                                        )}
+                                    />
+
+                                    {/* Status */}
+                                    <Controller
+                                        name="status"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select
+                                                className="w-full"
+                                                value={field.value}
+                                                onChange={(key) => {
+                                                    if (key) {
+                                                        field.onChange(
+                                                            String(key),
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                <Label>Status</Label>
+                                                <Select.Trigger>
+                                                    <Select.Value />
+                                                    <Select.Indicator />
+                                                </Select.Trigger>
+                                                <Select.Popover>
+                                                    <ListBox>
+                                                        <ListBox.Item
+                                                            id="active"
+                                                            textValue="Active"
+                                                        >
+                                                            Active
+                                                            <ListBox.ItemIndicator />
+                                                        </ListBox.Item>
+                                                        <ListBox.Item
+                                                            id="inactive"
+                                                            textValue="Inactive"
+                                                        >
+                                                            Inactive
+                                                            <ListBox.ItemIndicator />
+                                                        </ListBox.Item>
+                                                    </ListBox>
+                                                </Select.Popover>
+                                            </Select>
+                                        )}
+                                    />
+                                </div>
                             </div>
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button color="danger" variant="flat" onPress={onClose} isDisabled={isLoading}>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button
+                                variant="danger"
+                                onPress={onClose}
+                                isDisabled={isLoading}
+                            >
+                                <XMarkIcon className="h-5 w-5" />
                                 Cancel
                             </Button>
-                            <Button color="primary" type="submit" isLoading={isLoading}>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                isPending={isLoading}
+                            >
+                                {!isLoading && (
+                                    <CheckIcon className="h-5 w-5" />
+                                )}
                                 {isEditMode ? "Save Changes" : "Create"}
                             </Button>
-                        </ModalFooter>
+                        </Modal.Footer>
                     </form>
-                )}
-            </ModalContent>
+                </Modal.Dialog>
+            </Modal.Container>
         </Modal>
     );
 }

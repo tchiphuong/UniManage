@@ -20,7 +20,7 @@ echo [2/3] Starting WebApi...
 start "UniManage.WebApi" cmd /k "title WebApi && cd /d %~dp0backend\src\03.Apps\UniManage.WebApi && dotnet run"
 
 echo [3/3] Starting Frontend (Next.js)...
-start "UniManage.Frontend" cmd /k "title Frontend && cd /d %~dp0frontend\uni-manage && yarn dev"
+start "UniManage.Frontend" cmd /k "title Frontend && cd /d %~dp0frontend\uni-manage && npm run dev"
 
 echo.
 echo All services have been launched in separate windows!

@@ -1,4 +1,4 @@
-﻿namespace UniManage.Shared.Application.Modules.MsUnit.Queries;
+namespace UniManage.Shared.Application.Modules.MsUnit.Queries;
 
 #region Query
 
@@ -67,7 +67,7 @@ public sealed class GetUnitByCodeQueryHandler : IRequestHandler<GetUnitByCodeQue
                     return notFoundResponse;
                 }
 
-                var response = ResponseHelper.Success(unit, CoreResource.common_getSuccess);
+                var response = ResponseHelper.Success<GetUnitByCodeQuery.Response?>(unit, CoreResource.common_getSuccess);
                 log.Result = response;
                 log.ReturnCode = response.ReturnCode;
                 log.Message = response.Message;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface FetchState<T> {
     data: T | null;
@@ -6,8 +6,9 @@ interface FetchState<T> {
     error: Error | null;
 }
 
+export * from "./use-api-handler";
 export * from "./use-confirm-delete";
-export * from "./useClickOutside";
+
 export function useFetch<T>(
     url: string,
     options?: RequestInit,
@@ -77,7 +78,9 @@ export function useLocalStorage<T>(
     const setValue = (value: T | ((prev: T) => T)) => {
         try {
             const valueToStore =
-                value instanceof Function ? value(storedValue) : value;
+                typeof value === "function"
+                    ? (value as (prev: T) => T)(storedValue)
+                    : value;
             setStoredValue(valueToStore);
             window.localStorage.setItem(key, JSON.stringify(valueToStore));
         } catch (error) {

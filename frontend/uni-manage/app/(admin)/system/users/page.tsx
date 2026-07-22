@@ -1,96 +1,69 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { 
-    Table, 
-    TableHeader, 
-    TableColumn, 
-    TableBody, 
-    TableRow, 
-    TableCell,
-    Pagination,
-    Chip,
-    Spinner,
-    Tooltip,
-    Button,
-    Input
-} from "@/components/common";
-import { MagnifyingGlassIcon, PencilSquareIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { userService } from "@/services/system/user.service";
-import { UserModel, UserListParams } from "@/types/system";
-import { toast } from "sonner";
-import { useDebounce } from "@/hooks/use-debounce"; 
-// Assuming use-debounce exists, otherwise we will create it or use simple timeout
+import { PlusIcon } from "@heroicons/react/24/outline";
+import { useCallback, useEffect, useState } from "react";
 
-import { UserFormModal } from "./components/user-form-modal";
-import { ConfirmModal } from "@/components/common";
+import {
+    Button,
+    Chip,
+    ConfirmModal,
+    Table,
+    TableColumn,
+    TableAction,
+} from "@/components/common";
+import { useApiHandler } from "@/hooks";
+import { useDebounce } from "@/hooks/use-debounce";
+import { userService } from "@/services/system/user.service";
+import { UserDetailModel, UserListParams, UserModel } from "@/types/system";
+
+import { UserFormModal, UserFormValues } from "./components/user-form-modal";
 
 export default function UsersPage() {
+    const { handleResponse, handleError } = useApiHandler();
+
     const [users, setUsers] = useState<UserModel[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [totalItems, setTotalItems] = useState(0);
-    
-    // Pagination & Filter state
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [searchQuery, setSearchQuery] = useState("");
-    
-    // Debounce search query to prevent spamming API
     const debouncedSearch = useDebounce(searchQuery, 500);
 
-    // Modal state
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserModel | null>(null);
-    const [userDetail, setUserDetail] = useState<UserDetailModel | null>(null);
+    const [userDetail, setUserDetail] = useState<UserDetailModel | undefined>();
     const [isModalLoading, setIsModalLoading] = useState(false);
 
-    const fetchUsers = useCallback(async () => {
+    const loadUsers = useCallback(async () => {
         setIsLoading(true);
         try {
             const params: UserListParams = {
                 pageIndex: page,
                 pageSize: rowsPerPage,
-                keyword: debouncedSearch
+                search: debouncedSearch,
             };
+
             const response = await userService.getUsers(params);
-            
             if (response.returnCode === 200 && response.data) {
                 setUsers(response.data.items);
                 setTotalItems(response.data.paging.totalItems);
             } else {
-                toast.error(response.message || "Failed to fetch users");
+                handleResponse(response, () => {});
             }
         } catch (error) {
-            toast.error("An error occurred while fetching users");
-            console.error(error);
+            handleError(error);
         } finally {
             setIsLoading(false);
         }
-    }, [page, rowsPerPage, debouncedSearch]);
+    }, [page, rowsPerPage, debouncedSearch, handleResponse, handleError]);
 
     useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
-
-    const pages = Math.ceil(totalItems / rowsPerPage) || 1;
-
-    const onSearchChange = useCallback((value?: string) => {
-        if (value) {
-            setSearchQuery(value);
-            setPage(1);
-        } else {
-            setSearchQuery("");
-        }
-    }, []);
-
-    const onClear = useCallback(() => {
-        setSearchQuery("");
-        setPage(1);
-    }, []);
+        loadUsers();
+    }, [loadUsers]);
 
     const handleAdd = () => {
-        setUserDetail(null);
+        setUserDetail(undefined);
         setIsFormModalOpen(true);
     };
 
@@ -102,11 +75,11 @@ export default function UsersPage() {
             if (response.returnCode === 200 && response.data) {
                 setUserDetail(response.data);
             } else {
-                toast.error(response.message || "Failed to load user details");
+                handleResponse(response, () => {});
                 setIsFormModalOpen(false);
             }
         } catch (error) {
-            toast.error("Failed to fetch user details");
+            handleError(error);
             setIsFormModalOpen(false);
         } finally {
             setIsModalLoading(false);
@@ -118,32 +91,31 @@ export default function UsersPage() {
         setIsDeleteModalOpen(true);
     };
 
-    const onFormSubmit = async (data: any) => {
+    const onFormSubmit = async (data: UserFormValues) => {
         setIsModalLoading(true);
         try {
-            if (userDetail) {
-                // Update
-                const response = await userService.updateUser(userDetail.uuid, data);
-                if (response.returnCode === 200) {
-                    toast.success("User updated successfully");
-                    setIsFormModalOpen(false);
-                    fetchUsers();
-                } else {
-                    toast.error(response.message || "Failed to update user");
-                }
+            let response;
+            if (userDetail?.uuid) {
+                response = await userService.updateUser(userDetail.uuid, {
+                    ...data,
+                    rowVersion: userDetail.rowVersion || "",
+                });
             } else {
-                // Create
-                const response = await userService.createUser(data);
-                if (response.returnCode === 200) {
-                    toast.success("User created successfully");
-                    setIsFormModalOpen(false);
-                    fetchUsers();
-                } else {
-                    toast.error(response.message || "Failed to create user");
-                }
+                response = await userService.createUser(data);
             }
+
+            handleResponse(
+                response,
+                () => {
+                    setIsFormModalOpen(false);
+                    loadUsers();
+                },
+                userDetail?.uuid
+                    ? "User updated successfully"
+                    : "User created successfully",
+            );
         } catch (error) {
-            toast.error("An error occurred");
+            handleError(error);
         } finally {
             setIsModalLoading(false);
         }
@@ -151,174 +123,104 @@ export default function UsersPage() {
 
     const onDeleteConfirm = async () => {
         if (!selectedUser) return;
+
         setIsModalLoading(true);
         try {
             const response = await userService.deleteUsers([selectedUser.uuid]);
-            if (response.returnCode === 200) {
-                toast.success("User deleted successfully");
-                setIsDeleteModalOpen(false);
-                fetchUsers();
-            } else {
-                toast.error(response.message || "Failed to delete user");
-            }
+            handleResponse(
+                response,
+                () => {
+                    setIsDeleteModalOpen(false);
+                    if (users.length === 1 && page > 1) {
+                        setPage(page - 1);
+                    } else {
+                        loadUsers();
+                    }
+                },
+                "User deleted successfully",
+            );
         } catch (error) {
-            toast.error("An error occurred");
+            handleError(error);
         } finally {
             setIsModalLoading(false);
         }
     };
 
-    const renderCell = useCallback((user: UserModel, columnKey: React.Key) => {
-        const cellValue = user[columnKey as keyof UserModel];
+    const columns: TableColumn<UserModel>[] = [
+        { key: "username", label: "USERNAME", sortable: true },
+        { key: "employeeCode", label: "EMPLOYEE CODE", sortable: true },
+        { key: "roleCode", label: "ROLE", sortable: true },
+        {
+            key: "status",
+            label: "STATUS",
+            sortable: true,
+            render: (user: UserModel) => (
+                <Chip
+                    color={user.status === "ACTIVE" ? "success" : "danger"}
+                    size="sm"
+                    variant="soft"
+                >
+                    {user.status}
+                </Chip>
+            ),
+        },
+    ];
 
-        switch (columnKey) {
-            case "username":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize">{user.username}</p>
-                    </div>
-                );
-            case "employeeCode":
-                return (
-                    <div className="flex flex-col">
-                        <p className="text-bold text-small capitalize">{user.employeeCode || "N/A"}</p>
-                    </div>
-                );
-            case "roleCode":
-                return (
-                    <Chip className="capitalize" size="sm" variant="flat">
-                        {user.roleCode || "No Role"}
-                    </Chip>
-                );
-            case "status":
-                return (
-                    <Chip className="capitalize" color={user.status === "active" ? "success" : "danger"} size="sm" variant="flat">
-                        {user.status}
-                    </Chip>
-                );
-            case "actions":
-                return (
-                    <div className="relative flex items-center gap-2">
-                        <Tooltip content="Edit user">
-                            <span 
-                                className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                                onClick={() => handleEdit(user)}
-                            >
-                                <PencilSquareIcon className="size-5" />
-                            </span>
-                        </Tooltip>
-                        <Tooltip color="danger" content="Delete user">
-                            <span 
-                                className="text-lg text-danger cursor-pointer active:opacity-50"
-                                onClick={() => handleDelete(user)}
-                            >
-                                <TrashIcon className="size-5" />
-                            </span>
-                        </Tooltip>
-                    </div>
-                );
-            default:
-                return cellValue;
-        }
-    }, [handleEdit, handleDelete]);
-
-    const topContent = useMemo(() => {
-        return (
-            <div className="flex flex-col gap-4">
-                <div className="flex justify-between gap-3 items-end">
-                    <Input
-                        isClearable
-                        className="w-full sm:max-w-[44%]"
-                        placeholder="Search by username, email or code..."
-                        startContent={<MagnifyingGlassIcon className="size-5" />}
-                        value={searchQuery}
-                        onClear={() => onClear()}
-                        onValueChange={onSearchChange}
-                    />
-                    <div className="flex gap-3">
-                        <Button color="primary" endContent={<PlusIcon className="size-5" />} onPress={handleAdd}>
-                            Add New
-                        </Button>
-                    </div>
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-default-400 text-small">Total {totalItems} users</span>
-                    <label className="flex items-center text-default-400 text-small">
-                        Rows per page:
-                        <select
-                            className="bg-transparent outline-none text-default-400 text-small ml-2"
-                            onChange={(e) => {
-                                setRowsPerPage(Number(e.target.value));
-                                setPage(1);
-                            }}
-                            value={rowsPerPage}
-                        >
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="15">15</option>
-                        </select>
-                    </label>
-                </div>
-            </div>
-        );
-    }, [searchQuery, totalItems, rowsPerPage, onSearchChange, onClear]);
-
-    const bottomContent = useMemo(() => {
-        return (
-            <div className="py-2 px-2 flex justify-between items-center">
-                <Pagination
-                    isCompact
-                    showControls
-                    showShadow
-                    color="primary"
-                    page={page}
-                    total={pages}
-                    onChange={setPage}
-                />
-            </div>
-        );
-    }, [page, pages]);
+    const actions: TableAction<UserModel>[] = [
+        {
+            key: "edit",
+            label: "Edit",
+            onClick: handleEdit,
+        },
+        {
+            key: "delete",
+            label: "Delete",
+            onClick: handleDelete,
+        },
+    ];
 
     return (
-        <div className="p-6 max-w-[1200px] mx-auto w-full">
-            <h1 className="text-2xl font-bold mb-6">User Management</h1>
-            <Table
-                aria-label="User management table with pagination"
-                isHeaderSticky
-                bottomContent={bottomContent}
-                bottomContentPlacement="outside"
-                classNames={{
-                    wrapper: "max-h-[600px]",
+        <div className="mx-auto w-full max-w-300 p-6">
+            <h1 className="mb-6 text-2xl font-bold">User Management</h1>
+            <Table<UserModel>
+                columns={columns}
+                items={users}
+                getRowKey={(item) => item.uuid}
+                isLoading={isLoading}
+                showSearch={true}
+                searchPlaceholder="Search by username, email or code..."
+                searchValue={searchQuery}
+                onSearchChange={setSearchQuery}
+                toolbarContent={
+                    <Button
+                        className="bg-primary text-primary-foreground"
+                        onPress={handleAdd}
+                    >
+                        <div className="flex items-center gap-2">
+                            <PlusIcon className="size-4" />
+                            <span>Add New</span>
+                        </div>
+                    </Button>
+                }
+                pagination={{
+                    page,
+                    pageSize: rowsPerPage,
+                    total: totalItems,
+                    onPageChange: setPage,
+                    onPageSizeChange: (size) => {
+                        setRowsPerPage(size);
+                        setPage(1);
+                    },
+                    pageSizeOptions: [10, 20, 50, 100],
                 }}
-                topContent={topContent}
-                topContentPlacement="outside"
-            >
-                <TableHeader>
-                    <TableColumn key="username">USERNAME</TableColumn>
-                    <TableColumn key="employeeCode">EMPLOYEE CODE</TableColumn>
-                    <TableColumn key="roleCode">ROLE</TableColumn>
-                    <TableColumn key="status">STATUS</TableColumn>
-                    <TableColumn key="actions" align="center">ACTIONS</TableColumn>
-                </TableHeader>
-                <TableBody
-                    emptyContent={isLoading ? " " : "No users found"}
-                    items={users}
-                    isLoading={isLoading}
-                    loadingContent={<Spinner label="Loading..." />}
-                >
-                    {(item) => (
-                        <TableRow key={item.uuid}>
-                            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                actions={actions}
+            />
 
-            <UserFormModal 
+            <UserFormModal
                 isOpen={isFormModalOpen}
                 onClose={() => setIsFormModalOpen(false)}
                 onSubmit={onFormSubmit}
-                initialData={userDetail}
+                initialData={userDetail || null}
                 isLoading={isModalLoading}
             />
 
@@ -329,8 +231,14 @@ export default function UsersPage() {
                 title="Confirm Deletion"
                 message={
                     <>
-                        <p>Are you sure you want to delete the user <strong>{selectedUser?.username}</strong>?</p>
-                        <p className="text-small text-default-500 mt-2">This action cannot be undone. All data associated with this user will be removed.</p>
+                        <p>
+                            Are you sure you want to delete the user{" "}
+                            <strong>{selectedUser?.username}</strong>?
+                        </p>
+                        <p className="text-small text-default-500 mt-2">
+                            This action cannot be undone. All data associated
+                            with this user will be removed.
+                        </p>
                     </>
                 }
                 confirmText="Delete User"

@@ -1,7 +1,8 @@
-import { getRequestConfig } from "next-intl/server";
-import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { locales, defaultLocale, Locale } from "./config";
+import { notFound } from "next/navigation";
+import { getRequestConfig } from "next-intl/server";
+
+import { defaultLocale, Locale, locales } from "./config";
 
 /**
  * Config cho next-intl

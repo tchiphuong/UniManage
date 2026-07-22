@@ -248,7 +248,7 @@ builder.Services.AddAuthentication("Bearer")
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidateAudience = true,
-            ValidAudience = builder.Configuration["IdentityServer:ApiName"],
+            ValidAudiences = new[] { builder.Configuration["IdentityServer:ApiName"], authority },
             
             ValidateIssuer = true,
             ValidIssuer = authority,

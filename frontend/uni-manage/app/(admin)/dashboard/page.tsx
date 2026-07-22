@@ -1,9 +1,10 @@
 "use client";
 
-import { StatsCard } from "./components";
-import { RecentOrders } from "./components/recent-orders";
 import { Card } from "@heroui/react";
 import { useTranslations } from "next-intl";
+
+import { StatsCard } from "./components";
+import { RecentOrders } from "./components/recent-orders";
 
 export default function Dashboard() {
     const t = useTranslations();

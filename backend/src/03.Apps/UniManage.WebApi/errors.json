@@ -208,10 +208,7 @@
           "properties": {
             "category": "Compiler",
             "isEnabledByDefault": true,
-            "tags": [
-              "Compiler",
-              "Telemetry"
-            ]
+            "tags": ["Compiler", "Telemetry"]
           }
         },
         "CS0234": {
@@ -221,11 +218,7 @@
           "properties": {
             "category": "Compiler",
             "isEnabledByDefault": true,
-            "tags": [
-              "Compiler",
-              "Telemetry",
-              "NotConfigurable"
-            ]
+            "tags": ["Compiler", "Telemetry", "NotConfigurable"]
           }
         },
         "CS8625": {
@@ -236,10 +229,7 @@
           "properties": {
             "category": "Compiler",
             "isEnabledByDefault": true,
-            "tags": [
-              "Compiler",
-              "Telemetry"
-            ]
+            "tags": ["Compiler", "Telemetry"]
           }
         },
         "CS8981": {
@@ -250,10 +240,7 @@
           "properties": {
             "category": "Compiler",
             "isEnabledByDefault": true,
-            "tags": [
-              "Compiler",
-              "Telemetry"
-            ]
+            "tags": ["Compiler", "Telemetry"]
           }
         }
       }

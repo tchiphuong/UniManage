@@ -3,6 +3,7 @@
 Đã tự động chạy test giao diện Frontend bằng Browser Subagent (E2E Test Simulation).
 
 **Kịch bản test:**
+
 1. Khởi động WebAPI Backend (port `60943`).
 2. Khởi động Next.js Frontend Server (port `3000`).
 3. Truy cập `http://localhost:3000/auth/login`.

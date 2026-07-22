@@ -1,7 +1,8 @@
 import { PagedResponse, PagingParams } from "@/types";
-import { useDataTable } from "./use-data-table";
-import { useDataModal } from "./use-data-modal";
+
 import { useConfirmDelete } from "./use-confirm-delete";
+import { useDataModal } from "./use-data-modal";
+import { useDataTable } from "./use-data-table";
 
 interface UseCrudTableProps<T, TParams extends PagingParams> {
     queryKey: string;

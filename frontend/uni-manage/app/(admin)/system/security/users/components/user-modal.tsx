@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Button, Form, Input, Label, Modal, Switch } from "@heroui/react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, UserService } from "@/services/user.service";
-import { Icon } from "@iconify/react";
+import {
+    Button,
+    Form,
+    Label,
+    Modal,
+    Switch,
+    TextField,
+    Input,
+    FieldError,
+} from "@heroui/react";
 import { addToast } from "@heroui/toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Icon } from "@iconify/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as z from "zod";
+
+import { User, UserService } from "@/services/user.service";
 
 // Define Base Schema (without refinements yet)
 const baseUserSchema = z.object({
@@ -16,7 +26,7 @@ const baseUserSchema = z.object({
     displayName: z.string().min(1, "Display name is required"),
     // email: z.string().email("Invalid email address"), // Removed
     password: z.string().optional(),
-    status: z.string(),
+    status: z.boolean().default(false),
 });
 
 // Create Schema: Password mandatory
@@ -50,7 +60,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
             displayName: "",
             // email: "", // Removed
             password: "",
-            status: "",
+            status: false,
         },
     });
 
@@ -64,7 +74,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                     displayName: user.displayName,
                     // email: user.email, // Removed
                     password: "",
-                    status: user.status,
+                    status: user.status === "ACTIVE",
                 });
             } else {
                 reset({
@@ -72,7 +82,7 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                     displayName: "",
                     // email: "", // Removed
                     password: "",
-                    status: "",
+                    status: false,
                 });
             }
         }
@@ -153,15 +163,18 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                                     name="username"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <TextField
                                             {...field}
-                                            label="Username"
-                                            placeholder="Enter username"
-                                            errorMessage={errors.username?.message?.toString()}
                                             isInvalid={!!errors.username}
-                                            variant="bordered"
-                                            labelPlacement="outside"
-                                        />
+                                        >
+                                            <Label>Username</Label>
+                                            <Input placeholder="Enter username" />
+                                            {errors.username && (
+                                                <FieldError>
+                                                    {errors.username.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
                                     )}
                                 />
 
@@ -169,15 +182,18 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                                     name="displayName"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <TextField
                                             {...field}
-                                            label="Display Name"
-                                            placeholder="Enter display name"
-                                            errorMessage={errors.displayName?.message?.toString()}
                                             isInvalid={!!errors.displayName}
-                                            variant="bordered"
-                                            labelPlacement="outside"
-                                        />
+                                        >
+                                            <Label>Display Name</Label>
+                                            <Input placeholder="Enter display name" />
+                                            {errors.displayName && (
+                                                <FieldError>
+                                                    {errors.displayName.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
                                     )}
                                 />
 
@@ -187,20 +203,25 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                                     name="password"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <TextField
                                             {...field}
-                                            type="password"
-                                            label={
-                                                isEdit
-                                                    ? "Password (leave blank to keep current)"
-                                                    : "Password"
-                                            }
-                                            placeholder="Enter password"
-                                            errorMessage={errors.password?.message?.toString()}
                                             isInvalid={!!errors.password}
-                                            variant="bordered"
-                                            labelPlacement="outside"
-                                        />
+                                        >
+                                            <Label>
+                                                {isEdit
+                                                    ? "Password (leave blank to keep current)"
+                                                    : "Password"}
+                                            </Label>
+                                            <Input
+                                                type="password"
+                                                placeholder="Enter password"
+                                            />
+                                            {errors.password && (
+                                                <FieldError>
+                                                    {errors.password.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
                                     )}
                                 />
 
@@ -208,16 +229,15 @@ export function UserModal({ isOpen, onClose, user }: UserModalProps) {
                                     name="status"
                                     control={control}
                                     render={({
-                                        field: { value, onChange, ...field },
+                                        field: { value, onChange },
                                     }) => (
                                         <Switch
-                                            {...field}
-                                            isSelected={value}
-                                            onValueChange={onChange}
+                                            isSelected={!!value}
+                                            onChange={onChange}
                                         >
                                             <Switch.Content>
                                                 <Switch.Control>
-                                                    <Switch.Indicator />
+                                                    <Switch.Thumb />
                                                 </Switch.Control>
                                                 Active Status
                                             </Switch.Content>

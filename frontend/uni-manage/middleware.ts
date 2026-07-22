@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { locales, defaultLocale, Locale } from "./i18n/config";
+import { NextResponse } from "next/server";
+
+import { defaultLocale, Locale, locales } from "./i18n/config";
 
 /**
  * Routes that don't require authentication

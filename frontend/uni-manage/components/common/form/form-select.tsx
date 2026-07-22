@@ -1,8 +1,8 @@
 "use client";
 
+import { FieldError, Label, ListBox, Select } from "@heroui/react";
 import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { Select, SelectItem } from "@heroui/react";
 
 interface Option {
     label: string;
@@ -11,11 +11,12 @@ interface Option {
 
 interface FormSelectProps extends Omit<
     React.ComponentProps<typeof Select>,
-    "children"
+    "children" | "onChange" | "value"
 > {
     name: string;
     label?: string;
     options: Option[];
+    placeholder?: string;
 }
 
 export function FormSelect({
@@ -23,6 +24,7 @@ export function FormSelect({
     label,
     options,
     className,
+    placeholder,
     ...props
 }: FormSelectProps) {
     const { control } = useFormContext();
@@ -35,18 +37,36 @@ export function FormSelect({
                 <Select
                     {...field}
                     {...props}
-                    label={label}
-                    selectedKeys={field.value ? [String(field.value)] : []}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    selectedKey={field.value ? String(field.value) : undefined}
+                    onSelectionChange={(key) => {
+                        if (key) {
+                            field.onChange(String(key));
+                        }
+                    }}
                     isInvalid={!!error}
-                    errorMessage={error?.message}
                     className={className}
+                    placeholder={placeholder}
                 >
-                    {options.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                        </SelectItem>
-                    ))}
+                    {label && <Label>{label}</Label>}
+                    <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                    </Select.Trigger>
+                    {error && <FieldError>{error.message}</FieldError>}
+                    <Select.Popover>
+                        <ListBox>
+                            {options.map((option) => (
+                                <ListBox.Item
+                                    key={option.value}
+                                    id={String(option.value)}
+                                    textValue={option.label}
+                                >
+                                    {option.label}
+                                    <ListBox.ItemIndicator />
+                                </ListBox.Item>
+                            ))}
+                        </ListBox>
+                    </Select.Popover>
                 </Select>
             )}
         />

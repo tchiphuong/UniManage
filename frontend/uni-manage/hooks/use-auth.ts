@@ -1,25 +1,26 @@
 import { useState } from "react";
+
 import { useRouter } from "@/i18n/navigation";
 import {
     apiClient,
-    setAccessToken,
-    setRefreshToken,
     clearAuthCookies,
     getAccessToken,
+    getRefreshToken,
+    setAccessToken,
+    setRefreshToken,
 } from "@/lib";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
-import type {
-    LoginRequest,
-    LoginResponse,
-    UserProfile,
-    FieldErrorModel,
-} from "@/types";
+import { useApiHandler } from "@/hooks/use-api-handler";
+import { authService } from "@/lib/services/auth.service";
+import { getTokenUsername } from "@/lib/utils";
+import type { LoginRequest, LoginResponse } from "@/types";
 
 /**
- * Hook để xử lý authentication
+ * Hook for authentication handling
  */
 export function useAuth() {
     const router = useRouter();
+    const { executeApiCall, handleError } = useApiHandler();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -31,48 +32,41 @@ export function useAuth() {
         setError(null);
 
         try {
-            const response = await apiClient.post<LoginResponse>(
-                API_ENDPOINTS.AUTH.LOGIN,
-                credentials,
+            const result = await executeApiCall(
+                () =>
+                    apiClient.post<LoginResponse>(
+                        API_ENDPOINTS.AUTH.LOGIN,
+                        credentials,
+                    ),
+                {
+                    onSuccess: (data) => {
+                        // Save tokens to cookies
+                        setAccessToken(
+                            data.accessToken,
+                            credentials.rememberMe,
+                        );
+                        if (data.refreshToken) {
+                            setRefreshToken(
+                                data.refreshToken,
+                                credentials.rememberMe,
+                            );
+                        }
+                        if (data.user) {
+                            localStorage.setItem(
+                                "auth_user",
+                                JSON.stringify(data.user),
+                            );
+                        }
+                    },
+                    showToastOnError: false, // Do not toast, we show the error in the form
+                },
             );
 
-            if (response.returnCode === 0 && response.data) {
-                // Save tokens to cookies
-                setAccessToken(
-                    response.data.accessToken,
-                    credentials.rememberMe,
-                );
-                if (response.data.refreshToken) {
-                    setRefreshToken(
-                        response.data.refreshToken,
-                        credentials.rememberMe,
-                    );
-                }
-
-                return { success: true, data: response.data };
-            } else {
-                const firstError = response.errors[0];
-                let errorMessage = "Login failed";
-
-                if (typeof firstError === "string") {
-                    errorMessage = firstError;
-                } else if (
-                    firstError &&
-                    typeof firstError === "object" &&
-                    "messages" in firstError
-                ) {
-                    const model = firstError as FieldErrorModel;
-                    errorMessage = model.messages[0] || "Login failed";
-                }
-
-                setError(errorMessage);
-                return { success: false, error: errorMessage };
+            if (!result.success) {
+                setError(result.error || null);
             }
-        } catch (err: unknown) {
-            const errorMsg =
-                (err as { response?: { data?: { message?: string } } }).response?.data?.message || "An error occurred";
-            setError(errorMsg);
-            return { success: false, error: errorMsg };
+
+            return result;
         } finally {
             setIsLoading(false);
         }
@@ -81,26 +75,36 @@ export function useAuth() {
     /**
      * Logout
      */
-    const logout = () => {
-        clearAuthCookies();
-        router.push("/login");
+    const logout = async () => {
+        try {
+            const refreshTokenValue = getRefreshToken();
+            if (refreshTokenValue) {
+                await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
+                    refreshToken: refreshTokenValue,
+                });
+            }
+        } catch (err) {
+            handleError(err);
+        } finally {
+            clearAuthCookies();
+            localStorage.removeItem("auth_user");
+            router.push("/auth/login");
+        }
     };
 
     /**
      * Get current user profile
      */
     const getCurrentUser = async () => {
-        try {
-            const response = await apiClient.get<UserProfile>(
-                API_ENDPOINTS.AUTH.ME,
-            );
-            if (response.returnCode === 0 && response.data) {
-                return response.data;
-            }
-            return null;
-        } catch {
-            return null;
-        }
+        const username = getTokenUsername(getAccessToken());
+        if (!username) return null;
+
+        const result = await executeApiCall(
+            () => authService.getCurrentUser(username),
+            { showToastOnError: false }, // Silent fail, we just return null
+        );
+
+        return result.success ? (result.data ?? null) : null;
     };
 
     /**
@@ -109,6 +113,7 @@ export function useAuth() {
     const isAuthenticated = () => {
         return !!getAccessToken();
     };
+
     return {
         login,
         logout,
@@ -121,41 +126,40 @@ export function useAuth() {
 }
 
 /**
- * Hook để kiểm tra xem user có đang login hay không
+ * Hook to check if user is currently logged in
  */
 export function useAuthCheck() {
+    const { executeApiCall } = useApiHandler();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     const checkAuth = async () => {
-        const token = getAccessToken();
+        const username = getTokenUsername(getAccessToken());
 
-        if (!token) {
+        if (!username) {
             setIsAuthenticated(false);
             setIsLoading(false);
             return false;
         }
 
-        try {
-            const response = await apiClient.get<UserProfile>(
-                API_ENDPOINTS.AUTH.ME,
-            );
-            if (response.returnCode === 0) {
-                setIsAuthenticated(true);
-                setIsLoading(false);
-                return true;
-            } else {
-                clearAuthCookies();
-                setIsAuthenticated(false);
-                setIsLoading(false);
-                return false;
+        const result = await executeApiCall(
+            () => authService.getCurrentUser(username),
+            { showToastOnError: false }, // Silent fail on background auth check
+        );
+
+        if (result.success) {
+            setIsAuthenticated(true);
+            if (result.data) {
+                localStorage.setItem("auth_user", JSON.stringify(result.data));
             }
-        } catch {
+        } else {
             clearAuthCookies();
+            localStorage.removeItem("auth_user");
             setIsAuthenticated(false);
-            setIsLoading(false);
-            return false;
         }
+
+        setIsLoading(false);
+        return result.success;
     };
 
     return { isAuthenticated, isLoading, checkAuth };

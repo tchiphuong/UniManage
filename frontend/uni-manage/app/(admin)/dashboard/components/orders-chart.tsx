@@ -1,18 +1,18 @@
 "use client";
 
+import { ChartBarIcon } from "@heroicons/react/24/outline";
+import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import {
-    BarChart,
     Bar,
-    XAxis,
-    YAxis,
+    BarChart,
     CartesianGrid,
-    Tooltip,
     Legend,
     ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
 } from "recharts";
-import { useTheme } from "next-themes";
-import { ChartBarIcon } from "@heroicons/react/24/outline";
 
 interface OrdersChartProps {
     data: { name: string; online: number; offline: number; unknown: number }[];

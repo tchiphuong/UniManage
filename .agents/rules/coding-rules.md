@@ -20,3 +20,28 @@ trigger: always_on
 - When fixing code, preserve the existing structure as much as possible. Only change what is necessary.
 - Never claim that something was done if it was not actually done.
 - If a mistake is found, acknowledge it briefly, fix it, and move on.
+
+### Internationalization (i18n) Rules
+
+- Never use fallback texts (e.g., hardcoded English or Vietnamese text like 'User', 'U', etc.) in the UI components.
+- Always use the () function from
+  ext-intl (or equivalent i18n library) for all user-facing strings.
+- If a translation key does not exist, you must create it in the respective translation files (e.g., messages/vi.json, messages/en.json) instead of relying on fallback strings.
+- This is a CRITICAL rule to maintain full localization support.
+
+### API Response Handling Rules
+
+- Always use handleApiError from @/lib/utils when parsing error messages from API responses.
+- Do not parse err.response.data or
+  esponse.errors[0] manually in individual components or hooks.
+- The success condition for the UniManage API Result<T> structure is
+  eturnCode === 0, NOT 200.
+
+- MANDATORY: Always use the `useApiHandler` hook and its `handleResponse` / `handleError` functions for making API calls and processing the responses in React components or custom hooks. Do not manually parse the success/error flow without it.
+
+### Code Documentation Language Rules
+
+- All doc comments (`/** */`, `///`, JSDoc, TSDoc) MUST be written in **English**.
+- This applies to **both backend (.cs) and frontend (.ts/.tsx)** code.
+- Inline comments (`//`) may use Vietnamese for quick notes, but doc comments are always English.
+- Reason: Doc comments are consumed by IDE tooltips, generated documentation, and future contributors — English ensures universal readability.

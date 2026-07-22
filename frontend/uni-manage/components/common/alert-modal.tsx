@@ -1,11 +1,12 @@
-import { Button } from "@heroui/react";
-import { Modal } from "./Modal";
-import { useTranslation } from "react-i18next";
 import {
-    InformationCircleIcon,
     CheckCircleIcon,
+    InformationCircleIcon,
     XCircleIcon,
 } from "@heroicons/react/24/outline";
+import { Button } from "@heroui/react";
+import { useTranslation } from "react-i18next";
+
+import { Modal } from "./modal";
 
 interface AlertModalProps {
     isOpen: boolean;
@@ -23,7 +24,7 @@ export function AlertModal({
     message,
     buttonText,
     type = "info",
-}: AlertModalProps) {
+}: Readonly<AlertModalProps>) {
     const { t } = useTranslation();
 
     const getIcon = () => {
@@ -44,14 +45,12 @@ export function AlertModal({
         }
     };
 
-    const getColor = () => {
+    const getVariant = (): "primary" | "danger" | undefined => {
         switch (type) {
-            case "success":
-                return "success";
             case "error":
                 return "danger";
+            case "success":
             case "warning":
-                return "warning";
             case "info":
             default:
                 return "primary";
@@ -70,7 +69,7 @@ export function AlertModal({
                 </div>
             }
             footer={
-                <Button color={getColor()} onPress={onClose} fullWidth>
+                <Button variant={getVariant()} onPress={onClose} fullWidth>
                     {buttonText || t("common.ok")}
                 </Button>
             }

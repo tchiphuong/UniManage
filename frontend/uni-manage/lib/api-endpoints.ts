@@ -49,17 +49,6 @@ export const ROLE_ENDPOINTS = {
     COMBOBOX: `${API_VERSION}/roles/combobox`,
 } as const;
 
-/**
- * Menu Management Endpoints
- */
-export const MENU_ENDPOINTS = {
-    LIST: `${API_VERSION}/menus`,
-    DETAIL: (id: number | string) => `${API_VERSION}/menus/${id}`,
-    CREATE: `${API_VERSION}/menus`,
-    UPDATE: (id: number | string) => `${API_VERSION}/menus/${id}`,
-    DELETE: `${API_VERSION}/menus`,
-    TREE: `${API_VERSION}/menus/tree`,
-} as const;
 
 /**
  * Department Management Endpoints
@@ -91,6 +80,7 @@ export const POSITION_ENDPOINTS = {
 export const SYSTEM_ENDPOINTS = {
     HEALTH: `${API_VERSION}/health`,
     VERSION: `${API_VERSION}/version`,
+    NAVBAR: `${API_VERSION}/system/navbars`,
 } as const;
 
 /**
@@ -100,7 +90,6 @@ export const API_ENDPOINTS = {
     AUTH: AUTH_ENDPOINTS,
     USER: USER_ENDPOINTS,
     ROLE: ROLE_ENDPOINTS,
-    MENU: MENU_ENDPOINTS,
     DEPARTMENT: DEPARTMENT_ENDPOINTS,
     POSITION: POSITION_ENDPOINTS,
     SYSTEM: SYSTEM_ENDPOINTS,

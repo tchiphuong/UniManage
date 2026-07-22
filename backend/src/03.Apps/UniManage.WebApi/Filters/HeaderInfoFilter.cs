@@ -17,7 +17,10 @@ namespace UniManage.WebApi.Filters
             var user = httpContext.User;
 
             var username = user?.FindFirstValue(ClaimTypes.Name)
+                ?? user?.FindFirstValue("username")
+                ?? user?.FindFirstValue("name")
                 ?? user?.FindFirstValue("preferred_username")
+                ?? user?.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? user?.FindFirstValue("sub");
 
             string? controllerName = null;

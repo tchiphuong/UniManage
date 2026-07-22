@@ -1,37 +1,37 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './e2e-tests',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
-  use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+    testDir: "./e2e-tests",
+    fullyParallel: true,
+    forbidOnly: !!process.env.CI,
+    retries: process.env.CI ? 2 : 0,
+    workers: process.env.CI ? 1 : undefined,
+    reporter: "html",
+    use: {
+        baseURL: "http://localhost:3000",
+        trace: "on-first-retry",
+        screenshot: "only-on-failure",
+        video: "retain-on-failure",
     },
-    // Uncomment for cross-browser testing
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
+    projects: [
+        {
+            name: "chromium",
+            use: { ...devices["Desktop Chrome"] },
+        },
+        // Uncomment for cross-browser testing
+        // {
+        //   name: 'firefox',
+        //   use: { ...devices['Desktop Firefox'] },
+        // },
+        // {
+        //   name: 'webkit',
+        //   use: { ...devices['Desktop Safari'] },
+        // },
+    ],
+    // Automatically start frontend server when running tests if needed
+    // webServer: {
+    //   command: 'npm run dev',
+    //   url: 'http://localhost:3000',
+    //   reuseExistingServer: !process.env.CI,
     // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-  ],
-  // Tự động start frontend server khi chạy test nếu cần
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });

@@ -1,14 +1,17 @@
 "use client";
 
+import { Toast } from "@heroui/react";
+import { appToastQueue } from "@/lib/toast-queues";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { SidebarProvider } from "@/contexts/sidebar-context";
-import { ToastProvider } from "@heroui/toast";
+import { useState } from "react";
+
+import { NavbarProvider } from "@/contexts/navbar-context";
+import { AuthProvider } from "@/contexts/auth-context";
 
 /**
  * Root Providers cho UniManage
- * Include ThemeProvider and SidebarProvider
+ * Include ThemeProvider and NavbarProvider
  */
 export function Providers({
     children,
@@ -34,10 +37,16 @@ export function Providers({
                 enableSystem
                 disableTransitionOnChange
             >
-                <SidebarProvider>
-                    {children}
-                    <ToastProvider placement="top-right" />
-                </SidebarProvider>
+                <AuthProvider>
+                    <NavbarProvider>
+                        {children}
+                        {/* Global Toast Queue */}
+                        <Toast.Provider
+                            placement="top end"
+                            queue={appToastQueue}
+                        />
+                    </NavbarProvider>
+                </AuthProvider>
             </NextThemesProvider>
         </QueryClientProvider>
     );

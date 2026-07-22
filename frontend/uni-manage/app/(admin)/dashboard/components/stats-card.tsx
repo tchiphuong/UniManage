@@ -5,7 +5,7 @@ export interface StatItem {
     value: number | string;
     prefix?: string;
     suffix?: string;
-    icon: string; // Tên icon hoặc URL hình ảnh trực tiếp từ Icons8
+    icon: string; // Icon name or image URL directly from Icons8
     color: string;
     change?: string;
     changeType?: "up" | "down" | "neutral";
@@ -15,8 +15,18 @@ interface StatsCardProps {
     stat: StatItem;
 }
 
-export function StatsCard({ stat }: StatsCardProps) {
+export function StatsCard({ stat }: Readonly<StatsCardProps>) {
     const { title, value, prefix, suffix, icon, change, changeType } = stat;
+
+    let changeColor = "text-zinc-500";
+    let changeIcon = "";
+    if (changeType === "up") {
+        changeColor = "text-success-500";
+        changeIcon = "↑";
+    } else if (changeType === "down") {
+        changeColor = "text-danger-500";
+        changeIcon = "↓";
+    }
 
     // Use the direct URL if it starts with http, otherwise fallback to the slug guesser
     const iconUrl = icon.startsWith("http")
@@ -39,20 +49,9 @@ export function StatsCard({ stat }: StatsCardProps) {
                             </h3>
                             {change && (
                                 <span
-                                    className={`text-xs font-semibold ${
-                                        changeType === "up"
-                                            ? "text-success-500"
-                                            : changeType === "down"
-                                              ? "text-danger-500"
-                                              : "text-zinc-500"
-                                    }`}
+                                    className={`text-xs font-semibold ${changeColor}`}
                                 >
-                                    {changeType === "up"
-                                        ? "↑"
-                                        : changeType === "down"
-                                          ? "↓"
-                                          : ""}{" "}
-                                    {change}
+                                    {changeIcon} {change}
                                 </span>
                             )}
                         </div>

@@ -6,6 +6,7 @@ description: Architecture reference and code templates for UniManage backend dev
 # UniManage Backend Developer Skill
 
 ## When to use this skill
+
 - Creating new backend modules (Commands, Queries, Handlers, Controllers)
 - Writing FluentValidation validators
 - Choosing between EF Core and Dapper for data access
@@ -13,6 +14,7 @@ description: Architecture reference and code templates for UniManage backend dev
 - Referencing CoreCommon constants, utilities, or response patterns
 
 ## Tech Stack
+
 - **Runtime**: ASP.NET Core .NET 9
 - **Auth**: Duende IdentityServer (custom Dapper stores)
 - **Database**: SQL Server
@@ -82,19 +84,20 @@ Regenerate: Open `CoreCommon.tt` → Right-click → "Run Custom Tool".
 
 ## Available Utilities (ALWAYS check before writing new logic)
 
-| Utility | Key Methods |
-|---|---|
-| `ResponseHelper` | `Success()`, `Error()`, `NotFound()`, `PagedSuccess()`, `PagedError()` |
-| `PasswordHelper` | `HashPassword()`, `VerifyPassword()`, `IsValidPassword()` |
-| `ValidationHelper` | `IsValidEmail()`, `IsValidPhoneNumber()`, `IsValidCode()` |
-| `DatabaseHelper` | `QueryPagingAsync()`, `ExecuteWithTransactionAsync()` |
-| `QueryHelper` | `BuildOrderByClause()`, `SanitizeSearchTerm()`, `EscapeSqlIdentifier()` |
-| `StringHelper` | `ToSlug()`, `ToCamelCase()`, `RemoveDiacritics()`, `MaskSensitiveData()` |
-| `DateTimeHelper` | `ToVietnamTime()`, `CalculateAge()`, `AddBusinessDays()` |
-| `TranslateHelper` | `GetLanguageSuffix()`, `TranslateAsync()` |
-| `CacheHelper` | `BuildKey()`, `RemoveByPatternAsync()` |
+| Utility            | Key Methods                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| `ResponseHelper`   | `Success()`, `Error()`, `NotFound()`, `PagedSuccess()`, `PagedError()`   |
+| `PasswordHelper`   | `HashPassword()`, `VerifyPassword()`, `IsValidPassword()`                |
+| `ValidationHelper` | `IsValidEmail()`, `IsValidPhoneNumber()`, `IsValidCode()`                |
+| `DatabaseHelper`   | `QueryPagingAsync()`, `ExecuteWithTransactionAsync()`                    |
+| `QueryHelper`      | `BuildOrderByClause()`, `SanitizeSearchTerm()`, `EscapeSqlIdentifier()`  |
+| `StringHelper`     | `ToSlug()`, `ToCamelCase()`, `RemoveDiacritics()`, `MaskSensitiveData()` |
+| `DateTimeHelper`   | `ToVietnamTime()`, `CalculateAge()`, `AddBusinessDays()`                 |
+| `TranslateHelper`  | `GetLanguageSuffix()`, `TranslateAsync()`                                |
+| `CacheHelper`      | `BuildKey()`, `RemoveByPatternAsync()`                                   |
 
 ## MediatR Pipeline Order
+
 `Logging → Validation → Authorization → Transaction (Command only) → Caching (Query only)`
 
 ## Standard CRUD Code Templates
@@ -108,9 +111,13 @@ For complete, ready-to-copy code templates, read the files in the `examples/` di
 
 ### Key Patterns in Templates
 
-1. **ILoggableCommand**: All Commands/Queries implement this. Logging is automated by pipeline — NO manual `ApiLogModel` or `UniLogManager` calls.
+1. **ILoggableCommand (CRITICAL RULE)**: All Commands/Queries inherit `BaseCommand`/`BaseQuery` which implements `ILoggableCommand`. Logging is automated by `LoggingBehavior` pipeline.
+   - 🚫 **FORBIDDEN**: Do NOT instantiate `ApiLogModel`.
+   - 🚫 **FORBIDDEN**: Do NOT call `UniLogManager.WriteApiLog(log)`.
+   - 🚫 **FORBIDDEN**: Do NOT wrap Handler logic in a `try-catch-finally` just to write logs. Throw exceptions normally so the pipeline can catch and log them.
 2. **Nested Response**: `public sealed record Response` nested inside the Command/Query class.
-3. **DbContext scope**: `using (var dbContext = new DbContext())` wraps OUTSIDE `try-catch`.
+3. **DbContext scope**: `using (var dbContext = new DbContext(openTransaction: true))` wraps OUTSIDE a single `try-catch`.
+   - When an exception occurs, call `await dbContext.RollbackAsync()` then `throw;` to let the pipeline log the 500 error.
 4. **Validators grouped**: One file per feature group (e.g., `UserQueriesValidators.cs`).
 
 ## Controller Formatting
@@ -149,11 +156,13 @@ public class UsersController : BaseController
 ```
 
 ## IdentityServer (Dapper-only, no EF Core)
+
 - Custom stores: `IClientStore`, `IResourceStore`, `IPersistedGrantStore`, `IDeviceFlowStore`
 - Flow: Authorization Code + PKCE (no ROPC)
 - Token cleanup: Hangfire job every 15 min
 
 ## Social Auth
+
 - Strategy Pattern via `ISocialAuthProvider` interface
 - Register providers in `ApplicationModule` (Autofac)
 - Use `SocialAuthProviderFactory` in Handlers

@@ -1,17 +1,24 @@
 "use client";
 
+import { addToast } from "@heroui/toast";
+import { Icon } from "@iconify/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Column, DataTable } from "@/components/common/data-table";
-import { RoleService, Role } from "@/services/role.service";
+
+import {
+    ConfirmModal,
+    Table,
+    TableColumn,
+    TableAction,
+    Chip,
+    Input,
+} from "@/components/common";
 import { PageHeader } from "@/components/page-header-i18n";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Input, Chip } from "@heroui/react";
-import { Icon } from "@iconify/react";
+import { Role, RoleService } from "@/services/role.service";
+
 import { RoleModal } from "./components/role-modal";
-import { ConfirmModal } from "@/components/common/confirm-modal";
-import { addToast } from "@heroui/toast";
 
 // Icon components
 const EditIcon = (props: any) => <Icon icon="solar:pen-bold" {...props} />;
@@ -96,24 +103,24 @@ export default function RolesPage() {
         }
     };
 
-    const columns: Column<Role>[] = [
+    const columns: TableColumn<Role>[] = [
         {
-            uid: "roleCode",
-            name: "Role Code",
+            key: "roleCode",
+            label: "Role Code",
             sortable: true,
         },
         {
-            uid: "roleName",
-            name: "Role Name",
+            key: "roleName",
+            label: "Role Name",
             sortable: true,
         },
         {
-            uid: "description",
-            name: "Description",
+            key: "description",
+            label: "Description",
         },
         {
-            uid: "isActive",
-            name: "Status",
+            key: "isActive",
+            label: "Status",
             render: (role: Role) => (
                 <Chip
                     className="capitalize"
@@ -126,33 +133,27 @@ export default function RolesPage() {
             ),
         },
         {
-            uid: "createdAt",
-            name: "Created At",
+            key: "createdAt",
+            label: "Created At",
             sortable: true,
             render: (role: Role) =>
                 new Date(role.createdAt).toLocaleDateString("vi-VN"),
         },
+    ];
+
+    const actions: TableAction<Role>[] = [
         {
-            uid: "actions",
-            name: "Actions",
-            render: (role: Role) => (
-                <div className="relative flex items-center gap-2">
-                    <span
-                        className="text-default-400 cursor-pointer text-lg active:opacity-50"
-                        onClick={() => handleEdit(role)}
-                        title="Edit role"
-                    >
-                        <EditIcon />
-                    </span>
-                    <span
-                        className="text-danger cursor-pointer text-lg active:opacity-50"
-                        onClick={() => handleDeleteClick(role.roleCode)}
-                        title="Delete role"
-                    >
-                        <DeleteIcon />
-                    </span>
-                </div>
-            ),
+            key: "edit",
+            label: "Edit",
+            icon: <EditIcon className="size-4" />,
+            onClick: (role) => handleEdit(role),
+        },
+        {
+            key: "delete",
+            label: "Delete",
+            icon: <DeleteIcon className="size-4" />,
+            color: "danger",
+            onClick: (role) => handleDeleteClick(role.roleCode),
         },
     ];
 
@@ -164,33 +165,40 @@ export default function RolesPage() {
                 action={{
                     label: "Add Role",
                     onClick: handleCreate,
-                    icon: <PlusIcon />,
                 }}
             />
 
             <div className="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
                 <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row">
-                    <Input
-                        className="w-full sm:max-w-[44%]"
-                        placeholder="Search roles..."
-                        value={keyword}
-                        onChange={(e) => setKeyword(e.target.value)}
-                        startContent={
+                    <div className="relative w-full sm:max-w-[44%]">
+                        <div className="absolute top-1/2 left-3 -translate-y-1/2">
                             <Icon
                                 icon="solar:magnifer-linear"
                                 className="text-default-400"
                             />
-                        }
-                    />
+                        </div>
+                        <Input
+                            className="w-full pl-10"
+                            placeholder="Search roles..."
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                        />
+                    </div>
                 </div>
 
-                <DataTable
+                <Table
                     columns={columns}
-                    data={data?.data?.items || []}
-                    totalPages={data?.data?.paging?.totalPages || 1}
-                    page={pageIndex}
-                    onPageChange={setPageIndex}
+                    items={data?.data?.items || []}
+                    getRowKey={(item) => item.roleCode}
                     isLoading={isLoading}
+                    pagination={{
+                        page: pageIndex,
+                        pageSize: pageSize,
+                        total: data?.data?.paging?.totalItems || 0,
+                        onPageChange: setPageIndex,
+                        onPageSizeChange: setPageSize,
+                    }}
+                    actions={actions}
                 />
             </div>
 

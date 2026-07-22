@@ -26,8 +26,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Queries
             public DateTime CreatedAt { get; set; }
         }
     }
-
-
+    #endregion
 
     #region Handler
 

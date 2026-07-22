@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Chip } from "@heroui/react";
+import { Chip, Table } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
 const rows = [

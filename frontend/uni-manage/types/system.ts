@@ -29,7 +29,8 @@ export interface CreateUserPayload {
     email: string;
     employeeCode?: string;
     status: string;
-    roleCode?: string;
+    roleCodes?: string[];
+    password?: string;
 }
 
 /**

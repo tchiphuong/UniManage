@@ -1,9 +1,10 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
-import { User } from "@heroui/user";
-import { Comment } from "@/types";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+import { User } from "@heroui/user";
+import { useTranslation } from "react-i18next";
+
+import { Comment } from "@/types";
 
 interface RecentCommentsProps {
     comments: Comment[];

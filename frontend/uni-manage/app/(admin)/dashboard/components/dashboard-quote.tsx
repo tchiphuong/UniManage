@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
-    ChatBubbleBottomCenterTextIcon,
     ArrowPathIcon,
+    ChatBubbleBottomCenterTextIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@heroui/react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
 import { Quote } from "@/types";
 
 export function DashboardQuote() {

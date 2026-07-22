@@ -1,16 +1,18 @@
 "use client";
 
-import React, {
-    createContext,
-    useContext,
-    useState,
-    useCallback,
-    ReactNode,
-} from "react";
 import { AlertDialog } from "@heroui/react";
-import { Button } from "@/components/common";
 // import { Icon } from "@iconify/react"; // Not needed if using AlertDialog.Icon
 import { useTranslations } from "next-intl";
+import React, {
+    createContext,
+    ReactNode,
+    useCallback,
+    useContext,
+    useMemo,
+    useState,
+} from "react";
+
+import { Button } from "@/components/common";
 
 // 1. Definition of Confirm Options
 export interface ConfirmOptions {
@@ -30,7 +32,9 @@ type ConfirmContextType = {
 const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
 
 // 3. Provider Component
-export function ConfirmProvider({ children }: Readonly<{ children: ReactNode }>) {
+export function ConfirmProvider({
+    children,
+}: Readonly<{ children: ReactNode }>) {
     const t = useTranslations("common.confirmDialog");
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState<ConfirmOptions>({
@@ -100,8 +104,10 @@ export function ConfirmProvider({ children }: Readonly<{ children: ReactNode }>)
         return "primary";
     };
 
+    const contextValue = useMemo(() => ({ confirm }), [confirm]);
+
     return (
-        <ConfirmContext.Provider value={{ confirm }}>
+        <ConfirmContext.Provider value={contextValue}>
             {children}
             <AlertDialog isOpen={isOpen} onOpenChange={handleOpenChange}>
                 <AlertDialog.Backdrop />
@@ -122,7 +128,10 @@ export function ConfirmProvider({ children }: Readonly<{ children: ReactNode }>)
                             <Button variant="tertiary" onPress={handleCancel}>
                                 {options.cancelLabel || t("btn.cancel")}
                             </Button>
-                            <Button variant={getButtonVariant()} onPress={handleConfirm}>
+                            <Button
+                                variant={getButtonVariant()}
+                                onPress={handleConfirm}
+                            >
                                 {options.confirmLabel || t("btn.confirm")}
                             </Button>
                         </AlertDialog.Footer>

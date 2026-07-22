@@ -1,29 +1,17 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
-import { usePathname, useSearchParams } from "next/navigation";
-import type { Locale } from "@/i18n/config";
-import Cookies from "js-cookie";
-import { Select, ListBox } from "@heroui/react";
-import type { Key } from "react";
+import { Dropdown, Button } from "@/components/common";
 import { Icon } from "@iconify/react";
+import Cookies from "js-cookie";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import type { Key } from "react";
+
+import type { Locale } from "@/i18n/config";
 
 interface LanguageSwitcherProps {
     className?: string;
 }
-
-const languages = [
-    {
-        code: "vi" as Locale,
-        nameKey: "languageVietnamese",
-        flag: "🇻🇳",
-    },
-    {
-        code: "en" as Locale,
-        nameKey: "languageEnglish",
-        flag: "🇺🇸",
-    },
-];
 
 export function LanguageSwitcher({
     className = "",
@@ -52,37 +40,29 @@ export function LanguageSwitcher({
 
     return (
         <div className={`relative ${className}`}>
-            <Select
-                aria-label={t("languageSelect")}
-                value={locale}
-                onChange={handleSelectionChange}
-                className="w-48"
-            >
-                <Select.Trigger>
-                    <Select.Value>
-                        {({ defaultChildren, isPlaceholder, state }) => {
-                            // Cập nhật để khi đóng Select vẫn hiển thị cờ bên ngoài
-                            const selectedItem = state.selectedItems[0];
-                            if (isPlaceholder || !selectedItem)
-                                return defaultChildren;
-                            return (
-                                <div className="flex items-center gap-2">
-                                    <Icon
-                                        icon={`circle-flags:${selectedItem.key === "vi" ? "vn" : "us"}`}
-                                        className="text-xl"
-                                    />
-                                    <span>{selectedItem.textValue}</span>
-                                </div>
-                            );
-                        }}
-                    </Select.Value>
-                    <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                    <ListBox>
-                        <ListBox.Item
+            <Dropdown>
+                <Dropdown.Trigger>
+                    <div className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm font-medium opacity-80 transition-opacity hover:opacity-100 focus:outline-none">
+                        <Icon
+                            icon={`circle-flags:${locale === "vi" ? "vn" : "us"}`}
+                            className="text-xl"
+                        />
+                        <span>
+                            {locale === "vi"
+                                ? t("languageVietnamese")
+                                : t("languageEnglish")}
+                        </span>
+                    </div>
+                </Dropdown.Trigger>
+                <Dropdown.Popover>
+                    <Dropdown.Menu
+                        aria-label={t("languageSelect")}
+                        onAction={(key) => handleSelectionChange(key)}
+                        selectedKeys={new Set([locale])}
+                        selectionMode="single"
+                    >
+                        <Dropdown.Item
                             key="vi"
-                            id="vi"
                             textValue={t("languageVietnamese")}
                         >
                             <div className="flex items-center gap-2">
@@ -92,11 +72,9 @@ export function LanguageSwitcher({
                                 />
                                 <span>{t("languageVietnamese")}</span>
                             </div>
-                            <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                        <ListBox.Item
+                        </Dropdown.Item>
+                        <Dropdown.Item
                             key="en"
-                            id="en"
                             textValue={t("languageEnglish")}
                         >
                             <div className="flex items-center gap-2">
@@ -106,11 +84,10 @@ export function LanguageSwitcher({
                                 />
                                 <span>{t("languageEnglish")}</span>
                             </div>
-                            <ListBox.ItemIndicator />
-                        </ListBox.Item>
-                    </ListBox>
-                </Select.Popover>
-            </Select>
+                        </Dropdown.Item>
+                    </Dropdown.Menu>
+                </Dropdown.Popover>
+            </Dropdown>
         </div>
     );
 }

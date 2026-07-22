@@ -83,7 +83,7 @@ public class SyUsersController : BaseController
     /// </summary>
     [HttpGet("{uuid}/roles")]
     [PermissionAuthorize(CoreFunction.SyUser, CoreAction.View)]
-    public async Task<ActionResult<ApiResponse<List<SyUserRoleModel>>>> GetRoles(Guid uuid, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<List<GetUserRolesQuery.Response>>>> GetRoles(Guid uuid, CancellationToken cancellationToken)
     {
         var query = new GetUserRolesQuery { Uuid = uuid, HeaderInfo = HeaderInfo };
         var result = await _mediator.Send(query, cancellationToken);

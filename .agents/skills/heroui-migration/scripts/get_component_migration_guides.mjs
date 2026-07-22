@@ -31,7 +31,7 @@ async function fetchDoc(filename) {
 
   try {
     const response = await fetch(url, {
-      headers: {"User-Agent": "HeroUI-Migration-Skill/1.0"},
+      headers: { "User-Agent": "HeroUI-Migration-Skill/1.0" },
       signal: AbortSignal.timeout(30000),
     });
 
@@ -49,9 +49,15 @@ async function main() {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
-    console.error("Usage: node get_component_migration_guides.mjs <Component1> [Component2] ...");
-    console.error("Example: node get_component_migration_guides.mjs button card modal");
-    console.error("\nUse list_migration_guides.mjs to see all available components.");
+    console.error(
+      "Usage: node get_component_migration_guides.mjs <Component1> [Component2] ...",
+    );
+    console.error(
+      "Example: node get_component_migration_guides.mjs button card modal",
+    );
+    console.error(
+      "\nUse list_migration_guides.mjs to see all available components.",
+    );
     process.exit(1);
   }
 
@@ -66,7 +72,9 @@ async function main() {
 
     try {
       const content = await fetchDoc(filename);
-      const title = component.charAt(0).toUpperCase() + component.slice(1).replace(/-/g, " ");
+      const title =
+        component.charAt(0).toUpperCase() +
+        component.slice(1).replace(/-/g, " ");
 
       results.push({
         component,
@@ -83,7 +91,9 @@ async function main() {
   const failed = results.filter((r) => r.error);
 
   if (failed.length > 0) {
-    failed.forEach((r) => console.error(`# Error for ${r.component}: ${r.error}`));
+    failed.forEach((r) =>
+      console.error(`# Error for ${r.component}: ${r.error}`),
+    );
   }
 
   if (results.length === 1) {
@@ -97,7 +107,11 @@ async function main() {
     }
   } else {
     const output = results
-      .map((r) => (r.content ? r.content : `# ${r.component} Migration Guide\n\nError: ${r.error}`))
+      .map((r) =>
+        r.content
+          ? r.content
+          : `# ${r.component} Migration Guide\n\nError: ${r.error}`,
+      )
       .join("\n\n---\n\n");
 
     console.log(output);

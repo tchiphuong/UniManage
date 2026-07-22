@@ -1,89 +1,104 @@
 ---
 name: HeroUI v3 Frontend Developer
-description: Hướng dẫn tiêu chuẩn để phát triển giao diện frontend sử dụng HeroUI v3 (React 19 & Tailwind CSS v4)
+description: Standard guidelines for frontend UI development using HeroUI v3 (React 19 & Tailwind CSS v4)
 ---
 
 # HeroUI v3 Guidelines
 
-Đây là tài liệu hướng dẫn bắt buộc (Mandatory Rules) dành cho các AI Agent khi viết mã giao diện (UI) cho dự án frontend (Next.js & Vite) sử dụng thư viện **HeroUI v3** (trước đây là NextUI).
+This is a mandatory guidance document (Mandatory Rules) for AI Agents when writing User Interface (UI) code for frontend projects (Next.js & Vite) using the **HeroUI v3** library (formerly NextUI).
 
-## 1. Công nghệ nền tảng
-- **UI Library**: HeroUI v3 (`@heroui/react` phiên bản 3.x trở lên).
+## 1. Core Technologies
+
+- **UI Library**: HeroUI v3 (`@heroui/react` version 3.x and above).
 - **Styling**: Tailwind CSS v4.
-- **Base Components**: Được xây dựng trên nền tảng **React Aria Components**, đảm bảo tối ưu Keyboard Navigation, Focus Management và Accessibility.
-- **Framework**: Hỗ trợ đồng thời Next.js 15 (App Router, React 19) và Vite (React-Router, React 18+).
+- **Base Components**: Built on top of **React Aria Components**, ensuring optimal Keyboard Navigation, Focus Management, and Accessibility.
+- **Framework**: Supports both Next.js 15 (App Router, React 19) and Vite (React-Router, React 18+).
 
-## 2. Quy tắc sử dụng Component
+## 2. Component Usage Rules
 
-### 2.1. Cấu hình mặc định (Wrappers)
-Để đảm bảo tính nhất quán (consistency) toàn hệ thống và tránh giao diện bị bo tròn quá mức, **luôn ưu tiên sử dụng các Component Wrapper** đã được tuỳ chỉnh sẵn trong dự án thay vì import trực tiếp từ `@heroui/react` nếu chúng tồn tại:
+### 2.1. Default Configurations (Wrappers)
 
-- **Input / Button / Table / Select**: 
-  - Import từ thư mục: `@/components/ui/...`
-  - Ví dụ: `import { Input } from "@/components/ui/input";`
-  - Các Wrapper này đã được tự động gán cấu hình: `radius="sm"`, `variant="bordered"` (với Input) để tạo cảm giác chuyên nghiệp, góc cạnh.
+To ensure system-wide consistency and avoid excessively rounded interfaces, **always prioritize using the pre-configured Component Wrappers** available in the project instead of importing directly from `@heroui/react` if they exist:
 
-### 2.2. Import trực tiếp
-Đối với các component chưa có Wrapper (như Dropdown, Avatar, Badge, ScrollShadow, Tooltip, Navbar...), import trực tiếp từ HeroUI:
+- **Input / Button / Table / Select / Modal / ...**:
+  - Import path: `@/components/common`
+  - Example: `import { Input, Button, Table } from "@/components/common";`
+  - Strictly DO NOT import directly from `@heroui/react` or `@nextui-org/react` for components that already exist in the common folder.
+
+### 2.2. Direct Imports (Strict Rule)
+
+Absolutely DO NOT import any component directly from `@heroui/react` into pages or business logic components.
+
+- If a HeroUI component (such as Dropdown, Avatar, Badge, etc.) is not yet available in `@/components/common`, **you MUST create a Wrapper for it in the `components/common` directory first**, and then export it via `index.ts`.
+- Purpose: Centralize all UI Framework dependencies in a single location (`common`), making it easier to modify default configurations (e.g., radius, animations) for the entire project in the future.
+
 ```tsx
-// ✅ ĐÚNG: Import từ thư viện gộp (ưu tiên)
-import { Dropdown, Avatar, Badge, Tooltip, ScrollShadow } from "@heroui/react";
+// ✅ CORRECT: Always import from common
+import { Dropdown, Avatar } from "@/components/common";
 
-// ❌ SAI: KHÔNG sử dụng nextui-org (phiên bản cũ)
-import { Dropdown } from "@nextui-org/react"; 
+// ❌ INCORRECT: Direct import from the UI library into app logic
+import { Dropdown } from "@heroui/react";
 ```
 
-## 3. Quy tắc Thiết kế (Design Principles)
+## 3. HeroUI v3 Updates (Breaking Changes)
 
-1. **Radius & Sharpness**: 
-   - CSS Core của HeroUI trong `hero.js` đã được tinh chỉnh (`radius.medium = "0.375rem"`).
-   - Hạn chế ghi đè (override) radius bằng các class tailwind (như `rounded-2xl` hay `rounded-full`) ngoại trừ Avatar hoặc các nhãn dán (Badge) đặc biệt.
+HeroUI v3 introduces major changes that must be strictly followed:
+
+1. **Button Component API**:
+   - The `color` prop has been removed. To use colored buttons, use the `variant` prop (e.g., `variant="danger"` or `variant="primary"`).
+   - The `startContent` and `endContent` props have been removed. Place icons directly inside the `children`.
+
+2. **Table Empty State**:
+   - Due to React Aria requirements, the number of `Cell` elements must perfectly match the number of `Column` elements.
+   - Absolutely DO NOT write custom `if (empty) render 1 row` logic.
+   - You MUST use the `renderEmptyState` prop of the Table component to handle the display when there is no data.
+
+3. **Compound Components**:
+   - Many components (Pagination, Dropdown, Modal...) have migrated to the Compound Components pattern. Always refer to the v3 documentation to write the correct structure (e.g., `<Pagination.Content><Pagination.Item>...`).
+
+## 4. Design Principles
+
+1. **Radius & Sharpness**:
+   - The HeroUI Core CSS in `hero.js` has been finely tuned (`radius.medium = "0.375rem"`).
+   - Avoid overriding the radius using tailwind classes (like `rounded-2xl` or `rounded-full`) except for Avatars or specific Badges.
 
 2. **Scrollbar & Overflow**:
-   - Thay vì dùng `overflow-y-auto` thô kệch, **luôn ưu tiên sử dụng `<ScrollShadow>`** cho các vùng nội dung dài (như danh sách Menu, danh sách thông báo) để tạo hiệu ứng fade mượt mà ở hai đầu vùng cuộn.
+   - Instead of using raw `overflow-y-auto`, **always prioritize using `<ScrollShadow>`** for long content areas to create a smooth fade effect at the edges.
 
 3. **Icons**:
-   - **Header / Các khu vực tĩnh giản đơn**: Sử dụng thư viện `@heroicons/react` (Outline cho trạng thái bình thường, Solid cho `Active`).
-   - **Menu, Dashboard / Các khu vực nổi bật**: Sử dụng bộ icon hình ảnh **Icons8 Liquid Glass Color** (icon 3D có màu sắc).
-     - Các file PNG này được lưu trữ cục bộ tại `public/icons/`.
-     - Sử dụng thẻ `<img src="/icons/[tên-icon].png" />`.
-     - Tuyệt đối không load icon qua URL mạng để đảm bảo hiệu suất.
+   - **Standard areas**: Use the `@heroicons/react/24/outline` library.
+   - **Featured areas**: Use the `<img src="/icons/[icon-name].png" />` tag with local icons.
 
-4. **Biến số và Cấu hình (App Config)**:
-   - Các con số mặc định (Page size, Date format, Base URL) **TUYỆT ĐỐI KHÔNG hard-code** vào component.
-   - Luôn gọi từ file cấu hình: `import { appConfig } from "@/config/app.config";` hoặc `lib/config/app.config.ts`.
+4. **Variables and Configurations (App Config)**:
+   - Default numbers (Page size, Date format, Base URL) MUST NEVER be hard-coded into components.
+   - Always call from the configuration file: `import { appConfig } from "@/config/app.config";`.
 
-## 4. Đặc thù Next.js vs Vite
+## 5. Next.js vs Vite Specifics
 
-Khi viết code sử dụng HeroUI Link hoặc Provider, lưu ý Router khác nhau:
-- **Next.js (uni-manage)**: Dùng `useRouter` từ `next/navigation` hoặc `@/i18n/navigation`. Thường kết hợp thẻ `<Link>` của Next.
-- **Vite (dashboard_tailwind_repo)**: Dùng `useNavigate` từ `react-router-dom` và thẻ `<Link>` của React-Router.
-## 5. HeroUI v3 & Pro Critical Rules (Agent Skills)
+- **Next.js (uni-manage)**: Use `useRouter` from `next/navigation` or `@/i18n/navigation`. Often combined with the Next `<Link>` tag.
+- **Vite (dashboard_tailwind_repo)**: Use `useNavigate` from `react-router-dom` and the React-Router `<Link>` tag.
 
-Dựa trên bộ quy chuẩn chính thức từ HeroUI Pro (`heroui-react-pro` và `heroui-pro-design-taste`), hãy tuân thủ nghiêm ngặt các nguyên tắc sau:
+## 6. HeroUI v3 & Pro Critical Rules (Agent Skills)
+
+Based on the official standards from HeroUI Pro:
 
 1. **Event Handlers (React Aria)**:
-   - Sử dụng **`onPress`** thay vì `onClick` cho các tương tác nhấp chuột (click/touch). Đây là tiêu chuẩn bắt buộc của React Aria để hỗ trợ đa thiết bị (chuột, cảm ứng, bàn phím) một cách hoàn hảo.
+   - Use **`onPress`** instead of `onClick` for click/touch interactions. This is a mandatory standard of React Aria.
 
-2. **Compound Components**:
-   - HeroUI v3 sử dụng mạnh mẽ mô hình Compound Components (ví dụ: `<Dropdown><DropdownTrigger>...</DropdownTrigger><DropdownMenu>...</DropdownMenu></Dropdown>`). Luôn khai báo đầy đủ các thành phần con theo tài liệu.
+2. **Styling & CSS System**:
+   - Leverage the BEM classes system (`base`, `wrapper`, `content`...) through the `classNames={{ ... }}` prop.
+   - Avoid using raw custom CSS or overly complex nested ternary operators in `className`.
 
-3. **Styling & CSS System**:
-   - Tận dụng hệ thống BEM classes (`base`, `wrapper`, `content`, `label`...) thông qua prop `classNames={{ ... }}` để tuỳ chỉnh sâu vào component thay vì bọc thẻ `div` lồng nhau.
-   - Hạn chế sử dụng custom CSS thuần. Tuân thủ thiết kế semantic (ngữ nghĩa) hơn là visual (thị giác).
+3. **Design Taste**:
+   - **Generous whitespace**: Always leave ample breathing room (padding/margin).
+   - **Subtle depth**: Use soft, light shadows.
+   - **Minimalism**: Avoid overusing striking colors.
 
-4. **Design Taste (Triết lý thiết kế)**:
-   - **Khoảng trắng (Generous whitespace)**: Luôn để không gian thở (padding/margin) rộng rãi.
-   - **Độ sâu (Subtle depth)**: Sử dụng shadow nhẹ nhàng, không dùng shadow quá gắt.
-   - **Tối giản (Minimalism)**: Tránh lạm dụng màu sắc nổi bật. Giữ giao diện gọn gàng, sử dụng màu nhấn (Primary/Success/Danger) đúng lúc.
+> Summary: Always use **HeroUI v3**, prioritize using **Wrappers in `@/components/common`**, follow the correct v3 API (do not use color/startContent for Buttons), use `onPress` instead of `onClick`, and adhere to a minimalist design style.
 
-> Tóm tắt: Luôn dùng **HeroUI v3**, ưu tiên dùng **Wrapper trong `@/components/ui`**, dùng `onPress` thay vì `onClick`, và tuân thủ phong cách thiết kế tối giản, nhiều khoảng trắng.
+## 7. Production-Grade Automation & E2E Testing
 
-## 6. Production-Grade Automation & E2E Testing
-
-Khi xây dựng mã kiểm thử tự động (Auto Test) cho dự án product, tuyệt đối tuân thủ chuẩn Enterprise:
-1. **Công cụ**: Sử dụng **Playwright** cho toàn bộ quá trình E2E Testing.
-2. **Page Object Model (POM)**: Tuyệt đối không viết test script lộn xộn (spaghetti code). Phải tách riêng logic tương tác UI ra các class POM đặt trong thư mục `e2e-tests/pages/` để dễ tái sử dụng và bảo trì.
-3. **Môi trường & Biến số**: Không hardcode thông tin nhạy cảm (username, password) vào mã nguồn test. Luôn đọc từ biến môi trường (`process.env`) hoặc dùng Fixtures/Mock data.
-4. **Bối cảnh (Isolation)**: Tận dụng cơ chế tự động cô lập (isolated context) của Playwright. Mỗi test case (`test()`) tự động có một session/trình duyệt độc lập. Không lạm dụng `page.context().clearCookies()` một cách dư thừa trong `beforeEach`.
-5. **CI/CD Ready**: Cấu hình test chạy song song (`fullyParallel: true`) và cơ chế chụp ảnh/quay video khi lỗi (`screenshot: 'only-on-failure'`) để sẵn sàng tích hợp vào Github Actions/Gitlab CI.
+1. **Tools**: Use **Playwright** for the entire E2E Testing process.
+2. **Page Object Model (POM)**: Isolate UI interaction logic into POM classes located in the `e2e-tests/pages/` directory.
+3. **Environments & Variables**: Never hardcode sensitive information. Always read from environment variables (`process.env`).
+4. **Isolation**: Leverage Playwright's automatic isolated context mechanism.

@@ -1,7 +1,9 @@
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { useDebounce } from "./use-debounce";
+
 import { PagedResponse, PagingParams } from "@/types";
+
+import { useDebounce } from "./use-debounce";
 
 interface UseDataTableProps<T, TParams extends PagingParams> {
     queryKey: string;

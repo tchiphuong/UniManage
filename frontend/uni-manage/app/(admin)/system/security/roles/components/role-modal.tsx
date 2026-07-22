@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Button, Form, Input, Modal, Switch, Textarea } from "@heroui/react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Role, RoleService } from "@/services/role.service";
-import { Icon } from "@iconify/react";
+import {
+    Button,
+    Form,
+    Modal,
+    Switch,
+    TextArea,
+    TextField,
+    Label,
+    Input,
+    FieldError,
+} from "@heroui/react";
 import { addToast } from "@heroui/toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Icon } from "@iconify/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as z from "zod";
+
+import { Role, RoleService } from "@/services/role.service";
 
 const roleSchema = z.object({
     roleCode: z
@@ -193,16 +204,19 @@ export function RoleModal({ isOpen, onClose, role }: RoleModalProps) {
                                     name="roleCode"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <TextField
                                             {...field}
-                                            label="Role Code"
-                                            placeholder="e.g. ADMIN_SYS"
-                                            errorMessage={errors.roleCode?.message?.toString()}
                                             isInvalid={!!errors.roleCode}
-                                            variant="bordered"
-                                            labelPlacement="outside"
-                                            isDisabled={isEdit} // Role Code is primary key based, typically immutable
-                                        />
+                                            isDisabled={isEdit}
+                                        >
+                                            <Label>Role Code</Label>
+                                            <Input placeholder="e.g. ADMIN_SYS" />
+                                            {errors.roleCode && (
+                                                <FieldError>
+                                                    {errors.roleCode.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
                                     )}
                                 />
 
@@ -210,15 +224,18 @@ export function RoleModal({ isOpen, onClose, role }: RoleModalProps) {
                                     name="roleName"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <TextField
                                             {...field}
-                                            label="Role Name"
-                                            placeholder="e.g. System Administrator"
-                                            errorMessage={errors.roleName?.message?.toString()}
                                             isInvalid={!!errors.roleName}
-                                            variant="bordered"
-                                            labelPlacement="outside"
-                                        />
+                                        >
+                                            <Label>Role Name</Label>
+                                            <Input placeholder="e.g. System Administrator" />
+                                            {errors.roleName && (
+                                                <FieldError>
+                                                    {errors.roleName.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
                                     )}
                                 />
 
@@ -226,15 +243,18 @@ export function RoleModal({ isOpen, onClose, role }: RoleModalProps) {
                                     name="description"
                                     control={control}
                                     render={({ field }) => (
-                                        <Textarea
+                                        <TextField
                                             {...field}
-                                            label="Description"
-                                            placeholder="Enter role description"
-                                            errorMessage={errors.description?.message?.toString()}
                                             isInvalid={!!errors.description}
-                                            variant="bordered"
-                                            labelPlacement="outside"
-                                        />
+                                        >
+                                            <Label>Description</Label>
+                                            <TextArea placeholder="Enter role description" />
+                                            {errors.description && (
+                                                <FieldError>
+                                                    {errors.description.message}
+                                                </FieldError>
+                                            )}
+                                        </TextField>
                                     )}
                                 />
 
@@ -245,13 +265,12 @@ export function RoleModal({ isOpen, onClose, role }: RoleModalProps) {
                                         field: { value, onChange, ...field },
                                     }) => (
                                         <Switch
-                                            {...field}
                                             isSelected={value}
-                                            onValueChange={onChange}
+                                            onChange={onChange}
                                         >
                                             <Switch.Content>
                                                 <Switch.Control>
-                                                    <Switch.Indicator />
+                                                    <Switch.Thumb />
                                                 </Switch.Control>
                                                 Active Status
                                             </Switch.Content>

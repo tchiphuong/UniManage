@@ -1,8 +1,9 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
-import { Activity } from "@/types";
 import { ClockIcon } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
+
+import { Activity } from "@/types";
 
 interface ActivityTimelineProps {
     activities: Activity[];

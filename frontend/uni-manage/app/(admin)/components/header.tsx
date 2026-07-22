@@ -1,54 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
-import useSWR from "swr";
-import { useTheme } from "next-themes";
-import { useSidebar } from "@/contexts/sidebar-context";
-import { Notification, User } from "@/types";
-import { Dropdown, Avatar, Button } from "@heroui/react";
 import {
-    SunIcon,
-    MoonIcon,
-    BellIcon,
-    ChevronDownIcon,
-    UserIcon,
-    Cog6ToothIcon,
     ArrowRightStartOnRectangleIcon,
+    BellIcon,
+    Cog6ToothIcon,
+    MoonIcon,
+    SunIcon,
+    UserIcon,
 } from "@heroicons/react/24/outline";
+import { Avatar, Button, Dropdown } from "@/components/common";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+
+import { useNavbarContext } from "@/contexts/navbar-context";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "@/i18n/navigation";
+import { Notification } from "@/types";
 
 export function Header() {
     const t = useTranslations();
-    const { theme, setTheme, resolvedTheme } = useTheme();
+    const { setTheme, resolvedTheme } = useTheme();
     const darkMode = resolvedTheme === "dark";
     const toggleDarkMode = () => setTheme(darkMode ? "light" : "dark");
-    const { sidebarOpen, toggleSidebar } = useSidebar();
+    const { navbarOpen, toggleNavbar } = useNavbarContext();
     const router = useRouter();
+    const { user, logout } = useAuth();
 
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
-    // Fetch notifications with SWR
-    const { data: notificationsData, mutate: mutateNotifications } = useSWR<
-        Notification[]
-    >(
-        "https://jsonplaceholder.typicode.com/comments?_limit=5",
-        (url) => fetch(url).then((res) => res.json()),
-        { revalidateOnFocus: false, dedupingInterval: 600000 },
-    );
-    const notifications = notificationsData || [];
-
-    // Fetch user with SWR
-    const { data: userData } = useSWR(
-        "https://randomuser.me/api/",
-        (url) => fetch(url).then((res) => res.json()),
-        { revalidateOnFocus: false, dedupingInterval: 600000 },
-    );
-    const user: User | null = userData?.results?.[0] || null;
+    // Placeholder for notifications until real API is ready
+    const [notifications, setNotifications] = useState<Notification[]>([]);
 
     const markAllAsRead = () => {
-        mutateNotifications([], false);
+        setNotifications([]);
     };
 
     // User menu handlers
@@ -60,8 +46,8 @@ export function Header() {
         router.push("/dashboard/settings");
     };
 
-    const handleSignOut = () => {
-        router.push("/auth/login");
+    const handleSignOut = async () => {
+        await logout();
     };
 
     const renderThemeIcon = () => {
@@ -79,22 +65,26 @@ export function Header() {
                     <div className="flex items-center space-x-4">
                         {/* Hamburger/X button */}
                         <button
-                            onClick={toggleSidebar}
+                            onClick={toggleNavbar}
                             className="text-muted hover:text-foreground relative h-8 w-8 cursor-pointer transition-colors focus:outline-none"
                         >
                             <span
-                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${
-                                    sidebarOpen ? "top-3.5 rotate-45" : "top-2"
+                                className={`absolute block h-0.5 transform rounded-full bg-current transition-all duration-300 ease-in-out ${
+                                    navbarOpen
+                                        ? "top-3.5 w-6 rotate-45"
+                                        : "top-2 w-5"
                                 }`}
                             />
                             <span
-                                className={`absolute block h-0.5 w-6 rounded-full bg-current transition-all duration-300 ease-in-out ${
-                                    sidebarOpen ? "opacity-0" : "top-4"
+                                className={`absolute block h-0.5 rounded-full bg-current transition-all duration-300 ease-in-out ${
+                                    navbarOpen ? "w-6 opacity-0" : "top-4 w-5"
                                 }`}
                             />
                             <span
-                                className={`absolute block h-0.5 w-6 transform rounded-full bg-current transition duration-300 ease-in-out ${
-                                    sidebarOpen ? "top-3.5 -rotate-45" : "top-6"
+                                className={`absolute block h-0.5 transform rounded-full bg-current transition-all duration-300 ease-in-out ${
+                                    navbarOpen
+                                        ? "top-3.5 w-6 -rotate-45"
+                                        : "top-6 w-5"
                                 }`}
                             />
                         </button>
@@ -162,7 +152,7 @@ export function Header() {
                                             key="empty"
                                             className="text-muted py-4 text-center"
                                         >
-                                            No new notifications
+                                            {t("common.global.lbl.noResults")}
                                         </Dropdown.Item>
                                     ) : (
                                         notifications
@@ -210,24 +200,33 @@ export function Header() {
                                         size="sm"
                                     >
                                         <Avatar.Image
-                                            src={user?.picture?.medium || ""}
-                                            alt={user?.name?.first || "User"}
+                                            src=""
+                                            alt={
+                                                user?.displayName ||
+                                                user?.userCode ||
+                                                t("common.menu.lbl.users")
+                                            }
                                         />
                                         <Avatar.Fallback>
-                                            {user?.name?.first?.[0] || "U"}
+                                            {user?.displayName?.[0] ||
+                                                user?.userCode?.[0]?.toUpperCase() ||
+                                                t("common.menu.lbl.users")[0]}
                                         </Avatar.Fallback>
                                     </Avatar>
                                     <div className="hidden flex-col items-start sm:flex">
                                         <span className="text-foreground line-clamp-1 text-left text-sm font-medium">
+                                            {user?.displayName ||
+                                                user?.userCode ||
+                                                t("common.global.lbl.loading")}
+                                        </span>
+                                        <span className="text-muted line-clamp-1 text-left text-xs">
                                             {user
-                                                ? `${user.name.first} ${user.name.last}`
+                                                ? user.email ||
+                                                  user.roleCode ||
+                                                  "—"
                                                 : t(
                                                       "common.global.lbl.loading",
                                                   )}
-                                        </span>
-                                        <span className="text-muted line-clamp-1 text-left text-xs">
-                                            {user?.email ||
-                                                t("common.global.lbl.loading")}
                                         </span>
                                     </div>
                                 </div>
@@ -239,15 +238,18 @@ export function Header() {
                                         className="h-14 gap-2 opacity-100 sm:hidden"
                                     >
                                         <p className="font-semibold">
+                                            {user?.displayName ||
+                                                user?.userCode ||
+                                                t("common.global.lbl.loading")}
+                                        </p>
+                                        <p className="text-muted text-xs">
                                             {user
-                                                ? `${user.name.first} ${user.name.last}`
+                                                ? user.email ||
+                                                  user.roleCode ||
+                                                  "—"
                                                 : t(
                                                       "common.global.lbl.loading",
                                                   )}
-                                        </p>
-                                        <p className="text-muted text-xs">
-                                            {user?.email ||
-                                                t("common.global.lbl.loading")}
                                         </p>
                                     </Dropdown.Item>
                                     <Dropdown.Item

@@ -1,5 +1,5 @@
-export * from "./auth";
 export * from "./api";
+export * from "./auth";
 
 // Menu groups
 export type MenuGroup =
@@ -22,12 +22,12 @@ export type MenuGroup =
     | "system";
 
 // Menu types
-export interface MenuItem {
+export interface NavbarItem {
     id?: string;
     title: string;
     icon?: string;
     link?: string;
-    children?: MenuItem[];
+    children?: NavbarItem[];
     open?: boolean;
     badge?: number;
     shortcut?: string;
@@ -151,7 +151,7 @@ export interface Quote {
     author: string;
 }
 
-// Todo types
+// To-do types
 export interface Todo {
     id: number;
     todo: string;

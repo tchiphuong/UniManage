@@ -1,17 +1,24 @@
 "use client";
 
+import { addToast } from "@heroui/toast";
+import { Icon } from "@iconify/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Column, DataTable } from "@/components/common/data-table";
-import { UserService, User } from "@/services/user.service";
+
+import {
+    ConfirmModal,
+    Table,
+    TableColumn,
+    TableAction,
+    Chip,
+    Input,
+} from "@/components/common";
 import { PageHeader } from "@/components/page-header-i18n";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Input, Chip } from "@heroui/react";
-import { Icon } from "@iconify/react";
+import { User, UserService } from "@/services/user.service";
+
 import { UserModal } from "./components/user-modal";
-import { ConfirmModal } from "@/components/common/confirm-modal";
-import { addToast } from "@heroui/toast";
 
 // Icon components
 const EditIcon = (props: any) => <Icon icon="solar:pen-bold" {...props} />;
@@ -99,23 +106,18 @@ export default function UsersPage() {
         }
     };
 
-    const columns: Column<User>[] = [
+    const columns: TableColumn<User>[] = [
         {
-            uid: "username",
-            name: "Username",
+            key: "username",
+            label: "Username",
         },
         {
-            uid: "displayName",
-            name: "Display Name",
+            key: "displayName",
+            label: "Display Name",
         },
         {
-            uid: "displayName",
-            name: "Display Name",
-        },
-        // Email column removed
-        {
-            uid: "status",
-            name: "Status",
+            key: "status",
+            label: "Status",
             render: (user: User) => (
                 <Chip
                     className="capitalize"
@@ -128,32 +130,26 @@ export default function UsersPage() {
             ),
         },
         {
-            uid: "createdAt",
-            name: "Created At",
+            key: "createdAt",
+            label: "Created At",
             render: (user: User) =>
                 new Date(user.createdAt).toLocaleDateString("vi-VN"),
         },
+    ];
+
+    const actions: TableAction<User>[] = [
         {
-            uid: "actions",
-            name: "Actions",
-            render: (user: User) => (
-                <div className="relative flex items-center gap-2">
-                    <span
-                        className="text-default-400 cursor-pointer text-lg active:opacity-50"
-                        onClick={() => handleEdit(user)}
-                        title="Edit user"
-                    >
-                        <EditIcon />
-                    </span>
-                    <span
-                        className="text-danger cursor-pointer text-lg active:opacity-50"
-                        onClick={() => handleDeleteClick(user.id)}
-                        title="Delete user"
-                    >
-                        <DeleteIcon />
-                    </span>
-                </div>
-            ),
+            key: "edit",
+            label: "Edit",
+            icon: <EditIcon className="size-4" />,
+            onClick: (user) => handleEdit(user),
+        },
+        {
+            key: "delete",
+            label: "Delete",
+            icon: <DeleteIcon className="size-4" />,
+            color: "danger",
+            onClick: (user) => handleDeleteClick(user.id),
         },
     ];
 
@@ -178,13 +174,19 @@ export default function UsersPage() {
                     />
                 </div>
 
-                <DataTable
+                <Table
                     columns={columns}
-                    data={data?.data?.items || []}
-                    totalPages={data?.data?.paging?.totalPages || 1}
-                    page={pageIndex}
-                    onPageChange={setPageIndex}
+                    items={data?.data?.items || []}
+                    getRowKey={(item) => item.id}
                     isLoading={isLoading}
+                    pagination={{
+                        page: pageIndex,
+                        pageSize: pageSize,
+                        total: data?.data?.paging?.totalItems || 0,
+                        onPageChange: setPageIndex,
+                        onPageSizeChange: setPageSize,
+                    }}
+                    actions={actions}
                 />
             </div>
 

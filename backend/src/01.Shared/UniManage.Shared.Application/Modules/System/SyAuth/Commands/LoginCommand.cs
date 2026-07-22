@@ -213,7 +213,8 @@ namespace UniManage.Shared.Application.Modules.SyAuth.Commands
                 log.IsException = true;
                 log.Message = ex.Message;
                 log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                return ResponseHelper.Error<LoginCommand.Response>(CoreResource.common_error);
+                // Return explicit system error message instead of generic fallback
+                return ResponseHelper.Error<LoginCommand.Response>(CoreResource.common_exceptionOccurred);
             }
             finally
             {

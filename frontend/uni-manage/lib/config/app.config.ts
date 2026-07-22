@@ -3,9 +3,8 @@ export const appConfig = {
     appName: "UniManage",
     companyName: "Phuong Tran",
     version: "1.0.0",
-    copyright: `© ${new Date().getFullYear()} Phuong Tran`,
-    logoUrl:
-        "https://images.freeimages.com/vhq/images/previews/214/generic-logo-140952.png",
+    copyright: `© 2024 - ${new Date().getFullYear()} Phuong Tran`,
+    logoUrl: "/logo.png",
 
     // 2. Localization
     defaultLocale: "vi",

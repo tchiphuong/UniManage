@@ -1,8 +1,9 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
-import { PerformanceMetric } from "@/types";
 import { PresentationChartLineIcon } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
+
+import { PerformanceMetric } from "@/types";
 
 interface PerformanceMetricsProps {
     metrics: PerformanceMetric[];

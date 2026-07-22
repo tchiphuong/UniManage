@@ -1,24 +1,27 @@
 "use client";
 
-import {
-    createContext,
-    useContext,
-    useState,
-    useEffect,
-    ReactNode,
-} from "react";
 import { useRouter } from "next/navigation";
 import {
-    authService,
-    type CurrentUserResponse,
-} from "@/lib/services/auth.service";
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
+    useMemo,
+    useCallback,
+} from "react";
+
 import {
+    clearAuthCookies,
     getAccessToken,
     getRefreshToken,
     setAccessToken,
     setRefreshToken,
-    clearAuthCookies,
 } from "@/lib/cookies";
+import {
+    authService,
+    type CurrentUserResponse,
+} from "@/lib/services/auth.service";
 
 interface AuthContextType {
     user: CurrentUserResponse | null;
@@ -35,7 +38,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { readonly children: ReactNode }) {
     const [user, setUser] = useState<CurrentUserResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
@@ -45,6 +48,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const initAuth = async () => {
             const token = getAccessToken();
             if (token) {
+                const cachedUser = localStorage.getItem("auth_user");
+                if (cachedUser) {
+                    try {
+                        setUser(JSON.parse(cachedUser));
+                        setIsLoading(false);
+                        return; // Skip API call since we have cached user
+                    } catch {
+                        localStorage.removeItem("auth_user");
+                    }
+                }
                 await refreshUser();
             } else {
                 setIsLoading(false);
@@ -54,17 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initAuth();
     }, []);
 
-    const login = (
-        accessToken: string,
-        refreshToken: string,
-        userData: CurrentUserResponse,
-    ) => {
-        setAccessToken(accessToken);
-        setRefreshToken(refreshToken);
-        setUser(userData);
-    };
+    const login = useCallback(
+        (
+            accessToken: string,
+            refreshToken: string,
+            userData: CurrentUserResponse,
+        ) => {
+            setAccessToken(accessToken);
+            setRefreshToken(refreshToken);
+            setUser(userData);
+            localStorage.setItem("auth_user", JSON.stringify(userData));
+        },
+        [],
+    );
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             const refreshTokenValue = getRefreshToken();
             if (refreshTokenValue) {
@@ -74,12 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error("Logout error:", error);
         } finally {
             clearAuthCookies();
+            localStorage.removeItem("auth_user");
             setUser(null);
             router.push("/auth/login");
         }
-    };
+    }, [router]);
 
-    const refreshUser = async () => {
+    const refreshUser = useCallback(async () => {
         try {
             setIsLoading(true);
             const token = getAccessToken();
@@ -99,27 +117,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const response = await authService.getCurrentUser(username);
             if (response.returnCode === 0 && response.data) {
                 setUser(response.data);
+                localStorage.setItem(
+                    "auth_user",
+                    JSON.stringify(response.data),
+                );
             } else {
                 clearAuthCookies();
+                localStorage.removeItem("auth_user");
                 setUser(null);
             }
         } catch (error) {
             console.error("Refresh user error:", error);
             clearAuthCookies();
+            localStorage.removeItem("auth_user");
             setUser(null);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const value: AuthContextType = {
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        logout,
-        refreshUser,
-    };
+    const value: AuthContextType = useMemo(
+        () => ({
+            user,
+            isAuthenticated: !!user,
+            isLoading,
+            login,
+            logout,
+            refreshUser,
+        }),
+        [user, isLoading, login, logout, refreshUser],
+    );
 
     return (
         <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

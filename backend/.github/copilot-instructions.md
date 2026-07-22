@@ -222,10 +222,10 @@ public sealed class CreateUserCommand : IRequest<ApiResponse<Response>>
 **Query PHẢI kế thừa đúng base class:**
 
 - **`BaseListQuery`**: Query trả về `PagedResult` (danh sách + phân trang)
-    - Cung cấp `HeaderInfo` + `Keyword` + `PageIndex` + `PageSize` + `Offset` + `SortBy` + `SortDirection` + `SearchFields`
-    - PageIndex mặc định = 1, PageSize mặc định = 20
+  - Cung cấp `HeaderInfo` + `Keyword` + `PageIndex` + `PageSize` + `Offset` + `SortBy` + `SortDirection` + `SearchFields`
+  - PageIndex mặc định = 1, PageSize mặc định = 20
 - **`BaseQuery`**: Query đơn (get by id/code, check exists, combobox, permissions...)
-    - Chỉ cung cấp `HeaderInfo` cho logging context
+  - Chỉ cung cấp `HeaderInfo` cho logging context
 
 **BaseQuery hierarchy (UniManage.Model/Common/BaseModel.cs):**
 
@@ -599,9 +599,9 @@ using (var dbContext = new DbContext())
 - ✅ Use **Dapper** for: Complex joins, aggregations, performance-critical queries
 
 - Repository pattern:
-    - Write repo: Use EF Core, nhận IDbTransaction từ TransactionBehavior
-    - Read repo: EF Core cho simple queries, Dapper cho complex queries
-    - Đặt tên hàm: \*Async suffix cho async methods
+  - Write repo: Use EF Core, nhận IDbTransaction từ TransactionBehavior
+  - Read repo: EF Core cho simple queries, Dapper cho complex queries
+  - Đặt tên hàm: \*Async suffix cho async methods
 
 **Package Dependencies (Core project)**
 

@@ -1,16 +1,16 @@
 "use client";
 
+import { ChartPieIcon } from "@heroicons/react/24/outline";
+import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import {
-    PieChart,
-    Pie,
     Cell,
+    Legend,
+    Pie,
+    PieChart,
     ResponsiveContainer,
     Tooltip,
-    Legend,
 } from "recharts";
-import { useTheme } from "next-themes";
-import { ChartPieIcon } from "@heroicons/react/24/outline";
 
 interface RevenueChartProps {
     data: { name: string; value: number }[];
@@ -82,8 +82,11 @@ export function RevenueChart({ data }: RevenueChartProps) {
                             ))}
                         </Pie>
                         <Tooltip
-                            formatter={(value: number) => [
-                                `$${value.toLocaleString()}`,
+                            formatter={(value: number | undefined) => [
+                                new Intl.NumberFormat("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                }).format(value || 0),
                                 "Revenue",
                             ]}
                             contentStyle={{

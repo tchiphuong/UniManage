@@ -3,26 +3,12 @@ import {
     InputProps as HeroInputProps,
 } from "@heroui/react";
 
-export interface InputProps extends HeroInputProps {
-    // Add any specific props if needed
-}
+export type InputProps = HeroInputProps;
 
-export function Input({
-    radius = "full",
-    variant = "flat",
-    labelPlacement = "outside-top",
-    classNames,
-    ...props
-}: InputProps) {
-    return (
-        <HeroInput
-            radius={radius}
-            variant={variant}
-            labelPlacement={labelPlacement}
-            classNames={{
-                ...classNames,
-            }}
-            {...props}
-        />
-    );
+/**
+ * Input wrapper với default props chuẩn hóa
+ * Các chỗ gọi không cần khai báo lại placeholder style
+ */
+export function Input({ className, ...props }: InputProps) {
+    return <HeroInput className={className} {...props} />;
 }

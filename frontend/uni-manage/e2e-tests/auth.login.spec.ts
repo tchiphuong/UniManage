@@ -1,33 +1,34 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from './pages/LoginPage';
+import { expect, test } from "@playwright/test";
 
-test.describe('Authentication - Login Flow', () => {
-  let loginPage: LoginPage;
+import { LoginPage } from "./pages/login-page";
 
-  test.beforeEach(async ({ page }) => {
-    // Playwright tự động cung cấp 'page' mới hoàn toàn (isolated context) cho mỗi test
-    loginPage = new LoginPage(page);
-    await loginPage.goto();
-  });
+test.describe("Authentication - Login Flow", () => {
+    let loginPage: LoginPage;
 
-  test('✅ Đăng nhập thành công với tài khoản đúng', async ({ page }) => {
-    // Sử dụng thông tin từ biến môi trường nếu có, fallback về account test
-    const testUser = process.env.TEST_USERNAME || 'admin';
-    const testPass = process.env.TEST_PASSWORD || 'admin123';
+    test.beforeEach(async ({ page }) => {
+        // Playwright automatically provides a completely new 'page' (isolated context) for each test
+        loginPage = new LoginPage(page);
+        await loginPage.goto();
+    });
 
-    await loginPage.login(testUser, testPass);
+    test("✅ Đăng nhập thành công với tài khoản đúng", async ({ page }) => {
+        // Use environment variables if available, fallback to test account
+        const testUser = process.env.TEST_USERNAME || "admin";
+        const testPass = process.env.TEST_PASSWORD || "admin123";
 
-    // Xác nhận đã chuyển hướng vào dashboard
-    await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
-  });
+        await loginPage.login(testUser, testPass);
 
-  test('❌ Đăng nhập thất bại - Báo lỗi khi sai mật khẩu', async () => {
-    await loginPage.login('admin', 'wrongpassword');
-    await loginPage.expectErrorMessageVisible();
-  });
+        // Verify redirection to dashboard
+        await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
+    });
 
-  test('❌ Validation - Báo lỗi khi để trống thông tin', async () => {
-    await loginPage.login('', ''); // Bấm submit ngay lập tức
-    await loginPage.expectValidationErrorVisible();
-  });
+    test("❌ Đăng nhập thất bại - Báo lỗi khi sai mật khẩu", async () => {
+        await loginPage.login("admin", "wrongpassword");
+        await loginPage.expectErrorMessageVisible();
+    });
+
+    test("❌ Validation - Báo lỗi khi để trống thông tin", async () => {
+        await loginPage.login("", ""); // Submit immediately
+        await loginPage.expectValidationErrorVisible();
+    });
 });

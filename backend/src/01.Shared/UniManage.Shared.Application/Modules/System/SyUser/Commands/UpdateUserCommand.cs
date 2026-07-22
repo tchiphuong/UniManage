@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Shared.Infrastructure.Constant;
@@ -99,78 +99,44 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
     {
         public async Task<ApiResponse<UpdateUserCommand.Response>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
         {
-            var log = new ApiLogModel(request.HeaderInfo ?? new HeaderInfo())
+            using (var dbContext = new DbContext(openTransaction: true))
             {
-                Parameter = new List<LogParamModel>
+                try
                 {
-                    new(nameof(request.Uuid), request.Uuid.ToString()),
-                    new(nameof(request.Email), request.Email),
-                    new(nameof(request.EmployeeCode), request.EmployeeCode),
-                    new(nameof(request.Status), request.Status),
-                    new(nameof(request.RowVersion), request.RowVersion != null ? Convert.ToBase64String(request.RowVersion) : string.Empty)
-                }
-            };
+                    var user = await dbContext.Set<SyUsers>()
+                        .FirstOrDefaultAsync(u => u.Uuid == request.Uuid, cancellationToken);
 
-            try
-            {
-                using (var dbContext = new DbContext(openTransaction: true))
+                    if (user == null)
+                    {
+                        return ResponseHelper.NotFound<UpdateUserCommand.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
+                    }
+
+                    // Check RowVersion for optimistic concurrency
+                    if (request.RowVersion != null && !user.RowVersion.SequenceEqual(request.RowVersion))
+                    {
+                        return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_concurrencyError);
+                    }
+
+                    user.EmployeeCode = request.EmployeeCode;
+                    user.Status = request.Status;
+                    user.Email = request.Email;
+                    user.UpdatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser;
+                    user.UpdatedAt = DateTimeHelper.Now;
+
+                    await dbContext.SaveChangesAsync(cancellationToken);
+                    await dbContext.CommitAsync();
+
+                    // Clear cache for combobox users since list has changed
+                    await CacheHelper.RemoveByPatternAsync(CacheKeyConstant.System.ComboboxUsersPattern);
+
+                    var responseData = new UpdateUserCommand.Response { Uuid = user.Uuid };
+                    return ResponseHelper.Success(responseData, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_user));
+                }
+                catch (Exception)
                 {
-                    try
-                    {
-                        var user = await dbContext.Set<SyUsers>()
-                            .FirstOrDefaultAsync(u => u.Uuid == request.Uuid, cancellationToken);
-
-                        if (user == null)
-                        {
-                            var notFoundResponse = ResponseHelper.NotFound<UpdateUserCommand.Response>(string.Format(CoreResource.common_notFound, CoreResource.entity_user));
-                            log.Message = notFoundResponse.Message;
-                            log.ReturnCode = notFoundResponse.ReturnCode;
-                            return notFoundResponse;
-                        }
-
-                        // Check RowVersion for optimistic concurrency
-                        if (request.RowVersion != null && !user.RowVersion.SequenceEqual(request.RowVersion))
-                        {
-                            var concurrencyResponse = ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_concurrencyError);
-                            log.Message = concurrencyResponse.Message;
-                            log.ReturnCode = concurrencyResponse.ReturnCode;
-                            return concurrencyResponse;
-                        }
-
-                        user.EmployeeCode = request.EmployeeCode;
-                        user.Status = request.Status;
-                        user.Email = request.Email;
-                        user.UpdatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser;
-                        user.UpdatedAt = DateTimeHelper.Now;
-
-                        await dbContext.SaveChangesAsync(cancellationToken);
-                        await dbContext.CommitAsync();
-
-                        // Xóa cache combobox user vì thông tin hi?n th? có th? b? d?i
-                        await CacheHelper.RemoveByPatternAsync(CacheKeyConstant.System.ComboboxUsersPattern);
-
-                        var responseData = new UpdateUserCommand.Response { Uuid = user.Uuid };
-                        var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_updateSuccess, CoreResource.entity_user));
-
-                        log.Result = responseData;
-                        log.Message = response.Message;
-                        log.ReturnCode = response.ReturnCode;
-
-                        return response;
-                    }
-                    catch (Exception ex)
-                    {
-                        await dbContext.RollbackAsync();
-                        log.IsException = true;
-                        log.Message = ex.Message;
-                        log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                        return ResponseHelper.Error<UpdateUserCommand.Response>(CoreResource.common_error);
-                    }
+                    await dbContext.RollbackAsync();
+                    throw;
                 }
-            }
-            finally
-            {
-                UniLogManager.WriteApiLog(log);
             }
         }
     }

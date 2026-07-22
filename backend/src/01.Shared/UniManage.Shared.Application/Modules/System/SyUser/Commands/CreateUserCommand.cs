@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UniManage.Shared.Domain;
@@ -19,7 +19,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
         public string? EmployeeCode { get; init; }
         public string Password { get; init; } = default!;
         public string Status { get; init; } = default!;
-        public List<string> RoleCode { get; init; } = default!;
+        public List<string> RoleCodes { get; init; } = default!;
 
         public sealed class Response
         {
@@ -73,7 +73,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
                         .WithMessage(CoreResource.validation_invalidStatus);
                 });
 
-            RuleFor(x => x.RoleCode)
+            RuleFor(x => x.RoleCodes)
                 .NotEmpty()
                 .WithMessage(string.Format(CoreResource.validation_required, CoreResource.lbl_roleCode))
                 .MustAsync(async (roles, cancel) => await AreRolesValidAsync(roles))
@@ -119,7 +119,7 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
     #region Handler
 
     /// <summary>
-    /// B? x? l� l?nh t?o m?i ngu?i d�ng
+    /// Handler for CreateUserCommand
     /// </summary>
     public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiResponse<CreateUserCommand.Response>>
     {
@@ -132,107 +132,58 @@ namespace UniManage.Shared.Application.Modules.SyUser.Commands
 
         public async Task<ApiResponse<CreateUserCommand.Response>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var log = new ApiLogModel(request.HeaderInfo)
+            using (var dbContext = new DbContext(openTransaction: true))
             {
-                Parameter = new List<LogParamModel>
+                try
                 {
-                    new(nameof(request.Username), request.Username),
-                    new(nameof(request.Email), request.Email),
-                    new(nameof(request.EmployeeCode), request.EmployeeCode),
-                    new(nameof(request.Status), request.Status),
-                    new(nameof(request.RoleCode), string.Join(",", request.RoleCode))
-                }
-            };
+                    var passwordHash = PasswordHelper.HashPassword(request.Password);
 
-            try
-            {
-                using (var unitOfWork = new UnitOfWork(new DbContext(openTransaction: true), _mediator))
-                {
-                    try
+                    var newUser = SyUsers.Create(
+                        username: request.Username,
+                        email: request.Email,
+                        passwordHash: passwordHash,
+                        status: request.Status,
+                        createdBy: request.HeaderInfo?.Username ?? CoreConstant.SystemUser
+                    );
+                    newUser.EmployeeCode = request.EmployeeCode;
+                    newUser.RoleCode = request.RoleCodes?.FirstOrDefault();
+
+                    dbContext.Set<SyUsers>().Add(newUser);
+                    await dbContext.SaveChangesAsync(cancellationToken);
+
+                    // Assign roles to user
+                    if (request.RoleCodes != null)
                     {
-                        var passwordHash = PasswordHelper.HashPassword(request.Password);
-
-                        var newUser = SyUsers.Create(
-                            username: request.Username,
-                            email: request.Email,
-                            passwordHash: passwordHash,
-                                                        status: request.Status,
-                            createdBy: request.HeaderInfo?.Username ?? CoreConstant.SystemUser
-                        );
-                        newUser.EmployeeCode = request.EmployeeCode;
-                        newUser.RoleCode = request.RoleCode?.FirstOrDefault();
-
-                        var repository = new Repository<SyUsers>(unitOfWork._dbContext);
-                        repository.Add(newUser);
-                        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-                        // G�n danh s�ch vai tr� cho ngu?i d�ng
-                        if (request.RoleCode != null)
+                        foreach (var role in request.RoleCodes)
                         {
-                            foreach (var role in request.RoleCode)
+                            dbContext.Set<SyUserRoles>().Add(new SyUserRoles
                             {
-                                unitOfWork._dbContext.Set<SyUserRoles>().Add(new SyUserRoles
-                                {
-                                    Username = newUser.Username,
-                                    RoleCode = role,
-                                    CreatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser,
-                                    CreatedAt = DateTimeHelper.Now
-                                });
-                            }
-                            await unitOfWork.SaveChangesAsync(cancellationToken);
+                                Username = newUser.Username,
+                                RoleCode = role,
+                                CreatedBy = request.HeaderInfo?.Username ?? CoreConstant.SystemUser,
+                                CreatedAt = DateTimeHelper.Now
+                            });
                         }
-
-                        await unitOfWork._dbContext.CommitAsync();
-
-                        // X�a cache combobox user v� danh s�ch d� thay d?i
-                        await CacheHelper.RemoveByPatternAsync(CacheKeyConstant.System.ComboboxUsersPattern);
-
-                        var responseData = new CreateUserCommand.Response { Id = newUser.Id };
-                        var response = ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_user));
-
-                        log.Result = responseData;
-                        log.Message = response.Message;
-                        log.ReturnCode = response.ReturnCode;
-
-                        return response;
+                        await dbContext.SaveChangesAsync(cancellationToken);
                     }
-                    catch (Exception)
-                    {
-                        await unitOfWork._dbContext.RollbackAsync();
-                        throw;
-                    }
+
+                    await dbContext.CommitAsync();
+
+                    // Clear cache for combobox users since list has changed
+                    await CacheHelper.RemoveByPatternAsync(CacheKeyConstant.System.ComboboxUsersPattern);
+
+                    var responseData = new CreateUserCommand.Response { Id = newUser.Id };
+                    return ResponseHelper.Success(responseData, string.Format(CoreResource.common_createSuccess, CoreResource.entity_user));
                 }
-            }
-            catch (Exception ex)
-            {
-                log.IsException = true;
-                log.Message = ex.Message;
-                log.ReturnCode = CoreApiReturnCode.ExceptionOccurred;
-                
-                return ResponseHelper.Error<CreateUserCommand.Response>(CoreResource.common_error);
-            }
-            finally
-            {
-                UniLogManager.WriteApiLog(log);
+                catch (Exception)
+                {
+                    await dbContext.RollbackAsync();
+                    throw;
+                }
             }
         }
     }
 
     #endregion
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

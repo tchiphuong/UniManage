@@ -1,14 +1,17 @@
 # MediatR Pipeline Behaviors - UniManage
 
 ## Mục đích
+
 Document này mô tả chi tiết về các MediatR Pipeline Behaviors trong dự án UniManage, giúp AI Agent hiểu và implement đúng chuẩn CQRS.
 
 ## Thứ tự thực thi Pipeline (bắt buộc)
+
 ```
 Request → Logging → Validation → Authorization → Transaction/Caching → Handler → Response
 ```
 
 **Thứ tự chi tiết:**
+
 1. **LoggingBehavior** - Log tất cả requests
 2. **ValidationBehavior** - Validate input bằng FluentValidation
 3. **AuthorizationBehavior** (tuỳ chọn) - Kiểm tra quyền
@@ -20,13 +23,15 @@ Request → Logging → Validation → Authorization → Transaction/Caching →
 ## 1. LoggingBehavior (bắt buộc)
 
 ### Mục đích
+
 - Log mọi request/response qua MediatR
 - Đo thời gian xử lý
 - Log handler name và parameters
 
 ### Implementation
+
 ```csharp
-public class LoggingBehavior<TRequest, TResponse> 
+public class LoggingBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -53,9 +58,9 @@ public class LoggingBehavior<TRequest, TResponse>
         try
         {
             var response = await next();
-            
+
             stopwatch.Stop();
-            
+
             _logger.LogInformation(
                 "Handled {RequestName} in {ElapsedMs}ms",
                 requestName,
@@ -66,13 +71,13 @@ public class LoggingBehavior<TRequest, TResponse>
         catch (Exception ex)
         {
             stopwatch.Stop();
-            
+
             _logger.LogError(
                 ex,
                 "Error handling {RequestName} after {ElapsedMs}ms",
                 requestName,
                 stopwatch.ElapsedMilliseconds);
-            
+
             throw;
         }
     }
@@ -80,10 +85,11 @@ public class LoggingBehavior<TRequest, TResponse>
 ```
 
 ### Đăng ký
+
 ```csharp
 // Program.cs hoặc Startup.cs
 builder.Services.AddTransient(
-    typeof(IPipelineBehavior<,>), 
+    typeof(IPipelineBehavior<,>),
     typeof(LoggingBehavior<,>));
 ```
 
@@ -92,13 +98,15 @@ builder.Services.AddTransient(
 ## 2. ValidationBehavior (bắt buộc)
 
 ### Mục đích
+
 - Validate request bằng FluentValidation
 - Gom tất cả lỗi validation
 - Trả về ApiResponse.Fail() với danh sách lỗi
 
 ### Implementation
+
 ```csharp
-public class ValidationBehavior<TRequest, TResponse> 
+public class ValidationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -146,11 +154,11 @@ public class ValidationBehavior<TRequest, TResponse>
 
         // Tạo ApiResponse.Fail() với errors
         var responseType = typeof(TResponse);
-        
+
         if (responseType.IsGenericType)
         {
             var genericType = responseType.GetGenericTypeDefinition();
-            
+
             // ApiResponse<T>
             if (genericType == typeof(ApiResponse<>))
             {
@@ -158,12 +166,12 @@ public class ValidationBehavior<TRequest, TResponse>
                 var failMethod = typeof(ApiResponse<>)
                     .MakeGenericType(dataType)
                     .GetMethod("Fail", new[] { typeof(string), typeof(List<string>) });
-                
+
                 return (TResponse)failMethod!.Invoke(
-                    null, 
+                    null,
                     new object[] { "Validation failed", errors });
             }
-            
+
             // PagedResponse<T>
             if (genericType == typeof(PagedResponse<>))
             {
@@ -171,9 +179,9 @@ public class ValidationBehavior<TRequest, TResponse>
                 var failMethod = typeof(PagedResponse<>)
                     .MakeGenericType(dataType)
                     .GetMethod("Fail", new[] { typeof(string), typeof(List<string>) });
-                
+
                 return (TResponse)failMethod!.Invoke(
-                    null, 
+                    null,
                     new object[] { "Validation failed", errors });
             }
         }
@@ -184,17 +192,19 @@ public class ValidationBehavior<TRequest, TResponse>
 ```
 
 ### Đăng ký
+
 ```csharp
 // Program.cs
 builder.Services.AddValidatorsFromAssembly(
     typeof(CreateUserValidator).Assembly);
 
 builder.Services.AddTransient(
-    typeof(IPipelineBehavior<,>), 
+    typeof(IPipelineBehavior<,>),
     typeof(ValidationBehavior<,>));
 ```
 
 ### Validator Example
+
 ```csharp
 public sealed class CreateUserValidator : AbstractValidator<CreateUserCommand>
 {
@@ -225,13 +235,15 @@ public sealed class CreateUserValidator : AbstractValidator<CreateUserCommand>
 ## 3. TransactionBehavior (chỉ Command)
 
 ### Mục đích
+
 - Tự động mở transaction cho mọi Command
 - Commit nếu thành công, Rollback nếu có exception
 - Truyền IDbTransaction xuống repository
 
 ### Implementation
+
 ```csharp
-public class TransactionBehavior<TRequest, TResponse> 
+public class TransactionBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -291,15 +303,17 @@ public class TransactionBehavior<TRequest, TResponse>
 ```
 
 ### Đăng ký
+
 ```csharp
 builder.Services.AddTransient(
-    typeof(IPipelineBehavior<,>), 
+    typeof(IPipelineBehavior<,>),
     typeof(TransactionBehavior<,>));
 ```
 
 ### Command Handler Pattern (sử dụng Transaction)
+
 ```csharp
-public sealed class CreateUserCommandHandler 
+public sealed class CreateUserCommandHandler
     : IRequestHandler<CreateUserCommand, ApiResponse<CreateUserCommand.Response>>
 {
     public async Task<ApiResponse<CreateUserCommand.Response>> Handle(
@@ -348,13 +362,15 @@ public sealed class CreateUserCommandHandler
 ## 4. CachingBehavior (chỉ Query - tuỳ chọn)
 
 ### Mục đích
+
 - Cache kết quả Query để tăng performance
 - Cache key = TypeName + hash(parameters)
 - TTL tuỳ chỉnh theo từng Query
 
 ### Implementation
+
 ```csharp
-public class CachingBehavior<TRequest, TResponse> 
+public class CachingBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -439,21 +455,23 @@ public interface ICacheable
 ```
 
 ### Đăng ký
+
 ```csharp
 builder.Services.AddMemoryCache();
 
 builder.Services.AddTransient(
-    typeof(IPipelineBehavior<,>), 
+    typeof(IPipelineBehavior<,>),
     typeof(CachingBehavior<,>));
 ```
 
 ### Query Example với Cache
+
 ```csharp
-public sealed class GetUserByIdQuery 
+public sealed class GetUserByIdQuery
     : IRequest<ApiResponse<UserDetailDto>>, ICacheable
 {
     public int Id { get; init; }
-    
+
     // Cache trong 5 phút
     public TimeSpan CacheDuration => TimeSpan.FromMinutes(5);
 }
@@ -464,13 +482,15 @@ public sealed class GetUserByIdQuery
 ## 5. AuthorizationBehavior (tuỳ chọn)
 
 ### Mục đích
+
 - Kiểm tra quyền truy cập cho Command/Query
 - Dựa trên Claims/Roles/Policies
 - Trả về Forbidden nếu không có quyền
 
 ### Implementation
+
 ```csharp
-public class AuthorizationBehavior<TRequest, TResponse> 
+public class AuthorizationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -546,20 +566,20 @@ public class AuthorizationBehavior<TRequest, TResponse>
     private static TResponse CreateUnauthorizedResponse()
     {
         var responseType = typeof(TResponse);
-        
+
         if (responseType.IsGenericType)
         {
             var genericType = responseType.GetGenericTypeDefinition();
-            
+
             if (genericType == typeof(ApiResponse<>))
             {
                 var dataType = responseType.GetGenericArguments()[0];
                 var failMethod = typeof(ApiResponse<>)
                     .MakeGenericType(dataType)
                     .GetMethod("Fail", new[] { typeof(string), typeof(int) });
-                
+
                 return (TResponse)failMethod!.Invoke(
-                    null, 
+                    null,
                     new object[] { "Unauthorized", 401 });
             }
         }
@@ -570,20 +590,20 @@ public class AuthorizationBehavior<TRequest, TResponse>
     private static TResponse CreateForbiddenResponse()
     {
         var responseType = typeof(TResponse);
-        
+
         if (responseType.IsGenericType)
         {
             var genericType = responseType.GetGenericTypeDefinition();
-            
+
             if (genericType == typeof(ApiResponse<>))
             {
                 var dataType = responseType.GetGenericArguments()[0];
                 var failMethod = typeof(ApiResponse<>)
                     .MakeGenericType(dataType)
                     .GetMethod("Fail", new[] { typeof(string), typeof(int) });
-                
+
                 return (TResponse)failMethod!.Invoke(
-                    null, 
+                    null,
                     new object[] { "Forbidden", 403 });
             }
         }
@@ -601,15 +621,16 @@ public interface IAuthorizable
 ```
 
 ### Command Example với Authorization
+
 ```csharp
-public sealed class DeleteUserCommand 
+public sealed class DeleteUserCommand
     : IRequest<ApiResponse<bool>>, IAuthorizable
 {
     public int Id { get; init; }
-    
+
     // Chỉ Admin mới được xoá user
     public List<string> RequiredRoles => new() { "Admin" };
-    
+
     // Hoặc có permission "users.delete"
     public List<string> RequiredPermissions => new() { "users.delete" };
 }
@@ -650,6 +671,7 @@ builder.Services.AddHttpContextAccessor();
 Khi sinh code Command/Query, AI Agent cần:
 
 ### ✅ Command
+
 - [ ] Tên kết thúc bằng `Command`
 - [ ] Implement `IRequest<ApiResponse<T>>`
 - [ ] Có `Validator` kế thừa `AbstractValidator<TCommand>`
@@ -660,6 +682,7 @@ Khi sinh code Command/Query, AI Agent cần:
 - [ ] Log error với ILogger
 
 ### ✅ Query
+
 - [ ] Tên kết thúc bằng `Query`
 - [ ] Implement `IRequest<ApiResponse<T>>` hoặc `IRequest<PagedResponse<T>>`
 - [ ] Không có Validator (tuỳ chọn)
@@ -670,6 +693,7 @@ Khi sinh code Command/Query, AI Agent cần:
 - [ ] Có thể implement `ICacheable` nếu cần cache
 
 ### ✅ Pipeline
+
 - [ ] LoggingBehavior: log tất cả
 - [ ] ValidationBehavior: validate với FluentValidation
 - [ ] TransactionBehavior: chỉ Command

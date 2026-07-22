@@ -1,33 +1,26 @@
-import { ReactNode, useMemo, useCallback } from "react";
-import {
-    Table as HeroTable,
-    TableHeader,
-    TableColumn,
-    TableBody,
-    TableRow,
-    TableCell,
-    Pagination,
-    Button,
-    Tooltip,
-    Input,
-    SortDescriptor,
-    Dropdown,
-    DropdownTrigger,
-    DropdownMenu,
-    DropdownItem,
-    SelectItem,
-    Skeleton,
-    Spinner,
-} from "@heroui/react";
-import { Select } from "@/components/common";
 import {
     ArrowPathIcon,
+    ChevronDownIcon,
     EyeIcon,
+    MagnifyingGlassIcon,
     PencilIcon,
     TrashIcon,
-    MagnifyingGlassIcon,
-    ChevronDownIcon,
 } from "@heroicons/react/24/outline";
+import {
+    Button,
+    Dropdown,
+    Input,
+    Label,
+    Pagination,
+    Skeleton,
+    SortDescriptor,
+    Spinner,
+    Table as BaseTable,
+    Tooltip,
+} from "@heroui/react";
+import { ReactNode, useCallback, useMemo } from "react";
+
+export type { SortDescriptor } from "@heroui/react";
 
 // ==================== TYPES ====================
 
@@ -77,8 +70,7 @@ export interface TableFilter {
     [key: string]: string | number | undefined;
 }
 
-// Table props
-export interface CommonTableProps<T> {
+export interface CommonTableProps<T extends object> {
     items: T[];
     columns: TableColumn<T>[];
     getRowKey: (item: T) => string | number;
@@ -114,6 +106,7 @@ export interface CommonTableProps<T> {
 
     // Actions column
     actions?: TableAction<T>[];
+    onRowAction?: (key: string | number) => void; // Allow row click
     actionsLabel?: string;
     actionsWidth?: number;
 
@@ -151,18 +144,20 @@ const defaultIcons: Record<string, ReactNode> = {
 
 const defaultColors: Record<
     string,
-    "default" | "primary" | "secondary" | "success" | "warning" | "danger"
+    "primary" | "secondary" | "success" | "warning" | "danger"
 > = {
-    view: "default",
+    view: "secondary",
     edit: "primary",
     delete: "danger",
 };
 
 // ==================== COMPONENT ====================
 
-export function Table<T>({
-    items,
+export function Table<T extends object>({
+    items = [],
     columns,
+    actions = [],
+    onRowAction,
     getRowKey,
     isLoading = false,
     enableSkeleton = true,
@@ -183,7 +178,6 @@ export function Table<T>({
     visibleColumns = "all",
     onVisibleColumnsChange,
     showColumnToggle = false,
-    actions,
     actionsLabel = "Actions",
     actionsWidth = 120,
     toolbarContent,
@@ -199,7 +193,7 @@ export function Table<T>({
     isHeaderSticky = true,
     maxHeight,
     "aria-label": ariaLabel = "Data table",
-}: CommonTableProps<T>) {
+}: Readonly<CommonTableProps<T>>) {
     // Calculate pagination info
     const totalPages = pagination
         ? Math.ceil(pagination.total / pagination.pageSize)
@@ -252,7 +246,6 @@ export function Table<T>({
         [filters, onFilterChange],
     );
 
-    // Render cell content
     const renderCell = (item: T, columnKey: string, index: number) => {
         // Check for skeleton
         if ((item as any)._isSkeleton) {
@@ -276,29 +269,28 @@ export function Table<T>({
                             ? action.isDisabled(item)
                             : false;
                         const icon = action.icon || defaultIcons[action.key];
-                        const color =
-                            action.color ||
-                            defaultColors[action.key] ||
-                            "default";
+
+                        let textColorClass = "text-primary";
+                        if (action.color === "danger")
+                            textColorClass = "text-danger";
+                        else if (action.color === "success")
+                            textColorClass = "text-success";
 
                         return (
-                            <Tooltip
-                                key={action.key}
-                                content={action.label}
-                                color={color === "default" ? undefined : color}
-                            >
-                                <Button
-                                    isIconOnly
-                                    size="sm"
-                                    variant="light"
-                                    color={color}
-                                    radius="full"
-                                    aria-label={action.label}
-                                    isDisabled={isDisabled}
-                                    onPress={() => action.onClick(item)}
-                                >
-                                    {icon}
-                                </Button>
+                            <Tooltip key={action.key}>
+                                <Tooltip.Trigger>
+                                    <Button
+                                        className={`hover:bg-default-100 min-h-8 min-w-8 bg-transparent p-1 ${textColorClass}`}
+                                        aria-label={action.label}
+                                        isDisabled={isDisabled}
+                                        onPress={() => action.onClick(item)}
+                                    >
+                                        {icon}
+                                    </Button>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content>
+                                    {action.label}
+                                </Tooltip.Content>
                             </Tooltip>
                         );
                     })}
@@ -317,6 +309,10 @@ export function Table<T>({
         if (value === null || value === undefined) {
             return <span className="text-gray-400">-</span>;
         }
+        if (typeof value === "object") {
+            return JSON.stringify(value);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         return String(value);
     };
 
@@ -352,20 +348,17 @@ export function Table<T>({
                 {/* Left side: Search + Filter dropdowns */}
                 <div className="flex flex-1 flex-wrap items-center gap-3">
                     {showSearch && (
-                        <Input
-                            isClearable
-                            className="w-full sm:max-w-50"
-                            placeholder={searchPlaceholder}
-                            startContent={
-                                <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-                            }
-                            value={searchValue}
-                            onClear={() => onSearchChange?.("")}
-                            onValueChange={onSearchChange}
-                            variant="bordered"
-                            radius="lg"
-                            size="sm"
-                        />
+                        <div className="relative w-full sm:max-w-50">
+                            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <Input
+                                className="w-full pl-10"
+                                placeholder={searchPlaceholder}
+                                value={searchValue}
+                                onChange={(e) =>
+                                    onSearchChange?.(e.target.value)
+                                }
+                            />
+                        </div>
                     )}
 
                     {/* Inline filter dropdowns */}
@@ -377,14 +370,11 @@ export function Table<T>({
                             ) {
                                 return (
                                     <Dropdown key={column.key}>
-                                        <DropdownTrigger className="hidden sm:flex">
+                                        <Dropdown.Trigger>
                                             <Button
-                                                endContent={
-                                                    <ChevronDownIcon className="h-4 w-4" />
-                                                }
-                                                variant="flat"
+                                                variant="ghost"
                                                 size="sm"
-                                                radius="lg"
+                                                className="hidden sm:flex"
                                             >
                                                 {column.label}
                                                 {filters[column.key] && (
@@ -392,90 +382,58 @@ export function Table<T>({
                                                         ({filters[column.key]})
                                                     </span>
                                                 )}
+                                                <ChevronDownIcon className="ml-1 h-4 w-4" />
                                             </Button>
-                                        </DropdownTrigger>
-                                        <DropdownMenu
-                                            disallowEmptySelection={false}
-                                            aria-label={`Filter by ${column.label}`}
-                                            closeOnSelect
-                                            selectedKeys={
-                                                filters[column.key]
-                                                    ? new Set([
-                                                          String(
-                                                              filters[
-                                                                  column.key
-                                                              ],
-                                                          ),
-                                                      ])
-                                                    : new Set()
-                                            }
-                                            selectionMode="single"
-                                            onSelectionChange={(keys) => {
-                                                const selected =
-                                                    Array.from(keys)[0];
-                                                handleFilterChange(
-                                                    column.key,
-                                                    (selected as string) || "",
-                                                );
-                                            }}
-                                        >
-                                            {[
-                                                { key: "", label: "All" },
-                                                ...column.filterOptions,
-                                            ].map((opt) => (
-                                                <DropdownItem key={opt.key}>
-                                                    {opt.label}
-                                                </DropdownItem>
-                                            ))}
-                                        </DropdownMenu>
+                                        </Dropdown.Trigger>
+                                        <Dropdown.Popover>
+                                            <Dropdown.Menu
+                                                disallowEmptySelection={false}
+                                                aria-label={`Filter by ${column.label}`}
+                                                selectedKeys={
+                                                    filters[column.key]
+                                                        ? new Set([
+                                                              String(
+                                                                  filters[
+                                                                      column.key
+                                                                  ],
+                                                              ),
+                                                          ])
+                                                        : new Set()
+                                                }
+                                                selectionMode="single"
+                                                onSelectionChange={(keys) => {
+                                                    const selected =
+                                                        Array.from(keys)[0];
+                                                    handleFilterChange(
+                                                        column.key,
+                                                        selected
+                                                            ? String(selected)
+                                                            : "",
+                                                    );
+                                                }}
+                                            >
+                                                {column.filterOptions.map(
+                                                    (opt) => (
+                                                        <Dropdown.Item
+                                                            id={opt.key}
+                                                            key={opt.key}
+                                                            textValue={
+                                                                opt.label
+                                                            }
+                                                        >
+                                                            <Label>
+                                                                {opt.label}
+                                                            </Label>
+                                                        </Dropdown.Item>
+                                                    ),
+                                                )}
+                                            </Dropdown.Menu>
+                                        </Dropdown.Popover>
                                     </Dropdown>
                                 );
                             }
                             return null;
                         })}
-
-                    {/* Columns visibility dropdown */}
-                    {showColumnToggle && (
-                        <Dropdown>
-                            <DropdownTrigger className="hidden sm:flex">
-                                <Button
-                                    endContent={
-                                        <ChevronDownIcon className="h-4 w-4" />
-                                    }
-                                    variant="flat"
-                                    size="sm"
-                                    radius="lg"
-                                >
-                                    Columns
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu
-                                disallowEmptySelection
-                                aria-label="Toggle columns"
-                                closeOnSelect={false}
-                                selectedKeys={
-                                    visibleColumns === "all"
-                                        ? new Set(columns.map((c) => c.key))
-                                        : visibleColumns
-                                }
-                                selectionMode="multiple"
-                                onSelectionChange={(keys) => {
-                                    onVisibleColumnsChange?.(
-                                        keys as Set<string>,
-                                    );
-                                }}
-                            >
-                                {columns.map((column) => (
-                                    <DropdownItem
-                                        key={column.key}
-                                        className="capitalize"
-                                    >
-                                        {column.label}
-                                    </DropdownItem>
-                                ))}
-                            </DropdownMenu>
-                        </Dropdown>
-                    )}
                 </div>
 
                 {/* Right side: Custom content, rows per page & Refresh */}
@@ -490,58 +448,67 @@ export function Table<T>({
 
                     {pagination?.onPageSizeChange && (
                         <div className="flex items-center gap-1">
-                            {/* <div className="text-small text-default-400">Rows per page:</div> */}
-                            <Select
-                                items={(
-                                    pagination.pageSizeOptions || [
-                                        5, 10, 20, 50,
-                                    ]
-                                ).map((size) => ({
-                                    key: String(size),
-                                    label: String(size),
-                                }))}
-                                selectedKeys={
-                                    new Set([String(pagination.pageSize)])
-                                }
-                                disallowEmptySelection
-                                aria-label="Rows per page"
-                                size="sm"
-                                className="min-w-20"
-                                onSelectionChange={(keys) => {
-                                    const selected = Array.from(keys)[0];
-                                    if (selected) {
-                                        pagination.onPageSizeChange?.(
-                                            Number(selected),
-                                        );
-                                    }
-                                }}
-                            >
-                                {(item) => (
-                                    <SelectItem
-                                        key={item.key}
-                                        textValue={item.label}
+                            <Dropdown>
+                                <Dropdown.Trigger>
+                                    <Button variant="ghost" size="sm">
+                                        {pagination.pageSize} / page
+                                        <ChevronDownIcon className="h-4 w-4" />
+                                    </Button>
+                                </Dropdown.Trigger>
+                                <Dropdown.Popover>
+                                    <Dropdown.Menu
+                                        aria-label="Rows per page"
+                                        selectionMode="single"
+                                        selectedKeys={
+                                            new Set([
+                                                String(pagination.pageSize),
+                                            ])
+                                        }
+                                        onSelectionChange={(keys) => {
+                                            const selected =
+                                                Array.from(keys)[0];
+                                            if (selected) {
+                                                pagination.onPageSizeChange?.(
+                                                    Number(selected),
+                                                );
+                                            }
+                                        }}
                                     >
-                                        {item.label}
-                                    </SelectItem>
-                                )}
-                            </Select>
+                                        {(
+                                            pagination.pageSizeOptions || [
+                                                5, 10, 20, 50,
+                                            ]
+                                        ).map((size) => (
+                                            <Dropdown.Item
+                                                id={String(size)}
+                                                key={String(size)}
+                                                textValue={String(size)}
+                                            >
+                                                <Label>{String(size)}</Label>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown.Popover>
+                            </Dropdown>
                         </div>
                     )}
 
                     {showRefresh && (
-                        <Tooltip content="Refresh">
-                            <Button
-                                isIconOnly
-                                variant="flat"
-                                radius="lg"
-                                size="sm"
-                                isLoading={isLoading}
-                                onPress={onRefresh}
-                            >
-                                <ArrowPathIcon
-                                    className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-                                />
-                            </Button>
+                        <Tooltip>
+                            <Tooltip.Trigger>
+                                <Button
+                                    isIconOnly
+                                    variant="ghost"
+                                    size="sm"
+                                    isPending={isLoading}
+                                    onPress={onRefresh}
+                                >
+                                    <ArrowPathIcon
+                                        className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                                    />
+                                </Button>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content>Refresh</Tooltip.Content>
                         </Tooltip>
                     )}
                 </div>
@@ -552,99 +519,196 @@ export function Table<T>({
     // ==================== PAGINATION ====================
     const defaultBottomContent = pagination && totalPages > 0 && (
         <div className="flex items-center justify-between px-2 py-2">
-            {showPaginationInfo && (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Showing {startItem} - {endItem} of {pagination.total}
-                </span>
-            )}
+            <span className="text-small text-default-400 hidden w-[30%] sm:block">
+                {selectionMode !== "none" &&
+                selectedKeys &&
+                selectedKeys !== "all" ? (
+                    <>
+                        {selectedKeys instanceof Set ? selectedKeys.size : 0} of{" "}
+                        {pagination.total} selected
+                    </>
+                ) : (
+                    <>
+                        Showing {startItem}-{endItem} of {pagination.total}
+                    </>
+                )}
+            </span>
+
             <Pagination
-                showControls
-                color="primary"
-                page={pagination.page}
-                total={totalPages}
-                onChange={pagination.onPageChange}
-                radius="full"
-                variant="light"
-                isDisabled={isLoading}
-            />
+                size="sm"
+                className="flex w-full justify-center sm:w-auto"
+            >
+                <Pagination.Content>
+                    <Pagination.Item>
+                        <Pagination.Previous
+                            isDisabled={pagination.page <= 1}
+                            onPress={() =>
+                                pagination.onPageChange(pagination.page - 1)
+                            }
+                        >
+                            Previous
+                        </Pagination.Previous>
+                    </Pagination.Item>
+
+                    {totalPages > 0 && (
+                        <>
+                            <Pagination.Item>
+                                <Pagination.Link
+                                    isActive={pagination.page === 1}
+                                    onPress={() => pagination.onPageChange(1)}
+                                >
+                                    1
+                                </Pagination.Link>
+                            </Pagination.Item>
+
+                            {pagination.page > 3 && totalPages > 3 && (
+                                <Pagination.Item>
+                                    <Pagination.Ellipsis />
+                                </Pagination.Item>
+                            )}
+
+                            {[
+                                pagination.page - 1,
+                                pagination.page,
+                                pagination.page + 1,
+                            ]
+                                .filter((p) => p > 1 && p < totalPages)
+                                .map((p) => (
+                                    <Pagination.Item key={p}>
+                                        <Pagination.Link
+                                            isActive={pagination.page === p}
+                                            onPress={() =>
+                                                pagination.onPageChange(p)
+                                            }
+                                        >
+                                            {p}
+                                        </Pagination.Link>
+                                    </Pagination.Item>
+                                ))}
+
+                            {pagination.page < totalPages - 2 &&
+                                totalPages > 3 && (
+                                    <Pagination.Item>
+                                        <Pagination.Ellipsis />
+                                    </Pagination.Item>
+                                )}
+
+                            {totalPages > 1 && (
+                                <Pagination.Item>
+                                    <Pagination.Link
+                                        isActive={
+                                            pagination.page === totalPages
+                                        }
+                                        onPress={() =>
+                                            pagination.onPageChange(totalPages)
+                                        }
+                                    >
+                                        {totalPages}
+                                    </Pagination.Link>
+                                </Pagination.Item>
+                            )}
+                        </>
+                    )}
+
+                    <Pagination.Item>
+                        <Pagination.Next
+                            isDisabled={pagination.page >= totalPages}
+                            onPress={() =>
+                                pagination.onPageChange(pagination.page + 1)
+                            }
+                        >
+                            Next
+                        </Pagination.Next>
+                    </Pagination.Item>
+                </Pagination.Content>
+            </Pagination>
+
+            <div className="hidden w-[30%] sm:block"></div>
         </div>
     );
 
-    // Default loading content
-    const defaultLoadingContent = <Spinner size="lg" color="primary" />;
-
     // ==================== RENDER ====================
+
     return (
         <div className="flex flex-col gap-4">
-            {/* Top content / Toolbar */}
-            {(showSearch ||
-                showFilters ||
-                showColumnToggle ||
-                toolbarContent ||
-                showRefresh) &&
-                (topContent || defaultTopContent)}
+            {topContent !== undefined ? topContent : defaultTopContent}
 
-            {/* Table */}
-            <HeroTable
-                aria-label={ariaLabel}
-                isStriped={isStriped}
-                isCompact={isCompact}
-                isHeaderSticky={isHeaderSticky}
-                selectionMode={selectionMode}
-                selectedKeys={selectedKeys as any}
-                onSelectionChange={onSelectionChange as any}
-                sortDescriptor={sortDescriptor}
-                onSortChange={handleSortChange}
-                classNames={{
-                    wrapper: `rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 ${
-                        maxHeight ? "overflow-y-auto" : ""
-                    }`,
-                    th: "bg-gray-50 dark:bg-zinc-700/50 text-gray-600 dark:text-gray-300 font-semibold",
-                }}
-                style={{
-                    maxHeight: maxHeight,
-                }}
-                bottomContent={bottomContent || defaultBottomContent}
-                bottomContentPlacement="outside"
-            >
-                <TableHeader>
-                    {tableColumnsFiltered.map((column) => (
-                        <TableColumn
-                            key={column.key}
-                            width={column.width}
-                            align={column.align}
-                            allowsSorting={column.sortable}
-                        >
-                            {column.label}
-                        </TableColumn>
-                    ))}
-                </TableHeader>
-                <TableBody
-                    items={displayItems}
-                    isLoading={tableIsLoading}
-                    loadingContent={loadingContent || defaultLoadingContent}
-                    emptyContent={emptyContent}
-                >
-                    {(item) => (
-                        <TableRow key={getRowKey(item)}>
-                            {tableColumnsFiltered.map((column, index) => (
-                                <TableCell key={column.key}>
-                                    {renderCell(item, column.key, index)}
-                                </TableCell>
+            <BaseTable className="w-full">
+                <BaseTable.ScrollContainer>
+                    <BaseTable.Content
+                        aria-label={ariaLabel}
+                        selectionMode={selectionMode as any}
+                        selectedKeys={selectedKeys as any}
+                        onSelectionChange={onSelectionChange as any}
+                        sortDescriptor={sortDescriptor}
+                        onSortChange={handleSortChange}
+                        className={maxHeight ? `max-h-[${maxHeight}]` : ""}
+                    >
+                        <BaseTable.Header>
+                            {tableColumnsFiltered.map((col) => (
+                                <BaseTable.Column
+                                    key={col.key}
+                                    id={col.key}
+                                    allowsSorting={col.sortable}
+                                >
+                                    {col.sortable
+                                        ? ({ sortDirection }) => (
+                                              <BaseTable.SortableColumnHeader
+                                                  sortDirection={sortDirection}
+                                              >
+                                                  {col.label}
+                                              </BaseTable.SortableColumnHeader>
+                                          )
+                                        : col.label}
+                                </BaseTable.Column>
                             ))}
-                        </TableRow>
-                    )}
-                </TableBody>
-            </HeroTable>
+                        </BaseTable.Header>
+
+                        <BaseTable.Body
+                            renderEmptyState={() => (
+                                <div className="text-default-500 flex w-full flex-col items-center justify-center py-10">
+                                    {tableIsLoading
+                                        ? loadingContent || (
+                                              <Spinner size="md" />
+                                          )
+                                        : emptyContent}
+                                </div>
+                            )}
+                        >
+                            {displayItems.map((item, index) => {
+                                const key = (item as any)._isSkeleton
+                                    ? (item as any).id
+                                    : getRowKey(item);
+
+                                return (
+                                    <BaseTable.Row
+                                        key={key}
+                                        id={key}
+                                        className={
+                                            onRowAction &&
+                                            !(item as any)._isSkeleton
+                                                ? "hover:bg-default-100 cursor-pointer"
+                                                : ""
+                                        }
+                                    >
+                                        {tableColumnsFiltered.map((col) => (
+                                            <BaseTable.Cell key={col.key}>
+                                                {renderCell(
+                                                    item,
+                                                    col.key,
+                                                    index,
+                                                )}
+                                            </BaseTable.Cell>
+                                        ))}
+                                    </BaseTable.Row>
+                                );
+                            })}
+                        </BaseTable.Body>
+                    </BaseTable.Content>
+                </BaseTable.ScrollContainer>
+            </BaseTable>
+
+            {bottomContent !== undefined ? bottomContent : defaultBottomContent}
         </div>
     );
 }
-
-// Re-export types
-export type {
-    TableColumn as ColumnDef,
-    TableAction as ActionDef,
-    TablePagination as PaginationInfo,
-    TableSort as SortInfo,
-    TableFilter as FilterValues,
-};

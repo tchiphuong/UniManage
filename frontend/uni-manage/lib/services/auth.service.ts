@@ -1,6 +1,7 @@
+import type { ApiResponse } from "@/types";
+
 import { apiClient } from "../api-client";
 import { AUTH_ENDPOINTS } from "../api-endpoints";
-import type { ApiResponse } from "@/types";
 
 /**
  * Auth Service - API methods for authentication
@@ -19,12 +20,13 @@ export interface LoginResponse {
 }
 
 export interface CurrentUserResponse {
-    username: string;
+    id: number;
+    userCode: string;
     displayName: string;
-    email: string;
+    email?: string;
     employeeCode?: string;
-    status: number;
-    roles: string[];
+    roleCode?: string;
+    createdAt: string;
 }
 
 export interface UserPermissionsResponse {

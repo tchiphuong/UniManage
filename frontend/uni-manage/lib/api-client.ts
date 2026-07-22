@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+
 import type { ApiResponse } from "@/types";
+
 import { getAccessToken, removeAccessToken } from "./cookies";
 
 /**
@@ -8,7 +10,7 @@ import { getAccessToken, removeAccessToken } from "./cookies";
  * Tích hợp với backend ASP.NET Core
  */
 class ApiClient {
-    private instance: AxiosInstance;
+    private readonly instance: AxiosInstance;
 
     constructor() {
         const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -31,18 +33,18 @@ class ApiClient {
         // Request interceptor
         this.instance.interceptors.request.use(
             (config) => {
-                // Thêm token nếu có
+                // Add token if exists
                 const token = getAccessToken();
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
 
-                // Thêm correlation ID
+                // Add correlation ID
                 config.headers["X-Correlation-Id"] =
                     this.generateCorrelationId();
 
-                // Thêm Accept-Language từ locale hiện tại
-                // Backend CultureMiddleware cần header này
+                // Add Accept-Language from current locale
+                // Backend CultureMiddleware requires this header
                 if (typeof window !== "undefined") {
                     const locale =
                         window.location.pathname.split("/")[1] || "vi";
@@ -64,19 +66,26 @@ class ApiClient {
             (response) => response,
             async (error: AxiosError<ApiResponse>) => {
                 if (error.response?.status === 401) {
-                    // Token hết hạn, redirect to login
+                    // Token expired, redirect to login
                     if (typeof window !== "undefined") {
                         removeAccessToken(); // Clear cookie to prevent middleware loop
                         window.location.href = "/auth/login";
                     }
                 }
-                return Promise.reject(error);
+                throw error;
             },
         );
     }
 
     private generateCorrelationId(): string {
-        return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        if (
+            typeof crypto !== "undefined" &&
+            typeof crypto.randomUUID === "function"
+        ) {
+            return crypto.randomUUID();
+        }
+        // Fallback for older environments
+        return `${Date.now()}-fallback-id`;
     }
 
     async get<T>(

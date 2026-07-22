@@ -1,6 +1,6 @@
-import { ReactNode } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { ReactNode } from "react";
 
 interface AuthFormWrapperProps {
     children: ReactNode;

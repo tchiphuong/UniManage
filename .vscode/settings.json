@@ -2,5 +2,11 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
-  }
+  },
+  "editor.tabSize": 4,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.workingDirectories": ["./frontend/uni-manage"],
+  "prettier.prettierPath": "./frontend/uni-manage/node_modules/prettier"
 }

@@ -1,18 +1,19 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
-import { Todo } from "@/types";
 import {
     CheckCircleIcon,
     ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { Chip } from "@heroui/react";
+import { useTranslation } from "react-i18next";
+
+import { Todo } from "@/types";
 
 interface TodoListWidgetProps {
     todos: Todo[];
 }
 
-export function TodoListWidget({ todos }: TodoListWidgetProps) {
+export function TodoListWidget({ todos }: Readonly<TodoListWidgetProps>) {
     const { t } = useTranslation();
 
     return (
@@ -43,7 +44,7 @@ export function TodoListWidget({ todos }: TodoListWidgetProps) {
                             <Chip
                                 size="sm"
                                 color="warning"
-                                variant="flat"
+                                variant="soft"
                                 className="h-6 text-xs"
                             >
                                 {t("widgets.pending")}
